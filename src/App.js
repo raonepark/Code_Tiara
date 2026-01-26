@@ -200,7 +200,7 @@ const LumoraDashboard = () => {
         container: 'mb-4',
         header: 'flex items-center gap-2 mb-2 px-2 py-1 border-b border-[#3E3E42]', // Terminal prompt separator
         title: 'text-sm font-bold capitalize before:content-[">_"] before:mr-2 before:text-[#61AFEF]', // Terminal prompt prefix
-        taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-all mb-1 border-l-4', // Code line style: Opaque BG, Left Border
+        taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-colors mb-1 border-l-4', // Code line style: Opaque BG, Left Border
         actionButton: {
           wrapper: 'flex items-center gap-1',
           button: 'p-1 rounded-[4px] bg-transparent border border-[#3E4451] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors cursor-pointer',
@@ -258,7 +258,7 @@ const LumoraDashboard = () => {
         header: 'flex items-center gap-2 p-3 border-b-2 border-dashed border-inherit bg-white', // ✨ White Header
         title: 'text-lg font-bold truncate',
         title: 'text-lg font-bold truncate',
-        taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-all shadow-sm mx-3 first:mt-3 last:mb-0'
+        taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-colors shadow-sm mx-3 first:mt-3 last:mb-0'
       },
       // ✨ Detailed Polish Props (Princess)
       settings: {
