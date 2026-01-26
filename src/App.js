@@ -2025,7 +2025,7 @@ const LumoraDashboard = () => {
 
                             return (
                               <div
-                                className={`p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'} space-y-1 min-h-[40px] transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-0 rounded-b-[15px] -mt-1.5' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                className={`p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'} space-y-1 min-h-[60px] transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-0 rounded-b-[15px] -mt-1.5' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                                 style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}
