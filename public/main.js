@@ -8,6 +8,9 @@ const path = require('path');
 // Basic dev detection
 const isDev = !app.isPackaged;
 
+// ✨ Set App ID for Windows Notifications to show "Code Tiara"
+app.setAppUserModelId("Code Tiara");
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 320,

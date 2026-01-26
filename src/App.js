@@ -8,8 +8,10 @@ import {
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
+import SettingsPanel from './components/SettingsPanel';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba } from './constants';
+import { THEME_CONFIG } from './constants/themeConfig';
 
 // ✨ Constants imported from constants.js
 
@@ -179,177 +181,7 @@ const LumoraDashboard = () => {
   };
 
   // --- 🎨 THEME CONFIGURATION ---
-  const THEME_CONFIG = {
-    developer: {
-      label: 'Developer',
-      root: 'bg-[#1E1E1E] text-[#ABB2BF] !font-mono', // VS Code Dark Theme Colors
-      windowBorder: '#555555', // ✨ Subtle Gray Border
-      card: 'bg-[#1E1E1E] border-none', // Cleaner background
-      header: { bg: 'bg-[#21252B]', text: 'text-[#61AFEF]', border: 'border-b border-[#3E3E42]' }, // Dark header with soft blue text
-      accent: {
-        text: 'text-[#61AFEF]',
-        bg: 'bg-[#61AFEF]',
-        hover: 'hover:bg-[#61AFEF]/90',
-        border: 'focus:border-[#61AFEF]'
-      },
-      iconType: 'terminal', // default
-      radius: 'rounded-none', // Square corners for strict feel
-      // ✨ Category Styles (List Mode)
-      category: {
-        variant: 'list',
-        container: 'mb-4',
-        header: 'flex items-center gap-2 mb-2 px-2 py-1 border-b border-[#3E3E42]', // Terminal prompt separator
-        title: 'text-sm font-bold capitalize before:content-[">_"] before:mr-2 before:text-[#61AFEF]', // Terminal prompt prefix
-        taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-colors mb-1 border-l-4', // Code line style: Opaque BG, Left Border
-        actionButton: {
-          wrapper: 'flex items-center gap-1',
-          button: 'p-1 rounded-[4px] bg-transparent border border-[#3E4451] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors cursor-pointer',
-          icon: 'w-4 h-4'
-        }
-      },
-      // ✨ Detailed Polish Props
-      settings: {
-        bg: 'bg-[#282C34]',
-        wrapper: 'rounded border border-[#3E3E42] bg-[#21252B] p-4 text-[#ABB2BF] font-mono', // Added text color and font-mono
-        header: 'border-b border-[#3E3E42] pb-2 mb-3 text-[#61AFEF] font-bold uppercase text-xs tracking-wider flex items-center gap-2 before:content-["#"]',
-        input: 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] focus:outline-none focus:border-[#61AFEF] placeholder-[#5C6370] rounded-none px-3 py-2 text-sm', // Updated BG to #1E1E1E
-        sectionTitle: 'text-[#E06C75] text-xs font-bold uppercase tracking-wider',
-        button: { default: 'bg-[#404E67] border border-[#3E3E42] hover:bg-[#4B5E7B] text-white rounded-none px-4 py-2 text-xs font-bold transition-colors' }, // Backup buttons Dark Blue
-        listRow: {
-          wrapper: 'flex items-center gap-2 p-2 rounded-none bg-[#282C34] border border-[#181A1F] mb-1', // Updated Border
-          iconTrigger: 'bg-[#1E1E1E] rounded-none border border-[#3E3E42] text-[#ABB2BF] text-lg hover:border-[#61AFEF]', // Updated icon trigger bg
-          input: 'bg-[#1E1E1E] border-none text-[#ABB2BF] focus:ring-0', // Updated Input bg to #1E1E1E
-          colorTrigger: 'rounded-none border border-[#3E3E42]',
-          deleteBtn: 'text-[#5C6370] bg-[#1E1E1E] border border-[#3E3E42] rounded-none hover:text-[#E06C75] hover:border-[#E06C75]'
-        },
-        popover: 'bg-[#21252B] border border-[#3E3E42] text-[#ABB2BF] shadow-xl font-mono'
-      },
-      scrollbar: {
-        track: '#1E1E1E',
-        thumb: '#4B5263',
-        thumbHover: '#5C6370'
-      },
-      timer: {
-        overlay: 'bg-[#1E1E1E]/95',
-        title: 'text-[#5C6370]',
-        text: 'text-[#98C379]',
-        button: 'bg-[#2C313A] border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E4451] rounded-none'
-      }
-    },
-    princess: {
-      label: 'Princess',
-      root: 'bg-[#FFFCFD] text-slate-800 font-gamja font-bold text-[1.05rem]', // ✨ Gamja Flower Font (via Class)
-      windowBorder: '#FFC0CB', // ✨ Pink Border
-      card: 'w-full h-full bg-[#FFFCFD] p-0 relative flex flex-col', // ✨ Full Screen Ultra Light Pink Diary
-      header: { bg: 'bg-[#FFF0F5]', text: 'text-[#FF6B81]', border: 'border-b border-[#FFC0CB]/30 border-dashed' },
-      progress: 'bg-[#FFC0CB]', // ✨ Pastel Pink Progress Bar
-      accent: {
-        text: 'text-[#F472B6]', // Pink 400
-        bg: 'bg-[#F472B6]',
-        hover: 'hover:bg-[#F472B6]/90',
-        border: 'focus:border-[#F472B6]'
-      },
-      iconType: 'crown',
-      radius: 'rounded-2xl',
-      // ✨ Category Styles (Mobile App Mode)
-      category: {
-        variant: 'card',
-        container: 'w-full mb-4 bg-white border-[2px] rounded-[20px] overflow-hidden shadow-sm', // ✨ Added w-full
-        header: 'flex items-center gap-2 p-3 border-b-2 border-dashed border-inherit bg-white', // ✨ White Header
-        title: 'text-lg font-bold truncate',
-        title: 'text-lg font-bold truncate',
-        taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-colors shadow-sm mx-3 first:mt-3 last:mb-0'
-      },
-      // ✨ Detailed Polish Props (Princess)
-      settings: {
-        bg: 'bg-white',
-        wrapper: 'w-full bg-white border-2 border-[#FFC0CB] rounded-[24px] shadow-sm p-3', // ✨ Added w-full
-        header: 'p-3 text-[#FF6B81] font-bold text-lg mb-4 tracking-widest',
-        input: 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] px-3 py-2 text-center text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#FF6B81] placeholder-[#FBCFE8]',
-        sectionTitle: 'text-[#F472B6]',
-        button: { default: 'bg-[#F472B6] text-white hover:bg-[#F472B6]/90 rounded-[24px] shadow-sm border-0' },
-        listRow: {
-          wrapper: 'flex items-center gap-2 p-2 rounded-[20px] bg-[#FFF0F5] border border-[#FFC0CB]',
-          iconTrigger: 'bg-white rounded-full border border-[#FFC0CB] text-lg shadow-sm hover:scale-110 pt-1',
-          input: 'bg-white border border-[#FFC0CB] rounded-[15px] focus:ring-[#FF6B81]',
-          colorTrigger: 'rounded-full border-2 border-white shadow-sm',
-          deleteBtn: 'text-[#FF6B81] bg-[#FFF0F5] border border-[#FFC0CB] rounded-full hover:bg-[#FF6B81] hover:text-white'
-        },
-        popover: 'bg-white border border-[#FFC0CB] rounded-[15px] shadow-xl'
-      },
-      scrollbar: {
-        track: 'rgba(255, 252, 253, 0)', // Transparent Track
-        thumb: '#FFB6C1', // Light Pink
-        thumbHover: '#FF69B4' // Hot Pink
-      },
-      timer: {
-        overlay: 'bg-[#FDF2F8]/95 backdrop-blur-sm',
-        title: 'text-[#F9A8D4]',
-        text: 'text-[#F472B6]',
-        button: 'bg-white border-[#FBCFE8] text-slate-500 hover:text-[#F472B6] hover:border-[#F472B6]'
-      }
-    },
-    excel: {
-      label: 'Excel',
-      root: 'bg-white text-[#000000] font-[Segoe_UI,Roboto,Helvetica,Arial,sans-serif]', // ✨ Force Deep Black Text
-      windowBorder: '#D1D5DB', // ✨ Added Light Gray Border
-      card: 'w-full h-full bg-white border border-[#D1D5DB] rounded-none shadow-none flex flex-col',
-      header: {
-        bg: 'bg-[#217346]',
-        text: 'text-white', // Consistent white text
-        border: 'border-b border-[#1e6b41]'
-      },
-      progress: 'bg-[#107C41]',
-      accent: {
-        text: 'text-[#107C41]',
-        bg: 'bg-[#107C41]',
-        hover: 'hover:bg-[#107C41]/90',
-        border: 'focus:border-[#107C41]'
-      },
-      iconType: 'table',
-      radius: 'rounded-none',
-      category: {
-        variant: 'list',
-        container: 'mb-0',
-        header: 'flex items-center gap-2 mb-0 px-2 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#217346] font-bold text-xs uppercase tracking-wider', // ✨ Restored Header
-        title: 'text-sm font-bold text-[#333333]', // Darker title
-        taskItem: 'group flex items-center gap-3 p-1 pl-2 text-[13px] bg-white hover:bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#333333]', // Darker task text
-        actionButton: {
-          wrapper: 'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
-          button: 'p-1 text-[#444] hover:text-black hover:bg-[#E1E1E1] rounded-none',
-          icon: 'w-3.5 h-3.5'
-        }
-      },
-      settings: {
-        bg: 'bg-white',
-        wrapper: 'rounded-none border border-[#D1D5DB] bg-white p-4 text-[#333]', // Dark text
-        header: 'border-b border-[#E1E1E1] pb-2 mb-3 text-[#217346] font-bold text-sm flex items-center gap-2',
-        input: 'bg-white border border-[#D1D5DB] text-[#000] focus:border-[#217346] placeholder-[#666] rounded-none px-2 py-1', // Darker placeholder/input text
-        sectionTitle: 'text-[#217346] font-bold text-xs uppercase',
-        button: { default: 'bg-[#F3F2F1] border border-[#D1D5DB] text-[#333] hover:bg-[#E1E1E1] rounded-none px-3 py-1 text-xs' },
-        listRow: {
-          wrapper: 'flex items-center gap-2 p-1 border-b border-[#E1E1E1] bg-white',
-          iconTrigger: 'text-[#444] hover:text-black border border-transparent hover:border-[#D1D5DB]',
-          input: 'bg-transparent border-none text-[#000] focus:ring-0',
-          colorTrigger: 'rounded-none border border-[#D1D5DB]',
-          deleteBtn: 'text-[#666] hover:text-red-600'
-        },
-        popup: "bg-white border border-[#D1D1D1] text-slate-800 shadow-xl rounded-none font-sans z-[9999]",
-        popover: 'bg-white border border-[#D1D5DB] text-[#333] shadow-md rounded-none'
-      },
-      scrollbar: {
-        track: '#E5E7EB',
-        thumb: '#9CA3AF',
-        thumbHover: '#107C41'
-      },
-      timer: {
-        overlay: 'bg-white/95',
-        title: 'text-slate-500',
-        text: 'text-[#217346]',
-        button: 'bg-white border-[#D1D5DB] text-slate-700 hover:border-[#107C41] rounded-none'
-      }
-    }
-  };
+  // THEME_CONFIG imported from constants/themeConfig.js
 
   const theme = THEME_CONFIG[currentTheme];
 
@@ -509,7 +341,7 @@ const LumoraDashboard = () => {
         // 시스템 알림 발생
         tasksToAlert.forEach(t => {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            new Notification('Lumora Dashboard', {
+            new Notification('Code Tiara', {
               body: `"${t.text}" 마감 시간입니다!`,
               silent: false
             });
@@ -550,7 +382,7 @@ const LumoraDashboard = () => {
 
       // 타이머 종료 시스템 알림
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification('Lumora Dashboard', {
+        new Notification('Code Tiara', {
           body: msg,
           silent: false
         });
@@ -773,7 +605,7 @@ const LumoraDashboard = () => {
 
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [activePicker, setActivePicker] = useState(null);
-  const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false); // ✨ Collapsible Theme Settings
+
   const [miniModeAdderId, setMiniModeAdderId] = useState(null); // ✨ Quick Add State
   const miniModeFormRef = useRef(null); // ✨ Ref for Quick Add Form
   const editFormRef = useRef(null); // ✨ Ref for Edit Task Form
@@ -1328,14 +1160,16 @@ const LumoraDashboard = () => {
             {/* Notification Dropdown (Compact) with Custom Scrollbar */}
             {/* Notification Dropdown (Compact) with Custom Scrollbar */}
             {isNotifOpen && (
-              <div ref={notifRef} className={`absolute shadow-xl z-50 overflow-hidden animate-in slide-in-from-top-2 ${currentTheme === 'princess' ? 'bg-white border-2 border-[#FFC0CB] rounded-[20px] top-10 right-4 w-64 max-w-[calc(100vw-2rem)] shadow-[0_10px_30px_rgba(255,182,193,0.4)]' : (currentTheme === 'developer' ? `right-12 top-8 w-64 ${theme.settings.popover}` : `right-2 top-7 w-56 ${theme.settings.popover}`)}`}>
+              <div ref={notifRef} className={`absolute z-50 overflow-hidden animate-in slide-in-from-top-2 
+                ${currentTheme === 'princess' ? 'top-10 right-4 w-64 max-w-[calc(100vw-2rem)]' : (currentTheme === 'developer' ? 'right-12 top-8 w-64' : 'right-2 top-7 w-64')} 
+                ${theme.notification.container}`}>
                 {/* 🎀 Princess Arrow */}
                 {currentTheme === 'princess' && <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white border-t-2 border-l-2 border-[#FFC0CB] rotate-45"></div>}
 
-                <div className={`px-3 py-2.5 border-b flex justify-between items-center ${currentTheme === 'princess' ? 'bg-[#FFF0F5] border-[#FFC0CB] border-dashed' : 'border-b border-inherit bg-inherit text-inherit'}`}>
-                  <span className={`text-xs font-bold opacity-70 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-inherit'}`}>알림 ({unreadCount})</span>
+                <div className={`px-3 py-2.5 flex justify-between items-center ${theme.notification.header}`}>
+                  <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs' : (currentTheme === 'developer' ? 'text-xs' : 'text-xs')}`}>알림 ({unreadCount})</span>
                   {unreadCount > 0 && (
-                    <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-1 rounded ${currentTheme === 'princess' ? 'text-red-400 hover:text-red-500 hover:bg-red-50' : 'text-inherit opacity-70 hover:opacity-100 hover:bg-white/10'}`}>지우기</button>
+                    <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-1 rounded transition-colors ${theme.notification.clearBtn}`}>지우기</button>
                   )}
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar">
@@ -1343,13 +1177,13 @@ const LumoraDashboard = () => {
                     <p className={`p-4 text-center text-sm opacity-60 ${currentTheme === 'princess' ? 'text-[#F472B6] font-[Gaegu]' : 'text-inherit'}`}>알림이 없습니다 {currentTheme === 'princess' ? '🎀' : ''}</p>
                   ) : (
                     notifications.map(n => (
-                      <div key={n.id} className={`p-3 border-b hover:bg-black/5 flex gap-3 items-start group ${currentTheme === 'princess' ? 'border-[#FFC0CB] border-dashed bg-white' : 'border-inherit'}`}>
+                      <div key={n.id} className={`p-3 border-b hover:bg-black/5 flex gap-3 items-start group transition-colors ${currentTheme === 'princess' ? 'border-[#FFC0CB] border-dashed' : 'border-inherit'}`}>
                         <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 shadow-sm ${currentTheme === 'princess' ? 'bg-red-400 ring-2 ring-red-100' : 'bg-red-500'}`}></div>
                         <div className="flex-1 space-y-1">
-                          <p className={`font-bold tracking-tight ${currentTheme === 'princess' ? 'text-base text-slate-700' : (currentTheme === 'developer' ? 'text-sm text-inherit font-mono' : 'text-base text-inherit')}`}>{n.title} <span className="text-xs opacity-50 font-normal ml-1">{n.time}</span></p>
-                          <p className={`leading-snug ${currentTheme === 'princess' ? 'text-sm text-slate-500' : (currentTheme === 'developer' ? 'text-xs opacity-80 font-mono leading-tight' : 'text-sm opacity-80')}`}>{n.message}</p>
+                          <p className={`font-bold tracking-tight ${theme.notification.title}`}>{n.title} <span className={`font-normal ml-1 opacity-70 ${theme.notification.time}`}>{n.time}</span></p>
+                          <p className={`leading-snug ${theme.notification.message}`}>{n.message}</p>
                         </div>
-                        <button onClick={() => clearNotification(n.id)} className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 ${currentTheme === 'princess' ? 'text-slate-300 hover:text-red-400' : 'text-inherit hover:text-red-400'}`}>
+                        <button onClick={() => clearNotification(n.id)} className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 ${theme.notification.closeBtn}`}>
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -1368,331 +1202,38 @@ const LumoraDashboard = () => {
 
         {/* --- SETTINGS MODE (Compact) with Custom Scrollbar --- */}
         {isSettingsOpen ? (
-          <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-md mx-auto w-full space-y-4">
-
-              {/* 🏷️ Header */}
-              <div className="flex justify-between items-center mb-2">
-                <h2 className={`text-xl font-bold flex items-center gap-1.5 ${currentTheme === 'princess' ? 'text-[#FF6B81] font-[Gaegu]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-slate-100')}`}>
-                  <Settings className={`w-5 h-5 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-indigo-500')}`} />
-                  {currentTheme === 'princess' ? '설정' : (currentTheme === 'excel' ? '환경 설정' : 'Settings')}
-                </h2>
-                <button
-                  onClick={() => setIsSettingsOpen(false)}
-                  className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold
-                  ${currentTheme === 'princess'
-                      ? 'bg-[#F472B6] hover:bg-[#F472B6]/90 text-white border border-[#F472B6] rounded-full'
-                      : (currentTheme === 'excel'
-                        ? 'bg-[#217346] hover:bg-[#1E6B3B] text-white rounded-none border border-[#1E6B3B]'
-                        : (currentTheme === 'developer' ? 'bg-transparent hover:bg-[#98C379] text-[#98C379] hover:text-[#282C34] border border-[#98C379] rounded-none font-mono' : `${theme.accent.bg} ${theme.accent.hover} text-white rounded-full`)
-                      )
-                    }`}
-                >
-                  <Save className="w-3.5 h-3.5" /> 저장
-                </button>
-              </div>
-
-
-
-              {/* 🎨 Theme Settings Card - Unified */}
-              {/* 🎨 Theme Settings Card - Unified (Collapsible) */}
-              <div className={theme.settings.wrapper}>
-                <div
-                  onClick={() => setIsThemeSettingsExpanded(!isThemeSettingsExpanded)}
-                  className={`flex items-center justify-between cursor-pointer ${theme.settings.header.replace('mb-3', 'mb-0')}`} // Remove bottom margin if collapsed
-                >
-                  <div className="flex items-center gap-2">
-                    <span>테마 설정</span>
-                    {!isThemeSettingsExpanded && (
-                      <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${currentTheme === 'princess' ? 'bg-pink-100 text-pink-500' : 'bg-slate-100 text-slate-500'}`}>
-                        {currentTheme === 'princess' ? '👑 Princess' : (currentTheme === 'excel' ? '📊 Excel' : '💻 Developer')}
-                      </span>
-                    )}
-                  </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isThemeSettingsExpanded ? 'rotate-180' : ''}`} />
-                </div>
-
-                {isThemeSettingsExpanded && (
-                  <div className="flex gap-2 mt-3 animate-in slide-in-from-top-2 duration-200">
-                    {Object.keys(THEME_CONFIG).map((key) => (
-                      <button
-                        key={key}
-                        onClick={() => setCurrentTheme(key)}
-                        className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out
-                        ${currentTheme === key
-                            ? (key === 'princess' ? 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105' :
-                              key === 'excel' ? 'bg-white border-2 border-[#107C41] text-[#107C41] rounded-none shadow-sm scale-105' :
-                                'bg-[#3E4451] border-2 border-[#61AFEF] text-white rounded-none shadow-lg scale-105') // Dev Active
-                            : (currentTheme === 'developer' ? 'bg-[#2D2D2D] border-[#3E4451] text-[#ABB2BF] hover:bg-[#3E3E42] rounded-none' : // Dev Inactive Context (Darken all unselected buttons)
-                              `bg-[#F9F9F9] border border-[#E0E0E0] text-[#888888] hover:bg-slate-100 ${key === 'princess' ? 'rounded-xl' : key === 'excel' ? 'rounded-none' : 'rounded-lg'}`)
-                          } border text-[10px] sm:text-xs`}
-                      >
-                        <span className="text-xl mb-1">{key === 'princess' ? '👑' : key === 'excel' ? '📊' : '💻'}</span>
-                        <span className="text-[10px] font-bold">{THEME_CONFIG[key].label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ⏰ Timer & Font Card - Unified */}
-              <div className={theme.settings.wrapper}>
-                <div className={theme.settings.header}>
-                  타이머 및 글꼴
-                </div>
-
-                {/* Timer Flex */}
-                <div className="flex gap-3 mb-4">
-                  <div className="flex-1">
-                    <label className={`text-xs block mb-1 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.timer.title}`}>집중 (분)</label>
-                    <input
-                      type="number"
-                      value={focusDuration}
-                      onChange={(e) => setFocusDuration(Number(e.target.value))}
-                      className={`w-full ${theme.settings.input} transition-all`}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className={`text-xs block mb-1 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.timer.title}`}>휴식 (분)</label>
-                    <input
-                      type="number"
-                      value={breakDuration}
-                      onChange={(e) => setBreakDuration(Number(e.target.value))}
-                      className={`w-full ${theme.settings.input} transition-all`}
-                    />
-                  </div>
-                </div>
-
-                {/* Font Size */}
-                <div className={`pt-3 border-t ${currentTheme === 'princess' ? 'border-dashed border-[#FFC0CB]' : 'border-slate-700/50'}`}>
-                  <div className={`text-xs mb-2 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.settings.sectionTitle}`}>
-                    텍스트 크기
-                  </div>
-                  <div className={`flex p-1 ${currentTheme === 'princess' ? 'bg-slate-100/50 border border-slate-200 rounded-full' : (currentTheme === 'excel' ? 'bg-slate-100/50 border border-slate-200' : 'bg-slate-100/50 border border-slate-200 rounded-lg')}`}>
-                    {['small', 'medium', 'large'].map(size => (
-                      <button
-                        key={size}
-                        onClick={() => setFontSize(size)}
-                        className={`flex-1 py-1.5 text-xs transition-all font-bold duration-300
-                          ${fontSize === size
-                            ? (currentTheme === 'princess' ? 'bg-[#F472B6] text-white rounded-full shadow-sm scale-105' :
-                              currentTheme === 'excel' ? 'bg-[#217346] text-white rounded-none shadow-sm scale-105' :
-                                'bg-[#61AFEF] text-[#282C34] rounded-none shadow-sm scale-105') // Dev Active (Blue)
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-black/5 ' + (currentTheme === 'princess' ? 'rounded-full' : currentTheme === 'excel' ? 'rounded-none' : 'rounded-md')
-                          }`}
-                      >
-                        {size === 'small' ? '작게' : size === 'medium' ? '보통' : '크게'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* 💾 Data & Category Card - Unified */}
-              <div className={theme.settings.wrapper}>
-                <div className={theme.settings.header}>
-                  데이터 백업/복구
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={exportData}
-                    className={`flex flex-col items-center justify-center p-3 transition-all group ${theme.settings.button.default} hover:-translate-y-0.5`}
-                  >
-                    <Download className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">백업</span>
-                  </button>
-                  <button onClick={triggerImport}
-                    className={`flex flex-col items-center justify-center p-3 transition-all group ${theme.settings.button.default} hover:-translate-y-0.5`}
-                  >
-                    <Upload className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">복구</span>
-                  </button>
-                  <input type="file" ref={fileInputRef} onChange={importData} accept=".json" className="hidden" />
-                </div>
-              </div>
-
-              {/* 🎨 Unified Category Management (All Themes use 'Editable Row') */}
-              <div className={`p-3 border-t ${currentTheme === 'princess' ? 'border-dashed border-[#FFC0CB]' : 'border-slate-700/50'}`}>
-                <div className={`text-sm mb-2 font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.settings.sectionTitle}`}>카테고리 관리</div>
-                <DragDropContext onDragEnd={onDragEndCategories}>
-                  <Droppable droppableId="categories-list">
-                    {(provided) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className="space-y-2 overflow-visible"
-                      >
-                        {categories.map((cat, index) => (
-                          <Draggable key={cat.id} draggableId={cat.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`relative transition-colors duration-200 group ${theme.settings.listRow.wrapper} ${currentTheme === 'excel' ? (index % 2 === 0 ? 'bg-white' : 'bg-[#F9F9F9]') : ''} ${activePicker?.id === cat.id ? 'z-50' : 'z-0'} ${snapshot.isDragging ? 'shadow-lg z-[100]' : ''} flex items-center`}
-                              >
-                                {/* 🖐️ Drag Handle */}
-                                {currentTheme === 'excel' ? (
-                                  <div {...provided.dragHandleProps} className="w-[30px] -ml-3 mr-2 self-stretch flex items-center justify-center bg-[#F3F2F1] border-r border-[#D1D1D1] text-[10px] text-slate-500 font-sans cursor-grab active:cursor-grabbing hover:bg-[#E1E1E1] transition-colors">
-                                    {index + 1}
-                                  </div>
-                                ) : currentTheme === 'princess' ? (
-                                  <div {...provided.dragHandleProps} className="mr-2 cursor-grab active:cursor-grabbing text-[#FFB6C1] hover:bg-[#FFF0F5] p-1 rounded-full transition-colors">
-                                    <Menu className="w-4 h-4" />
-                                  </div>
-                                ) : (
-                                  <div {...provided.dragHandleProps} className={`mr-2 cursor-grab active:cursor-grabbing p-1 transition-colors ${currentTheme === 'developer' ? 'text-[#5C6370] hover:text-white' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    <GripVertical className="w-4 h-4" />
-                                  </div>
-                                )}
-
-                                {/* 1. Icon Picker */}
-                                <div className="relative">
-                                  <button
-                                    onClick={() => setActivePicker(activePicker?.id === cat.id && activePicker?.type === 'icon' ? null : { id: cat.id, type: 'icon' })}
-                                    className={`w-8 h-8 flex items-center justify-center transition-all ${theme.settings.listRow.iconTrigger} ${activePicker?.id === cat.id && activePicker?.type === 'icon' ? 'ring-2 ring-opacity-50 scale-110' : ''}`}
-                                  >
-                                    {currentTheme === 'developer' || currentTheme === 'excel' ? (
-                                      // 💻 Developer/Excel Theme (Standard/Outline Icons)
-                                      getIcon(cat.icon, `w-4 h-4 ${activePicker?.id === cat.id ? (currentTheme === 'excel' ? 'text-[#217346]' : 'text-[#61AFEF]') : (currentTheme === 'excel' ? 'text-slate-600' : 'text-[#ABB2BF]')}`)
-                                    ) : (
-                                      // 🎀 Princess / Default Icons (Emoji)
-                                      cat.icon === 'heart' ? '🎀' : (cat.icon === 'star' ? '⭐' : (cat.icon === 'coffee' ? '☕' : (cat.icon === 'music' ? '🎵' : (cat.icon === 'home' ? '🏠' : (cat.icon === 'briefcase' ? '💼' : (cat.icon === 'terminal' ? '💻' : (cat.icon === 'table' ? '📊' : (cat.icon === 'book' ? '📚' : (cat.icon === 'gift' ? '🎁' : (cat.icon === 'zap' ? '✨' : (cat.icon === 'code' ? '📝' : (cat.icon === 'alert' ? '⚠️' : (cat.icon === 'hourglass' ? '⏳' : (cat.icon === 'calendar' ? '📅' : '📌'))))))))))))))
-                                    )}
-                                  </button>
-                                  {/* Icon Popover */}
-                                  {activePicker?.id === cat.id && activePicker?.type === 'icon' && (
-                                    <>
-                                      <div className="fixed inset-0 z-[9998]" onClick={() => setActivePicker(null)}></div>
-                                      <div className={`absolute left-0 top-full mt-2 flex p-1 gap-1 z-[9999] animate-in fade-in zoom-in-95 ${theme.settings.popover} flex-wrap w-[186px]`}>
-                                        {['star', 'heart', 'coffee', 'music', 'home', 'briefcase', 'terminal', 'gift', 'code', 'calendar'].map(icon => (
-                                          <button
-                                            key={icon}
-                                            onClick={() => { updateCategory(cat.id, 'icon', icon); setActivePicker(null); }}
-                                            className={`w-8 h-8 flex items-center justify-center rounded-md text-xs transition-colors hover:bg-black/5 ${cat.icon === icon ? 'bg-black/5 ring-1 ring-[#61AFEF]' : ''} ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : (currentTheme === 'excel' ? 'text-slate-700 hover:text-black' : '')}`}
-                                          >
-                                            {currentTheme === 'developer' || currentTheme === 'excel' ? (
-                                              getIcon(icon, 'w-4 h-4') // Use standard icons in picker too
-                                            ) : (
-                                              icon === 'heart' ? '🎀' : (icon === 'star' ? '⭐' : (icon === 'coffee' ? '☕' : (icon === 'music' ? '🎵' : (icon === 'home' ? '🏠' : (icon === 'briefcase' ? '💼' : (icon === 'terminal' ? '💻' : (icon === 'gift' ? '🎁' : (icon === 'code' ? '📝' : (icon === 'calendar' ? '📅' : '📌')))))))))
-                                            )}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-
-                                {/* 2. Name Input */}
-                                <input
-                                  type="text"
-                                  value={cat.label}
-                                  onChange={(e) => updateCategory(cat.id, 'label', e.target.value)}
-                                  className={`flex-1 px-3 py-1.5 text-xs transition-all outline-none min-w-0 ${theme.settings.listRow.input}`}
-                                />
-
-                                {/* 3. Color Picker */}
-                                <div className="relative flex items-center justify-center h-6">
-                                  <button
-                                    onClick={() => setActivePicker(activePicker?.id === cat.id && activePicker?.type === 'color' ? null : { id: cat.id, type: 'color' })}
-                                    className={`w-6 h-6 transition-all hover:scale-110 ${theme.settings.listRow.colorTrigger} ${activePicker?.id === cat.id && activePicker?.type === 'color' ? 'ring-2 ring-opacity-50 scale-110' : ''} ${(cat.colorTheme === 'princess' || cat.colorTheme === 'red') ? 'bg-[#FFC0CB]' :
-                                      (cat.colorTheme === 'blue' || cat.colorTheme === 'cyan') ? 'bg-[#AEE4FF]' :
-                                        (cat.colorTheme === 'mint' || cat.colorTheme === 'emerald' || cat.colorTheme === 'green') ? 'bg-[#98FB98]' :
-                                          (cat.colorTheme === 'purple') ? 'bg-[#DDA0DD]' :
-                                            (cat.colorTheme === 'yellow') ? 'bg-[#FFB347]' : 'bg-slate-400'
-                                      }`}
-                                  />
-                                  {/* Color Popover */}
-                                  {activePicker?.id === cat.id && activePicker?.type === 'color' && (
-                                    <>
-                                      <div className="fixed inset-0 z-[9998]" onClick={() => setActivePicker(null)}></div>
-                                      <div className={`absolute right-0 top-full mt-2 flex p-1 gap-1 z-[9999] animate-in fade-in zoom-in-95 ${theme.settings.popover}`}>
-                                        {['red', 'cyan', 'emerald', 'purple', 'yellow'].map(color => (
-                                          <button
-                                            key={color}
-                                            onClick={() => { updateCategory(cat.id, 'colorTheme', color); setActivePicker(null); }}
-                                            className={`w-6 h-6 rounded-full border border-slate-100/20 hover:scale-110 transition-transform ${color === 'red' ? 'bg-[#FFC0CB]' :
-                                              (color === 'cyan' ? 'bg-[#AEE4FF]' :
-                                                (color === 'emerald' ? 'bg-[#98FB98]' :
-                                                  (color === 'purple' ? 'bg-[#DDA0DD]' : 'bg-[#FFB347]')))
-                                              }`}
-                                          />
-                                        ))}
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-
-                                {/* 4. Delete Button (Inline & Aligned) */}
-                                {confirmingCategoryDeleteId === cat.id ? (
-                                  <div className="flex items-center gap-1 animate-in zoom-in-50 duration-200 ml-1">
-                                    <button
-                                      onClick={() => finalDeleteCategory(cat.id)}
-                                      className={`w-6 h-6 flex items-center justify-center rounded-full shadow-sm transition-all ${currentTheme === 'developer' ? 'bg-[#E06C75] text-[#1E1E1E] rounded-none hover:bg-[#FF6B81]' : 'bg-[#FF6B81] text-white hover:bg-[#FF4757]'}`}
-                                    >
-                                      <Check className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmingCategoryDeleteId(null)}
-                                      className={`w-6 h-6 flex items-center justify-center rounded-full shadow-sm transition-all ${currentTheme === 'developer' ? 'bg-[#2D2D2D] text-[#ABB2BF] border border-[#3E4451] rounded-none hover:bg-[#3E3E42]' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => setConfirmingCategoryDeleteId(cat.id)}
-                                    className={`w-6 h-6 flex items-center justify-center transition-all shadow-sm ${theme.settings.listRow.deleteBtn} ${currentTheme === 'developer' ? 'w-auto px-2 text-[10px] font-bold hover:text-[#E06C75]' : 'rounded-full'}`}
-                                  >
-                                    {currentTheme === 'developer' ? '[DEL]' : <Trash2 className="w-3.5 h-3.5" />}
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-                <button onClick={addCategory} className={`w-full mt-3 py-2 text-xs font-bold flex items-center justify-center gap-1 transition-all
-                  ${currentTheme === 'princess'
-                    ? 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm'
-                    : (currentTheme === 'excel'
-                      ? 'bg-[#F3F2F1] border border-[#D1D5DB] text-[#217346] rounded-none hover:bg-[#E1E1E1] hover:text-[#107C41]'
-                      : (currentTheme === 'developer'
-                        ? 'bg-transparent border border-dashed border-[#61AFEF] text-[#61AFEF] rounded-none hover:bg-[#61AFEF]/10 font-mono'
-                        : 'border-dashed border-2 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500 rounded'
-                      )
-                    )
-                  }`}>
-                  <Plus className="w-3.5 h-3.5" /> <span className="text-xs font-bold">추가</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Reset Button */}
-            <div className="flex justify-center pt-4">
-              <button
-                onClick={handleResetRequest}
-                className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2
-                  ${isResetConfirming
-                    ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + (currentTheme === 'excel' || currentTheme === 'developer' ? 'rounded-none' : 'rounded-full')
-                    : (currentTheme === 'princess'
-                      ? 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm'
-                      : (currentTheme === 'excel'
-                        ? 'bg-white border border-[#C00000] text-[#C00000] rounded-none hover:bg-[#C00000] hover:text-white'
-                        : (currentTheme === 'developer'
-                          ? 'bg-transparent border border-[#E06C75] text-[#E06C75] rounded-none hover:bg-[#E06C75] hover:text-[#282C34] font-mono'
-                          : 'bg-red-50 text-red-500 hover:bg-red-100 rounded-lg'
-                        )
-                      )
-                    )
-                  }`}
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                {isResetConfirming ? '정말 초기화 할까요?' : '데이터 초기화'}
-              </button>
-            </div>
-
-          </div>
+          <SettingsPanel
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            currentTheme={currentTheme}
+            setCurrentTheme={setCurrentTheme}
+            theme={theme}
+            focusDuration={focusDuration}
+            setFocusDuration={setFocusDuration}
+            breakDuration={breakDuration}
+            setBreakDuration={setBreakDuration}
+            fontSize={fontSize}
+            setFontSize={setFontSize}
+            categories={categories}
+            onDragEndCategories={onDragEndCategories}
+            activePicker={activePicker}
+            setActivePicker={setActivePicker}
+            updateCategory={updateCategory}
+            addCategory={addCategory}
+            confirmingCategoryDeleteId={confirmingCategoryDeleteId}
+            setConfirmingCategoryDeleteId={setConfirmingCategoryDeleteId}
+            finalDeleteCategory={finalDeleteCategory}
+            categoryToDelete={categoryToDelete}
+            setCategoryToDelete={setCategoryToDelete}
+            confirmDeleteCategory={confirmDeleteCategory}
+            exportData={exportData}
+            triggerImport={triggerImport}
+            fileInputRef={fileInputRef}
+            importData={importData}
+            handleResetRequest={handleResetRequest}
+            isResetConfirming={isResetConfirming}
+            getIcon={getIcon}
+          />
 
 
         ) : (
@@ -2184,7 +1725,7 @@ const LumoraDashboard = () => {
                     : (currentTheme === 'excel' ? 'bg-[#217346] text-white border-t-4 border-[#107C41]' : 'border-slate-800 bg-slate-900/50') // ✨ Excel Status Bar
                   )} text-center shrink-0`}>
                   <p className={`text-[9px] font-mono ${currentTheme === 'princess' ? 'text-[#F472B6] font-bold tracking-widest' : (currentTheme === 'excel' ? 'text-white font-sans text-left px-2 font-bold' : 'text-slate-600')}`}>
-                    {currentTheme === 'princess' ? 'Code Tiara 💖 (Created by Lumora)' : (currentTheme === 'excel' ? 'Ready' : 'Code Tiara v1.1.0 (Created by Lumora)')}
+                    {currentTheme === 'princess' ? 'Code Tiara 💖 (Created by Lumora)' : (currentTheme === 'excel' ? 'Ready' : 'Code Tiara v1.2.0 (Created by Lumora)')}
                   </p>
                 </div>
               )

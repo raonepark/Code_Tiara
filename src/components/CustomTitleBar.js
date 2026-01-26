@@ -15,11 +15,11 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
                 window.electron.ipcRenderer.send(channel);
             }
             else {
-                console.error('Lumora Error: Electron IPC is not available. window.require is undefined.');
+                console.error('Code Tiara Error: Electron IPC is not available. window.require is undefined.');
                 alert('Electron IPC 연결 실패: 개발 모드에서는 window.require가 필요합니다.');
             }
         } catch (error) {
-            console.error('Lumora Error: Failed to send IPC message', error);
+            console.error('Code Tiara Error: Failed to send IPC message', error);
             alert(`오류: ${error.message}`);
         }
     };
@@ -32,7 +32,7 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
             {/* Left: Branding */}
             <div className="flex items-center gap-1.5 text-[#FF6B81] font-bold text-xs" style={{ WebkitAppRegion: 'no-drag' }}> {/* Make interactive if needed, else drag is fine */}
                 <Heart className="w-3 h-3 fill-current" />
-                <span>Lumora Dashboard</span>
+                <span>Code Tiara</span>
             </div>
 
             {/* Right: Window Controls */}

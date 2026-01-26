@@ -1,9 +1,9 @@
 {
-    "name": "lumora-dashboard",
+    "name": "code-tiara",
     "productName": "Code Tiara",
     "description": "A powerful dashboard for productivity",
     "author": "Lumora",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "private": true,
     "dependencies": {},
     "main": "public/main.js",
