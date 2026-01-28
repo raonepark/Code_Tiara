@@ -109,7 +109,7 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
   );
 };
 
-const LumoraDashboard = () => {
+const CodeTiara = () => {
 
 
 
@@ -1926,4 +1926,4 @@ const LumoraDashboard = () => {
   );
 };
 
-export default LumoraDashboard;
+export default CodeTiara;
