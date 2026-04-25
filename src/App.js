@@ -32,47 +32,11 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
   const selectedLabel = options.find(opt => opt.id === value)?.label || placeholder || "Select";
 
   // 🎨 Theme Styles
-  const getThemeStyles = () => {
-    switch (currentTheme) {
-      case 'princess':
-        return {
-          trigger: "bg-white border-2 border-[#FFC0CB] rounded-[20px] shadow-sm text-slate-600 focus:ring-2 focus:ring-[#FF6B81] hover:border-[#FF6B81] px-3",
-          icon: "text-[#FF6B81]",
-          popup: "bg-white border-2 border-[#FFC0CB] rounded-[20px] shadow-[0_10px_30px_rgba(255,192,203,0.3)] p-1",
-          itemActive: "bg-[#FFF0F5] text-[#FF6B81] font-bold rounded-[12px]",
-          itemInactive: "text-slate-600 hover:bg-[#FFF0F5] rounded-[12px] transition-colors"
-        };
-      case 'excel':
-        return {
-          trigger: "bg-white border border-[#D1D5DB] rounded-none shadow-none text-slate-800 hover:border-[#107C41] focus:border-[#107C41]",
-          icon: "text-[#107C41]",
-          popup: "bg-white border border-[#107C41] rounded-none shadow-xl",
-          itemActive: "bg-[#107C41] text-white font-bold",
-          itemInactive: "text-slate-800 hover:bg-[#E6F2EA]"
-        };
-      case 'developer':
-        return {
-          trigger: "bg-[#282C34] border border-[#3E3E42] rounded-none shadow-none text-[#ABB2BF] font-mono hover:border-[#61AFEF]",
-          icon: "text-[#61AFEF]",
-          popup: "bg-[#21252B] border border-[#3E3E42] rounded-none shadow-xl font-mono",
-          itemActive: "bg-[#61AFEF] text-white font-bold",
-          itemInactive: "text-[#ABB2BF] hover:bg-[#2C313A]"
-        };
-      default:
-        return {
-          trigger: "bg-white border border-slate-200 rounded text-slate-600",
-          icon: "text-slate-400",
-          popup: "bg-white border border-slate-200 rounded shadow-lg",
-          itemActive: "bg-slate-100 font-bold",
-          itemInactive: "hover:bg-slate-50"
-        };
-    }
-  };
-
-  const styles = getThemeStyles();
+  const theme = THEME_CONFIG[currentTheme] || THEME_CONFIG['developer'];
+  const styles = theme.dropdown;
 
   return (
-    <div className={`relative w-1/3 min-w-[100px] ${currentTheme === 'developer' ? 'font-mono' : ''}`} ref={dropdownRef}>
+    <div className={`relative w-1/3 min-w-[100px]`} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -93,7 +57,7 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
                   onChange(opt.id);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-sm mb-0.5 transition-colors ${currentTheme === 'excel' || currentTheme === 'developer' ? 'rounded-none' : 'rounded-[10px]'} ${value === opt.id
+                className={`w-full text-left px-3 py-2 text-sm mb-0.5 transition-colors ${value === opt.id
                   ? styles.itemActive
                   : styles.itemInactive
                   }`}
@@ -903,7 +867,7 @@ const CodeTiara = () => {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${theme.radius} ${theme.root} ${currentTheme === 'princess' ? 'bg-[#FFF0F5]' : (currentTheme === 'developer' ? 'bg-[#1e1e1e]' : 'bg-white')}`}
+      className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${theme.radius} ${theme.root}`}
       style={{ border: `2px solid ${theme.windowBorder || 'transparent'}` }}
     >
       {/* Custom Scrollbar Styles injected here 
@@ -951,7 +915,7 @@ const CodeTiara = () => {
       {/* ✨ Custom Title Bar Removed */}
 
       {/* Size Change: Full Window Mode & No Limits */}
-      <div className={`${cardClassName} rounded-lg h-full`}>
+      <div className={`${cardClassName} h-full`}>
 
         {/* Terminal Header Bar */}
         <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-20 shrink-0 select-none`} style={{ WebkitAppRegion: 'drag' }}>
@@ -1110,44 +1074,28 @@ const CodeTiara = () => {
                       <div className={`flex flex-col py-1 relative z-10 ${currentTheme === 'princess' ? 'bg-white' : ''}`}>
                         <button
                           onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); }}
-                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors
-                            ${currentTheme === 'princess'
-                              ? 'text-slate-600 hover:bg-pink-50 hover:text-pink-500'
-                              : (currentTheme === 'excel' ? 'text-slate-800 hover:bg-[#E6F2EA]' : 'text-inherit hover:bg-black/10')
-                            }`}
+                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={currentTheme === 'excel' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? '전체 모드' : '미니 모드'}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? '전체 모드' : '미니 모드'}
                         </button>
                         <button
                           onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); }}
-                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors
-                            ${currentTheme === 'princess'
-                              ? 'text-slate-600 hover:bg-pink-50 hover:text-pink-500'
-                              : (currentTheme === 'excel' ? 'text-slate-800 hover:bg-[#E6F2EA]' : 'text-inherit hover:bg-black/10')
-                            }`}
+                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={currentTheme === 'excel' ? "opacity-100" : ""}>⏱️</span> 타이머
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>⏱️</span> 타이머
                         </button>
                         <button
                           onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); }}
-                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors
-                            ${currentTheme === 'princess'
-                              ? 'text-slate-600 hover:bg-pink-50 hover:text-pink-500'
-                              : (currentTheme === 'excel' ? 'text-slate-800 hover:bg-[#E6F2EA]' : 'text-inherit hover:bg-black/10')
-                            }`}
+                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={currentTheme === 'excel' ? "opacity-100" : ""}>🧹</span> 완료 항목 정리
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🧹</span> 완료 항목 정리
                         </button>
                         <div className={`h-px mx-2 my-0.5 ${currentTheme === 'princess' ? 'bg-pink-100' : (currentTheme === 'excel' ? 'bg-[#E1E1E1]' : 'bg-current opacity-10')}`}></div>
                         <button
                           onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }}
-                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors
-                            ${currentTheme === 'princess'
-                              ? 'text-slate-600 hover:bg-pink-50 hover:text-pink-500'
-                              : (currentTheme === 'excel' ? 'text-slate-800 hover:bg-[#E6F2EA]' : 'text-inherit hover:bg-black/10')
-                            }`}
+                          className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={currentTheme === 'excel' ? "opacity-100" : ""}>🔧</span> 전체 설정
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔧</span> 전체 설정
                         </button>
                       </div>
                     </div>
@@ -1566,12 +1514,12 @@ const CodeTiara = () => {
 
                             return (
                               <div
-                                className={`p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'} space-y-1 min-h-[60px] transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-0 rounded-b-[15px] -mt-1.5' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                className={`p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                                 style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}
                               >
-                                {categoryTasks.length === 0 && !snapshot.isDraggingOver && (
+                                {categoryTasks.length === 0 && !snapshot.isDraggingOver && miniModeAdderId !== category.id && (
                                   <p className={`text-[10px] italic p-1.5 py-4 opacity-50 text-center ${currentTheme === 'princess' ? 'text-[#D8A0A6]' : 'text-slate-600'}`}>비어 있음</p>
                                 )}
 
@@ -1625,27 +1573,33 @@ const CodeTiara = () => {
                         </Droppable>
 
                         {/* ✨ Quick Add Form (Collapsible) */}
-                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} className={`${miniModeAdderId === category.id ? 'max-h-80 opacity-100 mb-4 px-2 overflow-visible' : 'max-h-0 opacity-0 px-2 overflow-hidden'} transition-all duration-300 ease-in-out`}>
-                          <form
-                            onSubmit={(e) => addTask(e, category.id)}
-                            className={`transition-all duration-300 w-full z-10 relative
-                                 ${currentTheme === 'princess'
-                                ? 'bg-white p-3 rounded-[16px] border-[1.5px] border-[#FFC0CB] shadow-sm flex flex-col gap-2' // ✨ Simplified Princess Box
+                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} className={`${miniModeAdderId === category.id ? `max-h-80 opacity-100 overflow-visible mb-4 ${currentTheme === 'princess' ? 'mt-1 px-2' : 'mt-2 px-2'}` : `max-h-0 opacity-0 mt-0 px-2 overflow-hidden`} transition-all duration-300 ease-in-out`}>
+                            <form
+                              onSubmit={(e) => addTask(e, category.id)}
+                              style={currentTheme === 'princess' ? {
+                                '--c-light': CATEGORY_HUES[category.colorTheme] || '#FFC0CB',
+                                '--c-dark': CATEGORY_ICON_HUES[category.colorTheme] || '#FF6B81',
+                                '--c-light-rgb': hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FFC0CB', 0.6),
+                                '--c-bg': hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FFC0CB', 0.15)
+                              } : {}}
+                              className={`transition-all duration-300 w-full z-10 relative
+                                   ${currentTheme === 'princess'
+                                ? `bg-gradient-to-br from-[var(--c-bg)] to-white border border-[var(--c-light-rgb)] shadow-[0_8px_25px_var(--c-bg)] flex flex-col backdrop-blur-sm ${isMiniMode ? 'p-2.5 gap-2 rounded-[18px]' : 'p-3.5 gap-3 rounded-[24px]'}`
                                 : (currentTheme === 'excel'
                                   ? 'bg-white border border-[#107C41] shadow-md p-0 grid gap-0'
                                   : 'bg-[#252526] border border-[#007ACC] shadow-2xl p-4 rounded-md font-mono')}`}
                           >
                             {/* Input Area */}
-                            <div className={`${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2' : 'relative'}`}>
+                            <div className={`flex w-full ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2' : 'relative'}`}>
                               {currentTheme === 'developer' && <span className="absolute left-2 top-1.5 text-[#569CD6] mr-2 text-xs">{'>'}</span>}
                               <input
                                 type="text"
                                 value={newTaskText}
                                 onChange={(e) => setNewTaskText(e.target.value)}
                                 placeholder={currentTheme === 'excel' ? '새 할 일을 입력하세요...' : "할 일을 입력하세요..."}
-                                className={`w-full outline-none transition-all
+                                className={`w-full block outline-none transition-all
                                       ${currentTheme === 'princess'
-                                    ? 'text-sm p-2 bg-white border border-[#FFC0CB] text-slate-600 placeholder-slate-400 focus:border-[#FF6B81] rounded-[10px]'
+                                    ? `bg-white border border-[var(--c-light)] text-slate-700 placeholder-[var(--c-dark)] focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-bold ${isMiniMode ? 'text-[12px] p-1.5 px-2.5 rounded-[12px]' : 'text-[13px] p-2 px-3.5 rounded-[16px]'}`
                                     : (currentTheme === 'excel'
                                       ? 'text-sm p-2 font-sans text-slate-800 border border-[#D1D1D1] bg-white focus:border-[#217346]'
                                       : 'text-sm p-1.5 pl-4 bg-[#3C3C3C] text-[#D4D4D4] placeholder-[#5C6370] font-mono border border-[#3E3E42] focus:border-[#007ACC]')}`}
@@ -1654,48 +1608,47 @@ const CodeTiara = () => {
                             </div>
 
                             {/* Controls Area - Mobile First Vertical Stack */}
-                            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2
-                                ${currentTheme === 'princess' ? 'mt-0' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2' : 'mt-4')}`}>
+                            <div className={`flex justify-between
+                                ${currentTheme === 'princess' ? `flex-col w-full ${isMiniMode ? 'gap-2' : 'gap-3'}` : `flex-col sm:flex-row sm:items-center gap-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2' : 'mt-4'}`}`}>
 
-                              {/* Left: Date/Time */}
-                              <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${currentTheme === 'princess' ? 'bg-[#FFF0F5] p-1 rounded-[10px] pl-2 pr-1 border border-[#FFC0CB]/30' : ''}`}>
+                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? `bg-white border border-[var(--c-light)] shadow-sm justify-between ${isMiniMode ? 'p-1.5 rounded-[12px] pl-2 pr-1' : 'p-2 rounded-[16px] pl-3 pr-1.5'}` : 'flex-wrap justify-center sm:justify-start sm:w-auto'}`}>
                                 <CustomDatePicker
                                   value={taskDate}
                                   onChange={(e) => setTaskDate(e.target.value)}
                                   placeholder="Date"
-                                  inputClassName={`outline-none text-center bg-transparent cursor-pointer
-                                          ${currentTheme === 'princess' ? 'text-[#FF6B81] font-medium text-xs w-20 placeholder-pink-300' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 w-24 text-xs p-1' : 'bg-[#1E1E1E] text-[#CE9178] w-24 border-none text-xs')}`}
+                                  inputClassName={`outline-none bg-transparent cursor-pointer
+                                          ${currentTheme === 'princess' ? `text-[var(--c-dark)] font-bold text-left ${isMiniMode ? 'text-[11px] w-20' : 'text-xs w-24'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 w-24 text-xs p-1 text-center' : 'bg-[#1E1E1E] text-[#CE9178] w-24 border-none text-xs text-center')}`}
                                   currentTheme={currentTheme}
                                 />
                                 {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
                                 <div className="flex items-center gap-1">
-                                  <input type="text" value={taskHour} onChange={(e) => setTaskHour(e.target.value.replace(/[^0-9]/g, ''))} placeholder="12" maxLength={2} className={`w-8 sm:w-5 text-center outline-none bg-transparent ${currentTheme === 'princess' ? 'text-slate-600 font-medium text-xs' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 text-xs' : 'text-[#D19A66] text-xs')}`} />
-                                  <span className={`${currentTheme === 'princess' ? 'text-pink-300 text-xs' : 'text-slate-400'}`}>:</span>
-                                  <input type="text" value={taskMinute} onChange={(e) => setTaskMinute(e.target.value.replace(/[^0-9]/g, ''))} placeholder="00" maxLength={2} className={`w-8 sm:w-5 text-center outline-none bg-transparent ${currentTheme === 'princess' ? 'text-slate-600 font-medium text-xs' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 text-xs' : 'text-[#D19A66] text-xs')}`} />
-                                  <button type="button" onClick={() => setTaskAmpm(p => p === '오전' ? '오후' : '오전')} className={`ml-1 flex items-center justify-center transition-all ${currentTheme === 'princess' ? 'px-1.5 py-0.5 rounded bg-[#FF6B81] text-white text-[9px] font-medium' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1 text-[10px]' : 'text-[#569CD6] text-xs')}`}>{taskAmpm === '오전' ? 'AM' : 'PM'}</button>
+                                  <input type="text" value={taskHour} onChange={(e) => setTaskHour(e.target.value.replace(/[^0-9]/g, ''))} placeholder="12" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
+                                  <span className={`${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold text-xs mx-0.5' : 'text-slate-400'}`}>:</span>
+                                  <input type="text" value={taskMinute} onChange={(e) => setTaskMinute(e.target.value.replace(/[^0-9]/g, ''))} placeholder="00" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
+                                  <button type="button" onClick={() => setTaskAmpm(p => p === '오전' ? '오후' : '오전')} className={`ml-1 flex items-center justify-center transition-all ${currentTheme === 'princess' ? `bg-[var(--c-dark)] text-white font-bold shadow-sm opacity-90 hover:opacity-100 ${isMiniMode ? 'px-1.5 py-0.5 rounded-[6px] text-[8px]' : 'px-2 py-1 rounded-[8px] text-[9px]'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1 text-[10px]' : 'text-[#569CD6] text-xs')}`}>{taskAmpm === '오전' ? 'AM' : 'PM'}</button>
                                 </div>
                               </div>
 
                               {/* Right: Actions */}
-                              <div className="flex items-center gap-2 w-full sm:w-auto mt-1 sm:mt-0">
+                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? '' : 'sm:w-auto mt-1 sm:mt-0'}`}>
                                 {/* Cancel */}
                                 <button
                                   type="button"
                                   onClick={() => setMiniModeAdderId(null)}
                                   className={`flex items-center justify-center transition-all cursor-pointer flex-1 sm:flex-none
                                       ${currentTheme === 'princess'
-                                      ? 'h-8 sm:w-7 sm:h-7 rounded-[8px] bg-slate-100 text-slate-400 hover:bg-slate-200'
+                                      ? `bg-white text-[var(--c-dark)] border border-[var(--c-light)] shadow-sm hover:bg-[var(--c-bg)] hover:text-[var(--c-dark)] ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full sm:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
                                   title="취소"
                                 >
-                                  {currentTheme === 'excel' ? 'Cancel' : (currentTheme === 'developer' ? '[ESC]' : <X className="w-4 h-4" />)}
+                                  {currentTheme === 'excel' ? 'Cancel' : (currentTheme === 'developer' ? '[ESC]' : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
                                 </button>
                                 {/* Submit */}
                                 <button
                                   type="submit"
-                                  className={`flex items-center justify-center transition-transform active:scale-95 cursor-pointer flex-1 sm:flex-none
+                                  className={`flex items-center justify-center transition-all active:scale-95 cursor-pointer flex-1 sm:flex-none
                                       ${currentTheme === 'princess'
-                                      ? 'h-8 sm:w-7 sm:h-7 rounded-[8px] bg-[#FF6B81] text-white hover:bg-[#FF4757] shadow-sm'
+                                      ? `bg-[var(--c-dark)] text-white shadow-[0_4px_10px_var(--c-bg)] hover:shadow-[0_6px_15px_var(--c-bg)] hover:-translate-y-0.5 opacity-90 hover:opacity-100 ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full sm:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
                                   title="추가"
                                 >

@@ -1,46 +1,52 @@
 export const THEME_CONFIG = {
     developer: {
         label: 'Developer',
-        root: 'bg-[#1E1E1E] text-[#ABB2BF] !font-mono', // VS Code Dark Theme Colors
-        windowBorder: '#555555', // ✨ Subtle Gray Border
-        card: 'bg-[#1E1E1E] border-none', // Cleaner background
-        header: { bg: 'bg-[#21252B]', text: 'text-[#61AFEF]', border: 'border-b border-[#3E3E42]' }, // Dark header with soft blue text
+        titleText: 'text-[#61AFEF]',
+        themeIcon: '💻',
+        themeBadge: 'bg-slate-100 text-slate-500',
+        themeSelectorActive: 'bg-[#3E4451] border-2 border-[#61AFEF] text-white rounded-none shadow-lg scale-105',
+        themeSelectorInactive: 'bg-[#282C34] border border-[#3E4451] text-[#ABB2BF] hover:border-[#61AFEF] rounded-none shadow-sm',
+        divider: 'border-slate-700/50',
+        root: 'bg-[#1E1E1E] text-[#ABB2BF] !font-mono',
+        windowBorder: '#555555',
+        card: 'bg-[#1E1E1E] border-none',
+        header: { bg: 'bg-[#21252B]', text: 'text-[#61AFEF]', border: 'border-b border-[#3E3E42]' },
+        progress: 'bg-[#61AFEF]',
         accent: {
             text: 'text-[#61AFEF]',
             bg: 'bg-[#61AFEF]',
             hover: 'hover:bg-[#61AFEF]/90',
             border: 'focus:border-[#61AFEF]'
         },
-        iconType: 'terminal', // default
-        radius: 'rounded-none', // Square corners for strict feel
-        // ✨ Category Styles (List Mode)
+        iconType: 'terminal',
+        radius: 'rounded-none',
         category: {
             variant: 'list',
             container: 'mb-4',
-            header: 'flex items-center gap-2 mb-2 px-2 py-1 border-b border-[#3E3E42]', // Terminal prompt separator
-            title: 'text-sm font-bold capitalize before:content-[">_"] before:mr-2 before:text-[#61AFEF]', // Terminal prompt prefix
-            taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-colors mb-1 border-l-4', // Code line style: Opaque BG, Left Border
+            header: 'flex items-center gap-2 mb-2 px-2 py-1 border-b border-[#3E3E42]',
+            title: 'text-sm font-bold capitalize before:content-[">_"] before:mr-2 before:text-[#61AFEF]',
+            taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-colors mb-1 border-l-4',
             actionButton: {
                 wrapper: 'flex items-center gap-1',
                 button: 'p-1 rounded-[4px] bg-transparent border border-[#3E4451] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors cursor-pointer',
                 icon: 'w-4 h-4'
             }
         },
-        // ✨ Detailed Polish Props
         settings: {
             bg: 'bg-[#282C34]',
-            wrapper: 'rounded border border-[#3E3E42] bg-[#21252B] p-4 text-[#ABB2BF] font-mono', // Added text color and font-mono
+            wrapper: 'rounded border border-[#3E3E42] bg-[#21252B] p-4 text-[#ABB2BF] font-mono',
             header: 'border-b border-[#3E3E42] pb-2 mb-3 text-[#61AFEF] font-bold uppercase text-xs tracking-wider flex items-center gap-2 before:content-["#"]',
-            input: 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] focus:outline-none focus:border-[#61AFEF] placeholder-[#5C6370] rounded-none px-3 py-2 text-sm', // Updated BG to #1E1E1E
+            input: 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] focus:outline-none focus:border-[#61AFEF] placeholder-[#5C6370] rounded-none px-3 py-2 text-sm',
             sectionTitle: 'text-[#E06C75] text-xs font-bold uppercase tracking-wider',
-            button: { default: 'bg-[#404E67] border border-[#3E3E42] hover:bg-[#4B5E7B] text-white rounded-none px-4 py-2 text-xs font-bold transition-colors' }, // Backup buttons Dark Blue
+            button: { default: 'bg-[#404E67] border border-[#3E3E42] hover:bg-[#4B5E7B] text-white rounded-none px-4 py-2 text-xs font-bold transition-colors' },
             listRow: {
-                wrapper: 'flex items-center gap-2 p-2 rounded-none bg-[#282C34] border border-[#181A1F] mb-1', // Updated Border
-                iconTrigger: 'bg-[#1E1E1E] rounded-none border border-[#3E3E42] text-[#ABB2BF] text-lg hover:border-[#61AFEF]', // Updated icon trigger bg
-                input: 'bg-[#1E1E1E] border-none text-[#ABB2BF] focus:ring-0', // Updated Input bg to #1E1E1E
+                wrapper: 'flex items-center gap-2 p-2 rounded-none bg-[#282C34] border border-[#181A1F] mb-1',
+                iconTrigger: 'bg-[#1E1E1E] rounded-none border border-[#3E3E42] text-[#ABB2BF] text-lg hover:border-[#61AFEF]',
+                input: 'bg-[#1E1E1E] border-none text-[#ABB2BF] focus:ring-0',
                 colorTrigger: 'rounded-none border border-[#3E3E42]',
                 deleteBtn: 'text-[#5C6370] bg-[#1E1E1E] border border-[#3E3E42] rounded-none hover:text-[#E06C75] hover:border-[#E06C75]'
             },
+            popup: "bg-[#21252B] border border-[#3E3E42] rounded-none shadow-xl font-mono",
             popover: 'bg-[#21252B] border border-[#3E3E42] text-[#ABB2BF] shadow-xl font-mono'
         },
         scrollbar: {
@@ -62,36 +68,96 @@ export const THEME_CONFIG = {
             time: 'text-[10px] text-[#5C6370]',
             clearBtn: 'text-[#ABB2BF] hover:text-white hover:bg-[#3E3E42]',
             closeBtn: 'text-[#ABB2BF] hover:text-[#E06C75]'
+        },
+        dropdown: {
+            trigger: "bg-[#282C34] border border-[#3E3E42] rounded-none shadow-none text-[#ABB2BF] font-mono hover:border-[#61AFEF]",
+            icon: "text-[#61AFEF]",
+            popup: "bg-[#21252B] border border-[#3E3E42] rounded-none shadow-xl font-mono",
+            itemActive: "bg-[#61AFEF] text-white font-bold",
+            itemInactive: "text-[#ABB2BF] hover:bg-[#2C313A]"
+        },
+        datePicker: {
+            popup: "bg-[#21252B] border border-[#3E4451] text-[#ABB2BF] shadow-xl rounded-none font-mono z-[100]",
+            header: "bg-[#282C34] text-[#61AFEF] border-b border-[#3E4451] rounded-none",
+            arrow: "text-[#5C6370] hover:bg-[#282C34] hover:text-[#ABB2BF]",
+            dayDefault: "text-[#ABB2BF] hover:bg-[#282C34] rounded-none",
+            daySelected: "bg-[#61AFEF] text-white font-bold hover:bg-[#528BFF] shadow-sm rounded-none",
+            dayToday: "border border-[#61AFEF] text-[#61AFEF] rounded-none",
+            footerBtn: "text-[#61AFEF] hover:text-[#528BFF]",
+            input: "bg-[#1E1E1E] border border-[#3E4451] text-[#ABB2BF] rounded-none focus:border-[#61AFEF]"
+        },
+        task: {
+            dragShadow: 'bg-slate-800 ring-1 ring-indigo-500/50',
+            checkbox: 'text-slate-600 group-hover:text-indigo-400',
+            checkboxDone: 'text-green-500',
+            textDefault: 'text-slate-300',
+            textDone: 'text-slate-500',
+            timeDefault: 'text-slate-500',
+            editContainer: 'bg-[#252526] border border-[#007ACC] shadow-2xl p-4 rounded mb-4 font-mono',
+            editInputBgWrapper: '',
+            editInputBg: 'text-sm text-[#D4D4D4] bg-[#3C3C3C] p-2 border border-[#3E3E42] focus:border-[#007ACC]',
+            editActionRow: 'mt-2',
+            editDateWrapper: '',
+            editDateInput: 'w-24 text-xs bg-[#1E1E1E] text-[#CE9178] border-none',
+            editTimeInput: 'text-[#D19A66] text-xs',
+            editTimeSeparator: 'text-slate-400',
+            editAmpmBtn: 'text-[#569CD6] text-xs',
+            editCancelBtn: 'w-full sm:w-auto px-3 py-1 text-[#ABB2BF] hover:bg-[#3E3E42] text-xs rounded',
+            editSaveBtn: 'w-full sm:w-auto px-3 py-1 bg-[#007ACC] text-white text-xs rounded hover:bg-[#0062A3]',
+            deleteConfirmBtn: "p-1.5 text-white bg-[#FF6B81] hover:bg-[#FF4757] rounded-none shadow-lg",
+            deleteCancelBtn: "p-1.5 text-slate-500 bg-white border border-slate-200 hover:bg-slate-100 rounded-none shadow-lg"
+        },
+        buttons: {
+            closeBtn: 'bg-transparent hover:bg-[#E06C75]/10 text-[#5C6370] hover:text-[#E06C75] border border-transparent hover:border-[#E06C75] rounded-none font-mono',
+            saveBtn: 'bg-transparent hover:bg-[#98C379] text-[#98C379] hover:text-[#282C34] border border-[#98C379] rounded-none font-mono',
+            dangerBtn: 'bg-transparent border border-[#E06C75] text-[#E06C75] rounded-none hover:bg-[#E06C75] hover:text-[#282C34] font-mono',
+            outlineBtn: 'bg-transparent border border-dashed border-[#61AFEF] text-[#61AFEF] rounded-none hover:bg-[#61AFEF]/10 font-mono',
+            modalClose: 'p-1 text-[#5C6370] hover:text-white',
+            modalConfirm: 'bg-[#404E67] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#E06C75] hover:text-[#282C34] hover:border-[#E06C75]',
+            modalCancel: 'bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E3E42] hover:text-white rounded-none',
+            iconBtn: 'text-[#ABB2BF] hover:text-white',
+        },
+        modal: {
+            overlay: 'bg-[#1E1E1E]/90',
+            container: 'bg-[#21252B] border border-[#3E3E42] text-[#ABB2BF] rounded-none shadow-2xl font-mono'
         }
     },
     princess: {
         label: 'Princess',
-        root: 'bg-[#FFFCFD] text-slate-800 font-gamja font-bold text-[1.05rem]', // ✨ Gamja Flower Font (via Class)
-        windowBorder: '#FFC0CB', // ✨ Pink Border
-        card: 'w-full h-full bg-[#FFFCFD] p-0 relative flex flex-col', // ✨ Full Screen Ultra Light Pink Diary
+        titleText: 'text-[#FF6B81] font-[Gaegu]',
+        themeIcon: '👑',
+        themeBadge: 'bg-pink-100 text-pink-500',
+        themeSelectorActive: 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105',
+        themeSelectorInactive: 'bg-white border border-[#FFC0CB] text-[#FF6B81] hover:border-[#F472B6] hover:bg-[#FFF0F5]/50 rounded-xl shadow-sm',
+        divider: 'border-dashed border-[#FFC0CB]',
+        root: 'bg-[#FFFCFD] text-slate-800 font-gamja font-bold text-[1.05rem]',
+        windowBorder: '#FFC0CB',
+        card: 'w-full h-full bg-[#FFFCFD] p-0 relative flex flex-col',
         header: { bg: 'bg-[#FFF0F5]', text: 'text-[#FF6B81]', border: 'border-b border-[#FFC0CB]/30 border-dashed' },
-        progress: 'bg-[#FFC0CB]', // ✨ Pastel Pink Progress Bar
+        progress: 'bg-[#FFC0CB]',
         accent: {
-            text: 'text-[#F472B6]', // Pink 400
+            text: 'text-[#F472B6]',
             bg: 'bg-[#F472B6]',
             hover: 'hover:bg-[#F472B6]/90',
             border: 'focus:border-[#F472B6]'
         },
         iconType: 'crown',
         radius: 'rounded-2xl',
-        // ✨ Category Styles (Mobile App Mode)
         category: {
             variant: 'card',
-            container: 'w-full mb-4 bg-white border-[2px] rounded-[20px] overflow-hidden shadow-sm', // ✨ Added w-full
-            header: 'flex items-center gap-2 p-3 border-b-2 border-dashed border-inherit bg-white', // ✨ White Header
+            container: 'w-full mb-4 bg-white border-[2px] rounded-[20px] overflow-hidden shadow-sm',
+            header: 'flex items-center gap-2 p-3 border-b-2 border-dashed border-inherit bg-white',
             title: 'text-lg font-bold truncate',
-            // title: 'text-lg font-bold truncate', // Duplicate removal
-            taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-colors shadow-sm mx-3 first:mt-3 last:mb-0'
+            taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-colors shadow-sm mx-3 first:mt-3 last:mb-0',
+            actionButton: {
+                wrapper: 'gap-2',
+                button: 'p-1.5 text-pink-400 hover:text-[#DB2777] bg-pink-100/50 hover:bg-[#FBCFE8] hover:border-[#F9A8D4] rounded-[10px] backdrop-blur-md border border-pink-200 shadow-sm transition-all duration-200 ease-in-out',
+                icon: 'w-3 h-3'
+            }
         },
-        // ✨ Detailed Polish Props (Princess)
         settings: {
             bg: 'bg-white',
-            wrapper: 'w-full bg-white border-2 border-[#FFC0CB] rounded-[24px] shadow-sm p-3', // ✨ Added w-full
+            wrapper: 'w-full bg-white border-2 border-[#FFC0CB] rounded-[24px] shadow-sm p-3',
             header: 'p-3 text-[#FF6B81] font-bold text-lg mb-4 tracking-widest',
             input: 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] px-3 py-2 text-center text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#FF6B81] placeholder-[#FBCFE8]',
             sectionTitle: 'text-[#F472B6]',
@@ -103,12 +169,13 @@ export const THEME_CONFIG = {
                 colorTrigger: 'rounded-full border-2 border-white shadow-sm',
                 deleteBtn: 'text-[#FF6B81] bg-[#FFF0F5] border border-[#FFC0CB] rounded-full hover:bg-[#FF6B81] hover:text-white'
             },
+            popup: "bg-white border border-[#FFC0CB] rounded-[15px] shadow-xl",
             popover: 'bg-white border border-[#FFC0CB] rounded-[15px] shadow-xl'
         },
         scrollbar: {
-            track: 'rgba(255, 252, 253, 0)', // Transparent Track
-            thumb: '#FFB6C1', // Light Pink
-            thumbHover: '#FF69B4' // Hot Pink
+            track: 'rgba(255, 252, 253, 0)',
+            thumb: '#FFB6C1',
+            thumbHover: '#FF69B4'
         },
         timer: {
             overlay: 'bg-[#FDF2F8]/95 backdrop-blur-sm',
@@ -124,16 +191,74 @@ export const THEME_CONFIG = {
             time: 'text-xs text-[#F472B6]',
             clearBtn: 'text-red-400 hover:text-red-500 hover:bg-red-50',
             closeBtn: 'text-slate-300 hover:text-red-400'
+        },
+        dropdown: {
+            trigger: "bg-white border-2 border-[#FFC0CB] rounded-[20px] shadow-sm text-slate-600 focus:ring-2 focus:ring-[#FF6B81] hover:border-[#FF6B81] px-3",
+            icon: "text-[#FF6B81]",
+            popup: "bg-white border-2 border-[#FFC0CB] rounded-[20px] shadow-[0_10px_30px_rgba(255,192,203,0.3)] p-1",
+            itemActive: "bg-[#FFF0F5] text-[#FF6B81] font-bold rounded-[12px]",
+            itemInactive: "text-slate-600 hover:bg-[#FFF0F5] rounded-[12px] transition-colors"
+        },
+        datePicker: {
+            popup: "bg-white border-2 border-[#FFC0CB] text-slate-600 shadow-[0_4px_20px_rgba(255,192,203,0.4)] rounded-[16px] p-2",
+            header: "bg-[#FFF0F5] text-[#FF6B81] border-b border-[#FFC0CB] border-dashed rounded-[12px]",
+            arrow: "text-[#FF6B81] hover:bg-white hover:text-[#F472B6]",
+            dayDefault: "text-slate-600 hover:bg-[#FFF0F5] rounded-[8px]",
+            daySelected: "bg-[#FF6B81] text-white font-bold hover:bg-[#F472B6] shadow-sm rounded-[8px]",
+            dayToday: "border border-[#FF6B81] text-[#FF6B81] rounded-[8px]",
+            footerBtn: "text-[#F472B6] hover:text-[#FF6B81] font-bold font-[Gaegu]",
+            input: "bg-white border border-[#FFC0CB] text-[#FF6B81] rounded-[8px]"
+        },
+        task: {
+            dragShadow: 'border-[#F472B6] scale-105 shadow-xl',
+            checkbox: 'text-[var(--icon-color)] opacity-60 hover:opacity-100',
+            checkboxDone: 'text-[var(--border-hover)]',
+            textDefault: 'text-slate-600 font-medium',
+            textDone: 'text-slate-600 font-medium opacity-50 line-through',
+            timeDefault: 'text-slate-500 font-medium',
+            editContainer: 'bg-white p-2 sm:p-3 rounded-[16px] border-[1.5px] border-[#FFC0CB] shadow-sm mb-2 mt-1',
+            editInputBgWrapper: '',
+            editInputBg: 'text-sm text-slate-600 font-normal bg-[#FFF0F5] border border-transparent focus:bg-white focus:border-[#FFB6C1] rounded-[8px] px-3 py-2',
+            editActionRow: 'mt-2',
+            editDateWrapper: 'bg-white border border-[#FFC0CB] px-1.5 sm:px-2 py-1 rounded-[10px]',
+            editDateInput: 'text-[#FF6B81] font-medium text-[10px] sm:text-xs min-w-[60px] sm:min-w-[70px] placeholder-pink-300',
+            editTimeInput: 'text-slate-600 font-medium text-[10px] sm:text-xs',
+            editTimeSeparator: 'text-pink-300 text-[10px] sm:text-xs',
+            editAmpmBtn: 'px-1 py-0.5 rounded bg-[#FF6B81] text-white text-[8px] sm:text-[9px] font-medium',
+            editCancelBtn: 'h-8 sm:w-7 sm:h-7 rounded-[8px] bg-slate-100 text-slate-400 hover:bg-slate-200 text-xs font-bold',
+            editSaveBtn: 'h-8 sm:w-7 sm:h-7 rounded-[8px] bg-[#FF6B81] text-white hover:bg-[#FF4757] shadow-sm text-xs font-bold',
+            deleteConfirmBtn: "p-1.5 text-white bg-[#FF6B81] hover:bg-[#FF4757] rounded-lg shadow-lg",
+            deleteCancelBtn: "p-1.5 text-slate-500 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg shadow-lg"
+        },
+        buttons: {
+            closeBtn: 'bg-slate-100 text-slate-400 hover:bg-slate-200 rounded-full border border-slate-200',
+            saveBtn: 'bg-[#F472B6] hover:bg-[#F472B6]/90 text-white border border-[#F472B6] rounded-full',
+            dangerBtn: 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm',
+            outlineBtn: 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm',
+            modalClose: 'p-1 text-slate-400 hover:bg-slate-100 rounded-full',
+            modalConfirm: 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] hover:bg-[#FF6B81] hover:text-white rounded-[16px]',
+            modalCancel: 'bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-[16px]',
+            iconBtn: 'text-slate-400 hover:text-[#F472B6]',
+        },
+        modal: {
+            overlay: 'bg-white/80 backdrop-blur-sm',
+            container: 'bg-white border-[3px] border-[#FFC0CB] rounded-[30px] shadow-[0_10px_40px_rgba(255,192,203,0.5)] font-[Gaegu]'
         }
     },
     excel: {
         label: 'Excel',
-        root: 'bg-white text-[#000000] font-[Segoe_UI,Roboto,Helvetica,Arial,sans-serif]', // ✨ Force Deep Black Text
-        windowBorder: '#D1D5DB', // ✨ Added Light Gray Border
-        card: 'w-full h-full bg-white border border-[#D1D5DB] rounded-none shadow-none flex flex-col',
+        titleText: 'text-[#217346]',
+        themeIcon: '📊',
+        themeBadge: 'bg-slate-100 text-slate-500',
+        themeSelectorActive: 'bg-[#E6F2EA] border-2 border-[#107C41] text-[#107C41] rounded-none shadow-sm scale-105',
+        themeSelectorInactive: 'bg-white border border-[#D1D5DB] text-[#217346] hover:border-[#107C41] hover:bg-[#F3F2F1] rounded-none shadow-sm',
+        divider: 'border-slate-700/50',
+        root: 'bg-white text-[#000000] font-[Segoe_UI,Roboto,Helvetica,Arial,sans-serif]',
+        windowBorder: '#0E6032',
+        card: 'w-full h-full bg-white border-none rounded-none shadow-none flex flex-col',
         header: {
             bg: 'bg-[#217346]',
-            text: 'text-white', // Consistent white text
+            text: 'text-white',
             border: 'border-b border-[#1e6b41]'
         },
         progress: 'bg-[#107C41]',
@@ -148,9 +273,9 @@ export const THEME_CONFIG = {
         category: {
             variant: 'list',
             container: 'mb-0',
-            header: 'flex items-center gap-2 mb-0 px-2 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#217346] font-bold text-xs uppercase tracking-wider', // ✨ Restored Header
-            title: 'text-sm font-bold text-[#333333]', // Darker title
-            taskItem: 'group flex items-center gap-3 p-1 pl-2 text-[13px] bg-white hover:bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#333333]', // Darker task text
+            header: 'flex items-center gap-2 mb-0 px-2 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#217346] font-bold text-xs uppercase tracking-wider',
+            title: 'text-sm font-bold text-[#333333]',
+            taskItem: 'group flex items-center gap-3 p-1 pl-2 text-[13px] bg-white hover:bg-[#F3F2F1] border-b border-[#E1E1E1] text-[#333333]',
             actionButton: {
                 wrapper: 'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
                 button: 'p-1 text-[#444] hover:text-black hover:bg-[#E1E1E1] rounded-none',
@@ -159,9 +284,9 @@ export const THEME_CONFIG = {
         },
         settings: {
             bg: 'bg-white',
-            wrapper: 'rounded-none border border-[#D1D5DB] bg-white p-4 text-[#333]', // Dark text
+            wrapper: 'rounded-none border border-[#D1D5DB] bg-white p-4 text-[#333]',
             header: 'border-b border-[#E1E1E1] pb-2 mb-3 text-[#217346] font-bold text-sm flex items-center gap-2',
-            input: 'bg-white border border-[#D1D5DB] text-[#000] focus:border-[#217346] placeholder-[#666] rounded-none px-2 py-1', // Darker placeholder/input text
+            input: 'bg-white border border-[#D1D5DB] text-[#000] focus:border-[#217346] placeholder-[#666] rounded-none px-2 py-1',
             sectionTitle: 'text-[#217346] font-bold text-xs uppercase',
             button: { default: 'bg-[#F3F2F1] border border-[#D1D5DB] text-[#333] hover:bg-[#E1E1E1] rounded-none px-3 py-1 text-xs' },
             listRow: {
@@ -193,6 +318,58 @@ export const THEME_CONFIG = {
             time: 'text-[10px] text-[#666666]',
             clearBtn: 'text-[#444] hover:text-red-600 hover:bg-[#E1E1E1]',
             closeBtn: 'text-[#999] hover:text-red-600'
+        },
+        dropdown: {
+            trigger: "bg-white border border-[#D1D5DB] rounded-none shadow-none text-slate-800 hover:border-[#107C41] focus:border-[#107C41]",
+            icon: "text-[#107C41]",
+            popup: "bg-white border border-[#107C41] rounded-none shadow-xl",
+            itemActive: "bg-[#107C41] text-white font-bold",
+            itemInactive: "text-slate-800 hover:bg-[#E6F2EA]"
+        },
+        datePicker: {
+            popup: "bg-white border border-[#D1D1D1] text-slate-800 shadow-xl rounded-none font-sans z-[9999]",
+            header: "bg-[#E6F2EA] text-[#217346] border-b border-[#D1D1D1] rounded-none",
+            arrow: "text-[#217346] hover:bg-white hover:text-green-700",
+            dayDefault: "text-slate-700 hover:bg-[#E6F2EA] rounded-none",
+            daySelected: "bg-[#217346] text-white font-bold hover:bg-[#1E6B40] shadow-sm rounded-none",
+            dayToday: "border border-[#217346] text-[#217346] rounded-none",
+            footerBtn: "text-[#217346] hover:text-green-700 font-bold",
+            input: "bg-white border border-[#828790] text-slate-800 rounded-none focus:border-[#217346]"
+        },
+        task: {
+            dragShadow: 'bg-white shadow-xl ring-1 ring-[#D1D1D1]',
+            checkbox: '',
+            checkboxDone: '',
+            textDefault: 'text-[#000]',
+            textDone: 'text-[#555] line-through',
+            timeDefault: 'text-slate-500',
+            editContainer: 'bg-white border border-[#217346] shadow-md p-0 mb-4',
+            editInputBgWrapper: 'bg-[#F3F2F1] p-2',
+            editInputBg: 'text-sm font-sans text-slate-800 bg-white border border-[#D1D1D1] px-3 py-2 focus:border-[#217346]',
+            editActionRow: 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2 mt-0',
+            editDateWrapper: '',
+            editDateInput: 'w-24 text-xs p-1 bg-white border border-[#D1D1D1]',
+            editTimeInput: 'bg-white border border-[#D1D1D1] h-6 text-xs',
+            editTimeSeparator: 'text-slate-400',
+            editAmpmBtn: 'px-1 bg-white border border-[#D1D1D1] text-[10px] h-6',
+            editCancelBtn: 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700',
+            editSaveBtn: 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs font-bold',
+            deleteConfirmBtn: "p-1 text-white bg-[#C00000] hover:bg-[#900000] rounded-none",
+            deleteCancelBtn: "p-1 text-[#333] bg-white border border-[#D1D1D1] hover:bg-[#E1E1E1] rounded-none"
+        },
+        buttons: {
+            closeBtn: 'bg-white hover:bg-[#F3F2F1] text-slate-600 rounded-none border border-[#D1D1D1]',
+            saveBtn: 'bg-[#217346] hover:bg-[#1E6B3B] text-white rounded-none border border-[#1E6B3B]',
+            dangerBtn: 'bg-white border border-[#C00000] text-[#C00000] rounded-none hover:bg-[#C00000] hover:text-white',
+            outlineBtn: 'bg-[#F3F2F1] border border-[#D1D5DB] text-[#217346] rounded-none hover:bg-[#E1E1E1] hover:text-[#107C41]',
+            modalClose: 'p-1 text-[#666] hover:text-black hover:bg-[#F3F2F1]',
+            modalConfirm: 'bg-[#C00000] border border-[#C00000] text-white hover:bg-[#900000] rounded-none',
+            modalCancel: 'bg-white text-[#333] border border-[#D1D1D1] hover:bg-[#E1E1E1] rounded-none',
+            iconBtn: 'text-[#444] hover:text-black',
+        },
+        modal: {
+            overlay: 'bg-black/50 backdrop-blur-sm',
+            container: 'bg-white border border-[#D1D1D1] rounded-none shadow-xl'
         }
     }
 };

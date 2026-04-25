@@ -23,38 +23,21 @@ const SettingsPanel = ({
 
                 {/* 🏷️ Header */}
                 <div className="flex justify-between items-center mb-2">
-                    <h2 className={`text-xl font-bold flex items-center gap-1.5 ${currentTheme === 'princess' ? 'text-[#FF6B81] font-[Gaegu]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-slate-100')}`}>
-                        <Settings className={`w-5 h-5 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-indigo-500')}`} />
-                        {currentTheme === 'princess' ? '설정' : (currentTheme === 'excel' ? '환경 설정' : 'Settings')}
+                    <h2 className={`text-xl font-bold flex items-center gap-1.5 ${theme.titleText}`}>
+                        <Settings className={`w-5 h-5 ${theme.titleText.split(' ')[0]}`} />
+                        설정
                     </h2>
                     <div className="flex gap-2">
                         <button
                             onClick={onClose}
-                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold
-              ${currentTheme === 'princess'
-                                    ? 'bg-slate-100 text-slate-400 hover:bg-slate-200 rounded-full border border-slate-200'
-                                    : (currentTheme === 'excel'
-                                        ? 'bg-white hover:bg-[#F3F2F1] text-slate-600 rounded-none border border-[#D1D1D1]'
-                                        : (currentTheme === 'developer'
-                                            ? 'bg-transparent hover:bg-[#E06C75]/10 text-[#5C6370] hover:text-[#E06C75] border border-transparent hover:border-[#E06C75] rounded-none font-mono'
-                                            : 'bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full'
-                                        )
-                                    )
-                                }`}
+                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.closeBtn}`}
                         >
                             {currentTheme === 'developer' ? '[ESC]' : <X className="w-3.5 h-3.5" />}
                             {currentTheme === 'developer' ? '' : '취소'}
                         </button>
                         <button
                             onClick={onClose}
-                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold
-              ${currentTheme === 'princess'
-                                    ? 'bg-[#F472B6] hover:bg-[#F472B6]/90 text-white border border-[#F472B6] rounded-full'
-                                    : (currentTheme === 'excel'
-                                        ? 'bg-[#217346] hover:bg-[#1E6B3B] text-white rounded-none border border-[#1E6B3B]'
-                                        : (currentTheme === 'developer' ? 'bg-transparent hover:bg-[#98C379] text-[#98C379] hover:text-[#282C34] border border-[#98C379] rounded-none font-mono' : `${theme.accent.bg} ${theme.accent.hover} text-white rounded-full`)
-                                    )
-                                }`}
+                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.saveBtn}`}
                         >
                             <Save className="w-3.5 h-3.5" /> 저장
                         </button>
@@ -70,8 +53,8 @@ const SettingsPanel = ({
                         <div className="flex items-center gap-2">
                             <span>테마 설정</span>
                             {!isThemeSettingsExpanded && (
-                                <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${currentTheme === 'princess' ? 'bg-pink-100 text-pink-500' : 'bg-slate-100 text-slate-500'}`}>
-                                    {currentTheme === 'princess' ? '👑 Princess' : (currentTheme === 'excel' ? '📊 Excel' : '💻 Developer')}
+                                <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${theme.themeBadge}`}>
+                                    {theme.themeIcon} {theme.label}
                                 </span>
                             )}
                         </div>
@@ -84,16 +67,9 @@ const SettingsPanel = ({
                                 <button
                                     key={key}
                                     onClick={() => setCurrentTheme(key)}
-                                    className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out
-                  ${currentTheme === key
-                                            ? (key === 'princess' ? 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105' :
-                                                key === 'excel' ? 'bg-white border-2 border-[#107C41] text-[#107C41] rounded-none shadow-sm scale-105' :
-                                                    'bg-[#3E4451] border-2 border-[#61AFEF] text-white rounded-none shadow-lg scale-105') // Dev Active
-                                            : (currentTheme === 'developer' ? 'bg-[#2D2D2D] border-[#3E4451] text-[#ABB2BF] hover:bg-[#3E3E42] rounded-none' : // Dev Inactive Context (Darken all unselected buttons)
-                                                `bg-[#F9F9F9] border border-[#E0E0E0] text-[#888888] hover:bg-slate-100 ${key === 'princess' ? 'rounded-xl' : key === 'excel' ? 'rounded-none' : 'rounded-lg'}`)
-                                        } border text-[10px] sm:text-xs`}
+                                    className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out border text-[10px] sm:text-xs ${currentTheme === key ? theme.themeSelectorActive : theme.themeSelectorInactive}`}
                                 >
-                                    <span className="text-xl mb-1">{key === 'princess' ? '👑' : key === 'excel' ? '📊' : '💻'}</span>
+                                    <span className="text-xl mb-1">{THEME_CONFIG[key].themeIcon}</span>
                                     <span className="text-[10px] font-bold">{THEME_CONFIG[key].label}</span>
                                 </button>
                             ))}
@@ -110,7 +86,7 @@ const SettingsPanel = ({
                     {/* Timer Flex */}
                     <div className="flex gap-3 mb-4">
                         <div className="flex-1">
-                            <label className={`text-xs block mb-1 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.timer.title}`}>집중 (분)</label>
+                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>집중 (분)</label>
                             <input
                                 type="number"
                                 value={focusDuration}
@@ -119,7 +95,7 @@ const SettingsPanel = ({
                             />
                         </div>
                         <div className="flex-1">
-                            <label className={`text-xs block mb-1 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.timer.title}`}>휴식 (분)</label>
+                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>휴식 (분)</label>
                             <input
                                 type="number"
                                 value={breakDuration}
@@ -130,8 +106,8 @@ const SettingsPanel = ({
                     </div>
 
                     {/* Font Size */}
-                    <div className={`pt-3 border-t ${currentTheme === 'princess' ? 'border-dashed border-[#FFC0CB]' : 'border-slate-700/50'}`}>
-                        <div className={`text-xs mb-2 font-bold ml-1 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.settings.sectionTitle}`}>
+                    <div className={`pt-3 border-t ${theme.divider}`}>
+                        <div className={`text-xs mb-2 font-bold ml-1 ${theme.settings.sectionTitle}`}>
                             텍스트 크기
                         </div>
                         <div className={`flex p-1 ${currentTheme === 'princess' ? 'bg-slate-100/50 border border-slate-200 rounded-full' : (currentTheme === 'excel' ? 'bg-slate-100/50 border border-slate-200' : 'bg-slate-100/50 border border-slate-200 rounded-lg')}`}>
@@ -139,13 +115,7 @@ const SettingsPanel = ({
                                 <button
                                     key={size}
                                     onClick={() => setFontSize(size)}
-                                    className={`flex-1 py-1.5 text-xs transition-all font-bold duration-300
-                    ${fontSize === size
-                                            ? (currentTheme === 'princess' ? 'bg-[#F472B6] text-white rounded-full shadow-sm scale-105' :
-                                                currentTheme === 'excel' ? 'bg-[#217346] text-white rounded-none shadow-sm scale-105' :
-                                                    'bg-[#61AFEF] text-[#282C34] rounded-none shadow-sm scale-105') // Dev Active (Blue)
-                                            : 'text-slate-400 hover:text-slate-600 hover:bg-black/5 ' + (currentTheme === 'princess' ? 'rounded-full' : currentTheme === 'excel' ? 'rounded-none' : 'rounded-md')
-                                        }`}
+                                    className={`flex-1 py-1.5 text-xs transition-all font-bold duration-300 ${fontSize === size ? `${theme.accent.bg} ${theme.root.includes('text-[#ABB2BF]') ? 'text-[#282C34]' : 'text-white'} shadow-sm scale-105 ${theme.radius}` : `text-slate-400 hover:text-slate-600 hover:bg-black/5 ${theme.radius}`}`}
                                 >
                                     {size === 'small' ? '작게' : size === 'medium' ? '보통' : '크게'}
                                 </button>
@@ -175,8 +145,8 @@ const SettingsPanel = ({
                 </div>
 
                 {/* 🎨 Unified Category Management (All Themes use 'Editable Row') */}
-                <div className={`p-3 border-t ${currentTheme === 'princess' ? 'border-dashed border-[#FFC0CB]' : 'border-slate-700/50'}`}>
-                    <div className={`text-sm mb-2 font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : theme.settings.sectionTitle}`}>카테고리 관리</div>
+                <div className={`p-3 border-t ${theme.divider}`}>
+                    <div className={`text-sm mb-2 font-bold ${theme.settings.sectionTitle}`}>카테고리 관리</div>
                     <DragDropContext onDragEnd={onDragEndCategories}>
                         <Droppable droppableId="categories-list">
                             {(provided) => (
@@ -191,7 +161,7 @@ const SettingsPanel = ({
                                                 <div
                                                     ref={provided.innerRef}
                                                     {...provided.draggableProps}
-                                                    className={`relative transition-colors duration-200 group ${theme.settings.listRow.wrapper} ${currentTheme === 'excel' ? (index % 2 === 0 ? 'bg-white' : 'bg-[#F9F9F9]') : ''} ${activePicker?.id === cat.id ? 'z-50' : 'z-0'} ${snapshot.isDragging ? 'shadow-lg z-[100]' : ''} flex items-center`}
+                                                    className={`relative transition-colors duration-200 group flex items-center ${theme.settings.listRow.wrapper} ${currentTheme === 'excel' ? (index % 2 === 0 ? 'bg-white' : 'bg-[#F9F9F9]') : ''} ${activePicker?.id === cat.id ? 'z-50' : 'z-0'} ${snapshot.isDragging ? 'shadow-lg z-[100]' : ''}`}
                                                 >
                                                     {/* 🖐️ Drag Handle */}
                                                     {currentTheme === 'excel' ? (
@@ -318,17 +288,7 @@ const SettingsPanel = ({
                             )}
                         </Droppable>
                     </DragDropContext>
-                    <button onClick={addCategory} className={`w-full mt-3 py-2 text-xs font-bold flex items-center justify-center gap-1 transition-all
-            ${currentTheme === 'princess'
-                            ? 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm'
-                            : (currentTheme === 'excel'
-                                ? 'bg-[#F3F2F1] border border-[#D1D5DB] text-[#217346] rounded-none hover:bg-[#E1E1E1] hover:text-[#107C41]'
-                                : (currentTheme === 'developer'
-                                    ? 'bg-transparent border border-dashed border-[#61AFEF] text-[#61AFEF] rounded-none hover:bg-[#61AFEF]/10 font-mono'
-                                    : 'border-dashed border-2 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500 rounded'
-                                )
-                            )
-                        }`}>
+                    <button onClick={addCategory} className={`w-full mt-3 py-2 text-xs font-bold flex items-center justify-center gap-1 transition-all ${theme.buttons.outlineBtn}`}>
                         <Plus className="w-3.5 h-3.5" /> <span className="text-xs font-bold">추가</span>
                     </button>
                 </div>
@@ -338,20 +298,7 @@ const SettingsPanel = ({
             <div className="flex justify-center pt-4">
                 <button
                     onClick={handleResetRequest}
-                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2
-            ${isResetConfirming
-                            ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + (currentTheme === 'excel' || currentTheme === 'developer' ? 'rounded-none' : 'rounded-full')
-                            : (currentTheme === 'princess'
-                                ? 'bg-[#FFF0F5] border border-[#FFC0CB] text-[#FF6B81] rounded-2xl hover:bg-[#FF6B81] hover:text-white shadow-sm'
-                                : (currentTheme === 'excel'
-                                    ? 'bg-white border border-[#C00000] text-[#C00000] rounded-none hover:bg-[#C00000] hover:text-white'
-                                    : (currentTheme === 'developer'
-                                        ? 'bg-transparent border border-[#E06C75] text-[#E06C75] rounded-none hover:bg-[#E06C75] hover:text-[#282C34] font-mono'
-                                        : 'bg-red-50 text-red-500 hover:bg-red-100 rounded-lg'
-                                    )
-                                )
-                            )
-                        }`}
+                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn}`}
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
                     {isResetConfirming ? '정말 초기화 할까요?' : '데이터 초기화'}

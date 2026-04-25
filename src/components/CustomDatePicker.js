@@ -1,50 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calculator, Calendar as CalendarIcon } from 'lucide-react';
+import { THEME_CONFIG } from '../constants/themeConfig';
 
-const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", className = "", inputClassName = "", currentTheme = "default" }) => {
-    // 🎀 Theme Logic
-    const isPrincess = currentTheme === 'princess'; // Restore isPrincess for conditional usage below
-    const getThemeStyles = (theme) => {
-        switch (theme) {
-            case 'princess':
-                return {
-                    popup: "bg-white border-2 border-[#FFC0CB] text-slate-600 shadow-[0_4px_20px_rgba(255,192,203,0.4)] rounded-[16px] p-2",
-                    header: "bg-[#FFF0F5] text-[#FF6B81] border-b border-[#FFC0CB] border-dashed rounded-[12px]",
-                    arrow: "text-[#FF6B81] hover:bg-white hover:text-[#F472B6]",
-                    dayDefault: "text-slate-600 hover:bg-[#FFF0F5] rounded-[8px]",
-                    daySelected: "bg-[#FF6B81] text-white font-bold hover:bg-[#F472B6] shadow-sm rounded-[8px]",
-                    dayToday: "border border-[#FF6B81] text-[#FF6B81] rounded-[8px]",
-                    footerBtn: "text-[#F472B6] hover:text-[#FF6B81] font-bold font-[Gaegu]",
-                    input: "bg-white border border-[#FFC0CB] text-[#FF6B81] rounded-[8px]"
-                };
-            case 'excel':
-                return {
-                    popup: "bg-white border border-[#D1D1D1] text-slate-800 shadow-xl rounded-none font-sans z-[9999]",
-                    header: "bg-[#E6F2EA] text-[#217346] border-b border-[#D1D1D1] rounded-none",
-                    arrow: "text-[#217346] hover:bg-white hover:text-green-700",
-                    dayDefault: "text-slate-700 hover:bg-[#E6F2EA] rounded-none",
-                    daySelected: "bg-[#217346] text-white font-bold hover:bg-[#1E6B40] shadow-sm rounded-none",
-                    dayToday: "border border-[#217346] text-[#217346] rounded-none",
-                    footerBtn: "text-[#217346] hover:text-green-700 font-bold",
-                    input: "bg-white border border-[#828790] text-slate-800 rounded-none focus:border-[#217346]"
-                };
-            case 'developer':
-            default:
-                return {
-                    popup: "bg-[#21252B] border border-[#3E4451] text-[#ABB2BF] shadow-xl rounded-none font-mono z-[100]", // Changed bg to #21252B (solid) and added z-[100]
-                    header: "bg-[#282C34] text-[#61AFEF] border-b border-[#3E4451] rounded-none",
-                    arrow: "text-[#5C6370] hover:bg-[#282C34] hover:text-[#ABB2BF]",
-                    dayDefault: "text-[#ABB2BF] hover:bg-[#282C34] rounded-none",
-                    daySelected: "bg-[#61AFEF] text-white font-bold hover:bg-[#528BFF] shadow-sm rounded-none",
-                    dayToday: "border border-[#61AFEF] text-[#61AFEF] rounded-none",
-                    footerBtn: "text-[#61AFEF] hover:text-[#528BFF]",
-                    input: "bg-[#1E1E1E] border border-[#3E4451] text-[#ABB2BF] rounded-none focus:border-[#61AFEF]"
-                };
-        }
-    };
-
-    const styles = getThemeStyles(currentTheme);
+const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", className = "", inputClassName = "", currentTheme = "developer" }) => {
+    const themeConfig = THEME_CONFIG[currentTheme] || THEME_CONFIG['developer'];
+    const styles = themeConfig.datePicker;
     const defaultInputClass = styles.input;
 
     const finalInputClass = inputClassName || defaultInputClass;
@@ -256,7 +217,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
             {/* Weekdays */}
             <div className="grid grid-cols-7 mb-2 text-center">
                 {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-                    <div key={d} className={`text-[10px] font-bold ${isPrincess ? 'text-[#F472B6]' : 'text-slate-500'}`}>{d}</div>
+                    <div key={d} className={`text-[10px] font-bold ${currentTheme === 'princess' ? 'text-[#F472B6]' : 'text-slate-500'}`}>{d}</div>
                 ))}
             </div>
 
@@ -266,7 +227,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
             </div>
 
             {/* Footer - Optional: Clear / Today */}
-            <div className={`flex justify-between mt-3 pt-2 border-t ${isPrincess ? 'border-dashed border-[#FFC0CB]' : 'border-slate-800'}`}>
+            <div className={`flex justify-between mt-3 pt-2 border-t ${currentTheme === 'princess' ? 'border-dashed border-[#FFC0CB]' : 'border-slate-800'}`}>
                 <button
                     onClick={(e) => {
                         e.preventDefault();
