@@ -3,6 +3,7 @@ import {
     Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
+import { CATEGORY_HUES, hexToRgba } from '../constants';
 
 const TaskItem = memo(({
     task, index, provided, snapshot,
@@ -30,7 +31,13 @@ const TaskItem = memo(({
                 ...provided.draggableProps.style,
                 '--border-idle': borderIdle,
                 '--border-hover': borderHover,
-                '--icon-color': CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'
+                '--icon-color': CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                ...(currentTheme === 'princess' ? {
+                    '--c-light': CATEGORY_HUES[category.colorTheme] || '#FFC0CB',
+                    '--c-dark': CATEGORY_ICON_HUES[category.colorTheme] || '#FF6B81',
+                    '--c-light-rgb': hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FFC0CB', 0.6),
+                    '--c-bg': hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FFC0CB', 0.15)
+                } : {})
             }}
             onClick={() => { if (editingTaskId !== task.id) toggleTask(task.id) }}
             className={`${theme.category.taskItem} ${isMiniMode ? '!mx-0 !mb-1 !p-1.5 last:!mb-0' : ''} cursor-pointer active:cursor-grabbing relative ${task.completed ? 'opacity-60' : ''} ${snapshot.isDragging ? 'shadow-lg z-50 ' + theme.task.dragShadow : ''}`}
@@ -142,7 +149,7 @@ const TaskItem = memo(({
                         </span>
                         {/* 마감 시간 */}
                         {(task.dueTime || task.dueDate) && (
-                            <span className={`flex items-center gap-1 mt-0.5 ${task.completed ? 'text-slate-600' :
+                            <span className={`flex items-center gap-1 mt-0.5 ${task.completed ? `${theme.task.timeDefault} opacity-50` :
                                 (task.alerted && notifications.some(n => n.taskId === task.id)) ? 'text-red-400 font-bold animate-pulse' :
                                     theme.task.timeDefault
                                 } 

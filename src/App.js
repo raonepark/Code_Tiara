@@ -210,6 +210,16 @@ const CodeTiara = () => {
   const [boardTitle, setBoardTitle] = useState(() => localStorage.getItem('lumora_title') || defaultTitle);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
+  // ✨ Pop-out Window State
+  const [popoutCategoryId, setPopoutCategoryId] = useState(() => {
+    return new URLSearchParams(window.location.search).get('popout');
+  });
+  const [poppedOutCategories, setPoppedOutCategories] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lumora_popped_out')) || [];
+    } catch { return []; }
+  });
+
   // ✨ Mini Mode Detection (< 450px)
   const [isMiniMode, setIsMiniMode] = useState(window.innerWidth < 450);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ✨ Menu Toggle State
@@ -225,7 +235,25 @@ const CodeTiara = () => {
     localStorage.setItem('lumora_break_duration', breakDuration);
     localStorage.setItem('lumora_font_size', fontSize);
     localStorage.setItem('lumora_theme', currentTheme); // ✨ 테마 저장
-  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, currentTheme]);
+    localStorage.setItem('lumora_popped_out', JSON.stringify(poppedOutCategories));
+  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, currentTheme, poppedOutCategories]);
+
+  // ✨ Storage Event Listener for Cross-Window Sync
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'lumora_tasks') {
+        try { setTasks(JSON.parse(e.newValue) || []); } catch (err) {}
+      } else if (e.key === 'lumora_categories') {
+        try { setCategories(JSON.parse(e.newValue) || []); } catch (err) {}
+      } else if (e.key === 'lumora_popped_out') {
+        try { setPoppedOutCategories(JSON.parse(e.newValue) || []); } catch (err) {}
+      } else if (e.key === 'lumora_theme') {
+        if (e.newValue) setCurrentTheme(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // --- 🔔 시스템 알림 권한 요청 ---
   useEffect(() => {
@@ -852,13 +880,13 @@ const CodeTiara = () => {
   };
 
   // ✨ Safe IPC Call wrapper
-  const sendIPC = (channel) => {
+  const sendIPC = (channel, ...args) => {
     try {
       if (window.require) {
         const { ipcRenderer } = window.require('electron');
-        ipcRenderer.send(channel);
+        ipcRenderer.send(channel, ...args);
       } else if (window.electron && window.electron.ipcRenderer) {
-        window.electron.ipcRenderer.send(channel);
+        window.electron.ipcRenderer.send(channel, ...args);
       } else {
         console.error('Electron IPC not available');
       }
@@ -867,8 +895,11 @@ const CodeTiara = () => {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${theme.radius} ${theme.root}`}
-      style={{ border: `2px solid ${theme.windowBorder || 'transparent'}` }}
+      className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root}`}`}
+      style={{
+        border: popoutCategoryId ? 'none' : `2px solid ${theme.windowBorder || 'transparent'}`,
+        backgroundColor: popoutCategoryId ? 'transparent' : undefined
+      }}
     >
       {/* Custom Scrollbar Styles injected here 
       */}
@@ -915,9 +946,10 @@ const CodeTiara = () => {
       {/* ✨ Custom Title Bar Removed */}
 
       {/* Size Change: Full Window Mode & No Limits */}
-      <div className={`${cardClassName} h-full`}>
+      <div className={`${popoutCategoryId ? 'h-full flex flex-col' : `${cardClassName} h-full`}`}>
 
         {/* Terminal Header Bar */}
+        {!popoutCategoryId && (
         <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-20 shrink-0 select-none`} style={{ WebkitAppRegion: 'drag' }}>
           <div className="flex gap-1.5" style={{ WebkitAppRegion: 'no-drag' }}>
             <button
@@ -1144,6 +1176,7 @@ const CodeTiara = () => {
 
 
         </div>
+        )}
 
         {/* --- 🍅 POMODORO TIMER OVERLAY (Compact) --- */}
 
@@ -1188,7 +1221,7 @@ const CodeTiara = () => {
           /* --- DASHBOARD MODE (Compact) with Custom Scrollbar --- */
           <>
             {/* ✨ Fixed Status Header (Integrated Timer) - Shows in Mini Mode ONLY if Timer is Active */}
-            {(!isMiniMode || isTimerOpen) && (
+            {!popoutCategoryId && (!isMiniMode || isTimerOpen) && (
               <div className={`shrink-0 transition-all min-h-[58px] flex flex-col justify-center ${currentTheme === 'princess' ? 'bg-white px-6 py-2 border-b border-[#FFC0CB]/30' : 'px-4 pt-4 pb-2 border-b border-slate-800/50'}`}>
 
                 {isTimerOpen ? (
@@ -1320,7 +1353,7 @@ const CodeTiara = () => {
 
               {/* Input Form (Compact) - ✨ HIDDEN IN MINI MODE */}
               {/* ✨ Main Add Task UI - Hidden for themes that have category-specific adders */}
-              {!isMiniMode && !['princess', 'excel', 'developer'].includes(currentTheme) && (
+              {!popoutCategoryId && !isMiniMode && !['princess', 'excel', 'developer'].includes(currentTheme) && (
                 <form onSubmit={addTask} className={`w-full mb-4 p-3 rounded-lg border transition-all duration-300
                   ${currentTheme === 'princess'
                     ? 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[16px] shadow-sm' // ✨ Simplified Princess Container
@@ -1435,9 +1468,11 @@ const CodeTiara = () => {
 
               {/* Task Lists */}
               {/* Task Lists */}
+              {/* Task Lists */}
               <DragDropContext onDragEnd={onDragEnd}>
                 <div className="space-y-3 flex-1">
-                  {categories.map(category => {
+                  {(popoutCategoryId ? categories.filter(c => c.id === popoutCategoryId) : categories).map(category => {
+                    const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
                     const categoryTasks = tasks.filter(t => t.categoryId === category.id);
                     const colorStyles = getThemeStyles(category.colorTheme);
 
@@ -1450,17 +1485,92 @@ const CodeTiara = () => {
                       ? hexToRgba(categoryColor, 0.45)
                       : undefined;
 
+                    if (isPoppedOut) {
+                      const restoreCategory = () => {
+                        const updated = poppedOutCategories.filter(id => id !== category.id);
+                        setPoppedOutCategories(updated);
+                        localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                        sendIPC('close-popout-by-id', category.id);
+                      };
+
+                      if (currentTheme === 'developer') {
+                        return (
+                          <div key={category.id} className="flex items-center justify-between p-3 mb-4 bg-[#1E1E1E] border border-dashed border-[#3E3E42] opacity-80">
+                            <div className="flex items-center gap-2 font-mono">
+                              {getIcon(category.icon, `w-4 h-4 text-[#5C6370]`)}
+                              <span className="text-[#5C6370] text-sm">{`// ${category.label} is running in external window...`}</span>
+                            </div>
+                            <button
+                                onClick={restoreCategory}
+                                className="px-3 py-1 bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors text-xs font-mono"
+                            >
+                              [RETURN]
+                            </button>
+                          </div>
+                        );
+                      }
+                      
+                      if (currentTheme === 'excel') {
+                        return (
+                          <div key={category.id} className="flex items-center justify-between p-2 mb-2 bg-[#F3F2F1] border border-dashed border-[#D1D1D1] opacity-80">
+                            <div className="flex items-center gap-2 font-sans">
+                              {getIcon(category.icon, `w-4 h-4 text-[#666]`)}
+                              <span className="text-[#666] text-xs font-bold uppercase">[{category.label}] - EXTERNAL LINK</span>
+                            </div>
+                            <button
+                                onClick={restoreCategory}
+                                className="px-3 py-1 bg-white border border-[#D1D1D1] text-[#333] hover:bg-[#E1E1E1] transition-colors text-xs font-sans"
+                            >
+                              Restore
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      // Princess theme
+                      return (
+                        <div key={category.id} className={`flex items-center justify-between p-4 mb-4 mx-2 rounded-[20px] border-2 border-dashed bg-white/50 backdrop-blur-sm opacity-80 transition-all`}
+                          style={{ borderColor: hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FBCFE8', 0.8) }}
+                        >
+                          <div className="flex items-center gap-3">
+                            {getIcon(category.icon, `w-5 h-5 text-slate-400`)}
+                            <span className={`text-slate-500 font-bold text-lg`}>{category.label} <span className="text-sm opacity-60 ml-1">💭 (외출 중!)</span></span>
+                          </div>
+                          <button
+                              onClick={restoreCategory}
+                              style={{
+                                color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                                backgroundColor: 'white',
+                                borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8',
+                                borderWidth: '1.5px'
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); }}
+                              className={`text-xs px-3 py-1.5 rounded-[12px] font-bold transition-all shadow-sm`}
+                          >
+                            다시 부르기
+                          </button>
+                        </div>
+                      );
+                    }
+
                     return (
                       <div key={category.id} className={`${theme.category.container} 
                         ${currentTheme === 'princess'
                           ? (isMiniMode ? 'bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] mb-3 mx-2 mt-2 border-none !w-auto' : colorStyles.border) // ✨ Mini Mode: White Card Widget Style (No Margin, Parent Handles Padding)
-                          : (currentTheme === 'developer' ? colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5' : '')} transition-all duration-300`}>
+                          : (currentTheme === 'developer' 
+                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] shadow-2xl m-2 rounded-md' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
+                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] shadow-lg m-2' : '')
+                            )} transition-all duration-300`}>
                         <div
                           className={`${theme.category.header} 
                             ${currentTheme === 'princess'
                               ? (isMiniMode ? 'bg-transparent border-none px-3 py-1.5 rounded-t-[15px]' : colorStyles.border + ' border-b-2 border-dashed mx-[6px] mt-[6px] rounded-t-[15px]') // ✨ Mini Mode: Compact Header with Rounded Top
                               : (currentTheme === 'developer' ? 'bg-black/10 border-inherit' : '')}`}
-                          style={currentTheme === 'princess' ? { backgroundColor: headerBg } : {}}
+                          style={{
+                            ...(currentTheme === 'princess' ? { backgroundColor: headerBg } : {}),
+                            WebkitAppRegion: popoutCategoryId ? 'drag' : 'auto'
+                          }}
                         >
                           {getIcon(category.icon, `${isMiniMode ? 'w-3 h-3' : 'w-4 h-4'} ${colorStyles.icon}`)}
                           <h3 className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : (fontSize === 'large' ? 'text-lg' : 'text-base')}`}>{category.label}</h3>
@@ -1473,10 +1583,11 @@ const CodeTiara = () => {
                               onClick={(e) => { e.stopPropagation(); setMiniModeAdderId(miniModeAdderId === category.id ? null : category.id); }}
                               data-trigger-id={category.id}
                               style={currentTheme === 'princess' ? {
+                                WebkitAppRegion: 'no-drag',
                                 color: miniModeAdderId === category.id ? '#FFFFFF' : (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'),
                                 backgroundColor: miniModeAdderId === category.id ? (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185') : 'transparent',
                                 borderColor: (CATEGORY_HUES[category.colorTheme] || '#FBCFE8')
-                              } : {}}
+                              } : { WebkitAppRegion: 'no-drag' }}
                               className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95 group
                               ${currentTheme === 'princess'
                                   ? 'w-6 h-6 rounded-[8px] border hover:shadow-md'
@@ -1486,6 +1597,39 @@ const CodeTiara = () => {
                               title="Add Task"
                             >
                               <Plus className={`${currentTheme === 'princess' ? 'w-3.5 h-3.5 stroke-[3px]' : 'w-3.5 h-3.5'}`} />
+                            </button>
+
+                            {/* ✨ Pop-out / Return Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (popoutCategoryId) {
+                                  // Return to main window
+                                  const updated = poppedOutCategories.filter(id => id !== category.id);
+                                  setPoppedOutCategories(updated);
+                                  localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                                  sendIPC('close-popout');
+                                } else {
+                                  // Pop out
+                                  setPoppedOutCategories([...poppedOutCategories, category.id]);
+                                  sendIPC('open-popout', category.id);
+                                }
+                              }}
+                              style={currentTheme === 'princess' ? {
+                                WebkitAppRegion: 'no-drag',
+                                color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                                backgroundColor: 'transparent',
+                                borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8'
+                              } : { WebkitAppRegion: 'no-drag' }}
+                              onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
+                              onMouseLeave={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
+                              className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95
+                              ${currentTheme === 'princess'
+                                  ? 'w-6 h-6 rounded-[8px] border hover:shadow-md group'
+                                  : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
+                              title={popoutCategoryId ? "메인 화면으로 복귀" : "팝업으로 분리 (Pop-out)"}
+                            >
+                              {popoutCategoryId ? <X className="w-3.5 h-3.5" /> : <PanelTopOpen className="w-3.5 h-3.5" />}
                             </button>
 
                             <span

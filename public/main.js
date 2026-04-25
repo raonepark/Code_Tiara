@@ -11,6 +11,9 @@ const isDev = !app.isPackaged;
 // ✨ Set App ID for Windows Notifications to show "Code Tiara"
 app.setAppUserModelId("Code Tiara");
 
+// Global reference for popout windows to prevent garbage collection
+const popoutWindows = {};
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 320,
@@ -54,6 +57,61 @@ function createWindow() {
             win.unmaximize();
         } else {
             win.maximize();
+        }
+    });
+
+    // ✨ IPC Handler for Pop-out Windows
+    ipcMain.on('open-popout', (event, categoryId) => {
+        if (popoutWindows[categoryId]) {
+            popoutWindows[categoryId].focus();
+            return;
+        }
+
+        const popoutWin = new BrowserWindow({
+            width: 320,
+            height: 400,
+            useContentSize: true,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false,
+            },
+            autoHideMenuBar: true,
+            frame: false, // Frameless for sticky note look
+            transparent: true,
+            backgroundColor: '#00000000',
+            alwaysOnTop: true, // Always on top as requested
+        });
+
+        popoutWindows[categoryId] = popoutWin;
+
+        popoutWin.on('closed', () => {
+            delete popoutWindows[categoryId];
+        });
+
+        const popoutUrl = isDev
+            ? `http://localhost:3000/?popout=${categoryId}`
+            : `file://${path.join(__dirname, '../build/index.html')}?popout=${categoryId}`;
+
+        popoutWin.loadURL(popoutUrl);
+
+        // Debug log
+        popoutWin.webContents.on('did-finish-load', () => {
+            console.log(`Popout window loaded for category: ${categoryId}`);
+        });
+    });
+    
+    ipcMain.on('close-popout', (event) => {
+        const webContents = event.sender;
+        const winToClose = BrowserWindow.fromWebContents(webContents);
+        if (winToClose) {
+            winToClose.close();
+        }
+    });
+
+    ipcMain.on('close-popout-by-id', (event, categoryId) => {
+        if (popoutWindows[categoryId]) {
+            popoutWindows[categoryId].close();
+            delete popoutWindows[categoryId];
         }
     });
 }
