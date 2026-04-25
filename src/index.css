@@ -18,3 +18,14 @@ code {
 
 /* 폰트 적용 (Gamja Flower) */
 @import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap');
+
+/* Princess 테마 가짜 굵기(Faux Bold) 방지 및 커스텀 굵기 렌더링 */
+.theme-princess .font-bold {
+    font-weight: 400 !important;
+    -webkit-text-stroke: 0.6px currentColor;
+}
+
+.theme-princess .font-medium {
+    font-weight: 400 !important;
+    -webkit-text-stroke: 0.25px currentColor;
+}

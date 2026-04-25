@@ -149,7 +149,7 @@ const CodeTiara = () => {
 
   const theme = THEME_CONFIG[currentTheme];
 
-  const rootClassName = `h-screen w-screen ${theme.root} flex overflow-hidden`;
+  const rootClassName = `h-screen w-screen theme-${currentTheme} ${theme.root} flex overflow-hidden`;
   const cardClassName = `w-full h-full ${theme.card} overflow-hidden flex flex-col relative transition-all`;
 
   // 폰트 크기에 따른 텍스트 클래스 매핑
@@ -1827,11 +1827,11 @@ const CodeTiara = () => {
                       ${currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white' : ''}`}>
                       <div className={`flex items-center justify-center
                         ${currentTheme === 'princess' ? 'w-10 h-10 bg-[#FFF0F5] rounded-full text-[#FF6B81]' : ''}`}>
-                        {currentTheme === 'princess' ? <AlertTriangle className="w-5 h-5 stroke-[2.5px]" /> : <AlertTriangle className="w-5 h-5 text-red-500" />}
+                        {currentTheme === 'princess' ? <AlertTriangle className="w-5 h-5 stroke-[2.5px]" /> : <AlertTriangle className={`w-5 h-5 ${currentTheme === 'developer' ? 'text-[#E5C07B]' : 'text-red-500'}`} />}
                       </div>
                       <h3 className={`font-bold text-lg 
-                        ${currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E06C75]')}`}>
-                        {currentTheme === 'excel' ? 'Confirm Cleanup' : (currentTheme === 'developer' ? 'ERR_CONFIRM_CLEAR' : '완료 항목 정리')}
+                        ${currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]')}`}>
+                        {currentTheme === 'excel' ? 'Confirm Cleanup' : (currentTheme === 'developer' ? 'SYS_CLEANUP_REQ' : '완료 항목 정리')}
                       </h3>
                     </div>
 
@@ -1861,9 +1861,9 @@ const CodeTiara = () => {
                             ? 'px-5 py-2.5 rounded-full bg-[#FF6B81] text-white hover:bg-[#FF5271] hover:shadow-lg hover:-translate-y-0.5 text-xs'
                             : (currentTheme === 'excel'
                               ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
-                              : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded')}`}
+                              : 'px-4 py-2 bg-[#E5C07B]/10 text-[#E5C07B] border border-[#E5C07B]/50 hover:bg-[#E5C07B]/20 text-xs rounded')}`}
                       >
-                        {currentTheme === 'excel' ? '정리' : (currentTheme === 'developer' ? '[CONFIRM]' : '삭제')}
+                        {currentTheme === 'excel' ? '정리' : (currentTheme === 'developer' ? '[EXECUTE]' : '삭제')}
                       </button>
                     </div>
                   </div>
