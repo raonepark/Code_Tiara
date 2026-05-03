@@ -132,6 +132,13 @@ function createWindow() {
             delete popoutWindows[categoryId];
         }
     });
+
+    // ✨ Auto-resize popout window based on content
+    ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
+        if (popoutWindows[categoryId]) {
+            popoutWindows[categoryId].setContentSize(width, Math.ceil(height));
+        }
+    });
 }
 
 function createTray() {

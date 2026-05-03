@@ -274,6 +274,31 @@ const CodeTiara = () => {
     }
   }, [categories, selectedCategoryId]);
 
+  // ✨ Auto-resize popout window based on content
+  useEffect(() => {
+    if (!popoutCategoryId) return;
+    
+    let observer;
+    const timeoutId = setTimeout(() => {
+      const el = document.getElementById('popout-content-wrapper');
+      if (el) {
+        observer = new ResizeObserver((entries) => {
+          const height = entries[0].target.offsetHeight;
+          
+          // ✨ In popout mode, we remove all outer paddings and margins to completely eliminate invisible areas.
+          // Therefore, the exact height is just the offsetHeight.
+          sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: window.innerWidth, height: height });
+        });
+        observer.observe(el);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (observer) observer.disconnect();
+    };
+  }, [popoutCategoryId]);
+
   // 설정 변경 시 타이머 리셋 반영
   useEffect(() => {
     const prev = prevDurationsRef.current;
@@ -943,13 +968,13 @@ const CodeTiara = () => {
   };
 
   return (
-    <div
-      className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root}`}`}
-      style={{
-        border: popoutCategoryId ? 'none' : `2px solid ${theme.windowBorder || 'transparent'}`,
-        backgroundColor: popoutCategoryId ? 'transparent' : undefined
-      }}
-    >
+      <div
+        className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root}`}`}
+        style={{
+          border: popoutCategoryId ? 'none' : `2px solid ${theme.windowBorder || 'transparent'}`,
+          backgroundColor: popoutCategoryId ? 'transparent' : undefined
+        }}
+      >
       {/* Custom Scrollbar Styles injected here 
       */}
       <style>{`
@@ -1398,7 +1423,7 @@ const CodeTiara = () => {
               </div>
             )}
 
-            <div className={`flex-1 flex flex-col overflow-y-auto custom-scrollbar ${currentTheme === 'princess' ? (isMiniMode ? 'p-1' : 'px-6 py-4') : 'p-3 sm:p-4'}`}>
+            <div className={`flex-1 flex flex-col ${popoutCategoryId ? 'overflow-hidden p-0' : 'overflow-y-auto custom-scrollbar ' + (currentTheme === 'princess' ? (isMiniMode ? 'p-1' : 'px-6 py-4') : 'p-3 sm:p-4')}`}>
 
               {/* Input Form (Compact) - ✨ HIDDEN IN MINI MODE */}
               {/* ✨ Main Add Task UI - Hidden for themes that have category-specific adders */}
@@ -1604,13 +1629,14 @@ const CodeTiara = () => {
                     }
 
                     return (
-                      <div key={category.id} className={`${theme.category.container} 
+                      <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${theme.category.container} 
                         ${currentTheme === 'princess'
-                          ? (isMiniMode ? 'bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] mb-3 mx-2 mt-2 border-none !w-auto' : colorStyles.border) // ✨ Mini Mode: White Card Widget Style (No Margin, Parent Handles Padding)
+                          ? (isMiniMode ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto ${popoutCategoryId ? 'm-0' : 'mb-3 mx-2 mt-2'}` : colorStyles.border) 
                           : (currentTheme === 'developer' 
-                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] shadow-2xl m-2 rounded-md' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
-                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] shadow-lg m-2' : '')
-                            )} transition-all duration-300`}>
+                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
+                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] m-0' : '')
+                            )} transition-all duration-300`}
+                        style={{ WebkitAppRegion: 'no-drag' }}>
                         <div
                           className={`${theme.category.header} 
                             ${currentTheme === 'princess'
