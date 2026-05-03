@@ -110,14 +110,14 @@ const SettingsPanel = ({
                         <div className={`text-xs mb-2 font-bold ml-1 ${theme.settings.sectionTitle}`}>
                             텍스트 크기
                         </div>
-                        <div className={`flex p-1 ${currentTheme === 'princess' ? 'bg-slate-100/50 border border-slate-200 rounded-full' : (currentTheme === 'excel' ? 'bg-slate-100/50 border border-slate-200' : 'bg-slate-100/50 border border-slate-200 rounded-lg')}`}>
-                            {['small', 'medium', 'large'].map(size => (
+                        <div className={`flex p-1 ${currentTheme === 'princess' ? 'bg-slate-100/50 border border-slate-200 rounded-full overflow-x-auto custom-scrollbar' : (currentTheme === 'excel' ? 'bg-slate-100/50 border border-slate-200 overflow-x-auto custom-scrollbar' : 'bg-slate-100/50 border border-slate-200 rounded-lg overflow-x-auto custom-scrollbar')}`}>
+                            {['x-small', 'small', 'medium', 'large', 'x-large'].map(size => (
                                 <button
                                     key={size}
                                     onClick={() => setFontSize(size)}
-                                    className={`flex-1 py-1.5 text-xs transition-all font-bold duration-300 ${fontSize === size ? `${theme.accent.bg} ${theme.root.includes('text-[#ABB2BF]') ? 'text-[#282C34]' : 'text-white'} shadow-sm scale-105 ${theme.radius}` : `text-slate-400 hover:text-slate-600 hover:bg-black/5 ${theme.radius}`}`}
+                                    className={`flex-1 min-w-[45px] py-1.5 text-[10px] sm:text-xs transition-all font-bold duration-300 ${fontSize === size ? `${theme.accent.bg} ${theme.root.includes('text-[#ABB2BF]') ? 'text-[#282C34]' : 'text-white'} shadow-sm scale-105 ${theme.radius}` : `text-slate-400 hover:text-slate-600 hover:bg-black/5 ${theme.radius}`}`}
                                 >
-                                    {size === 'small' ? '작게' : size === 'medium' ? '보통' : '크게'}
+                                    {size === 'x-small' ? '초소형' : size === 'small' ? '작게' : size === 'medium' ? '보통' : size === 'large' ? '크게' : '초대형'}
                                 </button>
                             ))}
                         </div>

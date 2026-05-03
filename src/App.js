@@ -155,17 +155,23 @@ const CodeTiara = () => {
   // 폰트 크기에 따른 텍스트 클래스 매핑
   const getTextSizeClass = (size) => {
     switch (size) {
+      case 'x-small': return 'text-xs';
+      case 'small': return 'text-sm';
       case 'medium': return 'text-base';
       case 'large': return 'text-lg';
+      case 'x-large': return 'text-xl';
       default: return 'text-sm'; // small
     }
   };
 
   const getSubTextSizeClass = (size) => {
     switch (size) {
+      case 'x-small': return 'text-[10px]';
+      case 'small': return 'text-[11px]';
       case 'medium': return 'text-xs';
       case 'large': return 'text-sm';
-      default: return 'text-[11px]'; // small (increased from 10px)
+      case 'x-large': return 'text-base';
+      default: return 'text-[11px]'; // small
     }
   };
 
@@ -416,16 +422,35 @@ const CodeTiara = () => {
 
     const finalDueTime = convertTo24Hour(taskHour, taskMinute, taskAmpm);
 
+    const targetCategoryId = forcedCatId || selectedCategoryId;
+
     const newTask = {
       id: Date.now(),
       text: newTaskText,
-      categoryId: forcedCatId || selectedCategoryId,
+      categoryId: targetCategoryId,
       completed: false,
       dueDate: taskDate, // ✨ 날짜 저장
       dueTime: finalDueTime,
       alerted: false
     };
-    setTasks([...tasks, newTask]);
+    
+    setTasks(prevTasks => {
+      const catTasks = prevTasks.filter(t => t.categoryId === targetCategoryId);
+      const incompleteTasks = catTasks.filter(t => !t.completed);
+      const completedTasks = catTasks.filter(t => t.completed);
+      const sortedCatTasks = [...incompleteTasks, newTask, ...completedTasks];
+
+      let finalTasks = [];
+      categories.forEach(cat => {
+        if (cat.id === targetCategoryId) {
+          finalTasks.push(...sortedCatTasks);
+        } else {
+          finalTasks.push(...prevTasks.filter(t => t.categoryId === cat.id));
+        }
+      });
+      return finalTasks;
+    });
+
     setNewTaskText('');
     setTaskDate(''); // ✨ 초기화
     setTaskHour('');
@@ -464,7 +489,31 @@ const CodeTiara = () => {
   };
 
   const toggleTask = (id) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    setTasks(prevTasks => {
+      const taskToToggle = prevTasks.find(t => t.id === id);
+      if (!taskToToggle) return prevTasks;
+      
+      const updatedTask = { ...taskToToggle, completed: !taskToToggle.completed };
+      const newTasks = prevTasks.map(t => t.id === id ? updatedTask : t);
+      
+      const categoryId = taskToToggle.categoryId;
+      const catTasks = newTasks.filter(t => t.categoryId === categoryId);
+      
+      const incompleteTasks = catTasks.filter(t => !t.completed);
+      const completedTasks = catTasks.filter(t => t.completed);
+      const sortedCatTasks = [...incompleteTasks, ...completedTasks];
+      
+      let finalTasks = [];
+      categories.forEach(cat => {
+        if (cat.id === categoryId) {
+          finalTasks.push(...sortedCatTasks);
+        } else {
+          finalTasks.push(...newTasks.filter(t => t.categoryId === cat.id));
+        }
+      });
+      
+      return finalTasks;
+    });
   };
 
   // --- Actions: Edit Task ---
@@ -1573,7 +1622,7 @@ const CodeTiara = () => {
                           }}
                         >
                           {getIcon(category.icon, `${isMiniMode ? 'w-3 h-3' : 'w-4 h-4'} ${colorStyles.icon}`)}
-                          <h3 className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : (fontSize === 'large' ? 'text-lg' : 'text-base')}`}>{category.label}</h3>
+                          <h3 className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}>{category.label}</h3>
                           <div className="flex items-center gap-2 ml-auto">
                             <span className={`${currentTheme === 'princess' ? (isMiniMode ? 'hidden' : 'inline') : (currentTheme === 'developer' || currentTheme === 'excel' ? 'hidden' : 'inline')}`} style={{ opacity: 0.3 }}>
                               {/* Line or Decoration */}

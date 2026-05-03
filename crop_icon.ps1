@@ -37,8 +37,8 @@ if ($bottom -le $top -or $right -le $left) {
 $objWidth = $right - $left
 $objHeight = $bottom - $top
 
-# Add some margin (10%)
-$margin = [int]($objWidth * 0.1)
+# Add some margin (30%)
+$margin = [int]($objWidth * 0.3)
 $newLeft = [Math]::Max(0, $left - $margin)
 $newTop = [Math]::Max(0, $top - $margin)
 $newRight = [Math]::Min($width - 1, $right + $margin)

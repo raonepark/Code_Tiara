@@ -2,7 +2,7 @@ const electron = require('electron');
 console.log('Electron require type:', typeof electron);
 console.log('Electron require value:', electron);
 console.log('Versions:', process.versions);
-const { app, BrowserWindow, ipcMain } = electron;
+const { app, BrowserWindow, ipcMain, Tray, Menu } = electron;
 const path = require('path');
 
 // Basic dev detection
@@ -14,8 +14,12 @@ app.setAppUserModelId("Code Tiara");
 // Global reference for popout windows to prevent garbage collection
 const popoutWindows = {};
 
+let mainWindow = null;
+let tray = null;
+let isQuitting = false;
+
 function createWindow() {
-    const win = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 320,
         height: 560,
         useContentSize: true, // This is important for precise sizing
@@ -27,6 +31,7 @@ function createWindow() {
         frame: false, // ✨ Frameless Window
         transparent: true, // ✨ Rounded Corners Support
         backgroundColor: '#00000000', // ✨ Transparent Background
+        icon: path.join(__dirname, '../assets/icons/icon.ico')
     });
 
     // Load URL
@@ -41,22 +46,34 @@ function createWindow() {
         : `file://${path.join(__dirname, '../build/index.html')}`;
 
     console.log('Loading URL:', startUrl);
-    win.loadURL(startUrl);
+    mainWindow.loadURL(startUrl);
+
+    // ✨ Prevent window from closing, hide it instead
+    mainWindow.on('close', (event) => {
+        if (!isQuitting) {
+            event.preventDefault();
+            mainWindow.hide();
+        }
+    });
 
     // ✨ IPC Handlers for Custom Title Bar
     ipcMain.on('minimize-window', () => {
-        win.minimize();
+        if (mainWindow) mainWindow.minimize();
     });
 
     ipcMain.on('close-window', () => {
-        win.close();
+        if (mainWindow) {
+            mainWindow.close(); // Triggers the 'close' event above
+        }
     });
 
     ipcMain.on('maximize-window', () => {
-        if (win.isMaximized()) {
-            win.unmaximize();
-        } else {
-            win.maximize();
+        if (mainWindow) {
+            if (mainWindow.isMaximized()) {
+                mainWindow.unmaximize();
+            } else {
+                mainWindow.maximize();
+            }
         }
     });
 
@@ -80,6 +97,7 @@ function createWindow() {
             transparent: true,
             backgroundColor: '#00000000',
             alwaysOnTop: true, // Always on top as requested
+            icon: path.join(__dirname, '../assets/icons/icon.ico')
         });
 
         popoutWindows[categoryId] = popoutWin;
@@ -116,7 +134,35 @@ function createWindow() {
     });
 }
 
-app.whenReady().then(createWindow);
+function createTray() {
+    const iconPath = path.join(__dirname, '../assets/icons/icon.ico');
+    tray = new Tray(iconPath);
+
+    const contextMenu = Menu.buildFromTemplate([
+        { label: '열기', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
+        { type: 'separator' },
+        { label: '종료', click: () => { isQuitting = true; app.quit(); } }
+    ]);
+
+    tray.setToolTip('Code Tiara');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+        if (mainWindow) {
+            if (mainWindow.isVisible()) {
+                mainWindow.focus();
+            } else {
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        }
+    });
+}
+
+app.whenReady().then(() => {
+    createWindow();
+    createTray();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -125,7 +171,9 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (mainWindow === null) {
         createWindow();
+    } else {
+        mainWindow.show();
     }
 });
