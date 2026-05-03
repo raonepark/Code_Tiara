@@ -10,7 +10,8 @@ module.exports = {
     files: [
         "build/**/*",
         "public/main.js",
-        "package.json"
+        "package.json",
+        "assets/**/*"
     ],
     asar: true,
     win: {
