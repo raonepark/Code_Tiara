@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calculator, Calendar as CalendarIcon } from 'lucide-react';
 import { THEME_CONFIG } from '../constants/themeConfig';
 
-const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", className = "", inputClassName = "", currentTheme = "developer" }) => {
+const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", className = "", inputClassName = "", currentTheme = "developer", customTrigger }) => {
     const themeConfig = THEME_CONFIG[currentTheme] || THEME_CONFIG['developer'];
     const styles = themeConfig.datePicker;
     const defaultInputClass = styles.input;
@@ -257,16 +257,22 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
     );
 
     return (
-        <div className="relative" ref={containerRef}>
-            <div
-                onClick={toggleOpen}
-                className={`flex items-center gap-1.5 cursor-pointer rounded px-2 py-0.5 min-w-[80px] h-[26px] transition-colors ${finalInputClass} ${className}`}
-            >
-                <CalendarIcon className="w-3 h-3 opacity-70" />
-                <span className={`text-xs whitespace-nowrap ${value ? 'opacity-100' : 'opacity-70'}`}>
-                    {value || placeholder}
-                </span>
-            </div>
+        <div className="relative flex items-center" ref={containerRef}>
+            {customTrigger ? (
+                <div onClick={toggleOpen} className="cursor-pointer flex items-center">
+                    {customTrigger}
+                </div>
+            ) : (
+                <div
+                    onClick={toggleOpen}
+                    className={`flex items-center gap-1.5 cursor-pointer rounded px-2 py-0.5 min-w-[80px] h-[26px] transition-colors ${finalInputClass} ${className}`}
+                >
+                    <CalendarIcon className="w-3 h-3 opacity-70" />
+                    <span className={`text-xs whitespace-nowrap ${value ? 'opacity-100' : 'opacity-70'}`}>
+                        {value || placeholder}
+                    </span>
+                </div>
+            )}
 
             {/* ✨ RENDER: Portal */}
             {isOpen && createPortal(popupContent, document.body)}

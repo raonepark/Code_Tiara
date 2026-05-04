@@ -24,8 +24,8 @@ module.exports = {
         icon: "assets/icon.ico"
     },
     nsis: {
-        oneClick: false,
-        allowToChangeInstallationDirectory: true,
+        oneClick: true,
+        allowToChangeInstallationDirectory: false,
         installerIcon: "assets/icon.ico",
         uninstallerIcon: "assets/icon.ico",
         artifactName: "${productName} Setup ${version}.${ext}",

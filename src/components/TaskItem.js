@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import {
-    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle
+    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
 import { CATEGORY_HUES, hexToRgba } from '../constants';
@@ -18,10 +18,84 @@ const TaskItem = memo(({
     editingHour, setEditingHour,
     editingMinute, setEditingMinute,
     editingAmpm, setEditingAmpm,
-    confirmingDeleteId, setConfirmingDeleteId, finalDeleteTask,
+    editingRecurrence, setEditingRecurrence,
+    editingRecurrenceInterval, setEditingRecurrenceInterval,
+    editingRecurrenceDays, setEditingRecurrenceDays,
+    confirmingDeleteId, setConfirmingDeleteId, finalDeleteTask, duplicateTask,
     notifications,
     editFormRef
 }) => {
+    const getRecurrenceHint = (dateStr, type) => {
+        if (type !== 'monthly') return '';
+        const d = new Date(dateStr || new Date().toISOString().slice(0, 10));
+        if (type === 'monthly') return `(매월 ${d.getDate()}일)`;
+        return '';
+    };
+
+    const renderDayPicker = (currentDays, setDays, referenceDateStr) => {
+        const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+        const defaultDay = new Date(referenceDateStr || new Date().toISOString().slice(0, 10)).getDay();
+        const activeDays = (currentDays && currentDays.length > 0) ? currentDays : [defaultDay];
+
+        const toggleDay = (idx) => {
+            if (activeDays.includes(idx)) {
+                if (activeDays.length === 1) return;
+                setDays(activeDays.filter(d => d !== idx));
+            } else {
+                setDays([...activeDays, idx].sort());
+            }
+        };
+
+        return (
+            <div className="flex gap-0.5 ml-2">
+                {daysArr.map((dayLabel, idx) => {
+                    const isActive = activeDays.includes(idx);
+                    let btnClass = '';
+                    if (currentTheme === 'princess') {
+                        btnClass = isActive ? 'bg-[var(--c-dark)] text-white shadow-sm' : 'bg-white text-[var(--c-dark)] border border-[var(--c-light)] opacity-70';
+                    } else if (currentTheme === 'excel') {
+                        btnClass = isActive ? 'bg-[#107C41] text-white border border-[#107C41]' : 'bg-[#F3F2F1] text-slate-500 border border-[#D1D1D1]';
+                    } else {
+                        btnClass = isActive ? 'bg-[#007ACC] text-white' : 'bg-[#2D2D30] text-[#ABB2BF] border border-[#3E3E42]';
+                    }
+
+                    return (
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => toggleDay(idx)}
+                            className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-bold transition-all ${btnClass}`}
+                        >
+                            {dayLabel}
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const getRecurrenceDisplayText = (taskObj) => {
+        if (!taskObj.recurrence || taskObj.recurrence === 'none') return null;
+        
+        if (taskObj.recurrence === 'daily') return '매일';
+        if (taskObj.recurrence === 'monthly') {
+            const d = new Date(taskObj.dueDate || new Date().toISOString().slice(0, 10));
+            return `매월 ${d.getDate()}일`;
+        }
+        if (taskObj.recurrence === 'custom') return `${taskObj.recurrenceInterval || 1}일마다`;
+        if (taskObj.recurrence === 'weekly') {
+            const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+            if (taskObj.recurrenceDays && taskObj.recurrenceDays.length > 0) {
+                const dayStrings = taskObj.recurrenceDays.map(d => daysArr[d]).join(', ');
+                return `매주 ${dayStrings}요일`;
+            } else {
+                const d = new Date(taskObj.dueDate || new Date().toISOString().slice(0, 10));
+                return `매주 ${daysArr[d.getDay()]}요일`;
+            }
+        }
+        return '';
+    };
+
     return (
         <div
             ref={provided.innerRef}
@@ -92,6 +166,45 @@ const TaskItem = memo(({
                                     currentTheme={currentTheme}
                                 />
 
+                                <div className="flex flex-wrap items-center gap-1">
+                                  <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
+                                    <Repeat className="w-3 h-3" />
+                                  </div>
+                                  <select
+                                    value={editingRecurrence}
+                                    onChange={(e) => setEditingRecurrence(e.target.value)}
+                                    className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
+                                    title="반복 설정"
+                                  >
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>안함</option>
+                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매일</option>
+                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매주</option>
+                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매월</option>
+                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>N일</option>
+                                  </select>
+                                  {editingRecurrence === 'weekly' && renderDayPicker(editingRecurrenceDays, setEditingRecurrenceDays, editingDate)}
+                                  {editingRecurrence === 'monthly' && (
+                                    <span className={`text-[10px] ml-1 whitespace-nowrap ${currentTheme === 'princess' ? 'text-[var(--c-dark)] opacity-70 font-bold' : (currentTheme === 'excel' ? 'text-slate-500' : 'text-[#ABB2BF] opacity-70')}`}>
+                                      {getRecurrenceHint(editingDate, editingRecurrence)}
+                                    </span>
+                                  )}
+                                  {editingRecurrence === 'custom' && (
+                                    <div className="flex items-center">
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={editingRecurrenceInterval}
+                                        onChange={(e) => setEditingRecurrenceInterval(e.target.value)}
+                                        className={`w-8 text-center outline-none bg-transparent text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentTheme === 'princess' ? 'border-b border-[var(--c-dark)] text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6' : 'border-b border-[#3E3E42] text-[#D19A66]')}`}
+                                      />
+                                      <div className="flex flex-col ml-0.5">
+                                        <button type="button" onClick={() => setEditingRecurrenceInterval(p => Math.max(1, Number(p) + 1))} className={`p-0 hover:bg-black/10 rounded-t ${currentTheme === 'princess' ? 'text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'text-slate-600' : 'text-slate-400')}`}><ChevronUp className="w-2.5 h-2.5" /></button>
+                                        <button type="button" onClick={() => setEditingRecurrenceInterval(p => Math.max(1, Number(p) - 1))} className={`p-0 hover:bg-black/10 rounded-b ${currentTheme === 'princess' ? 'text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'text-slate-600' : 'text-slate-400')}`}><ChevronDown className="w-2.5 h-2.5" /></button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
                                 {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
 
                                 <div className="flex items-center gap-0.5">
@@ -147,18 +260,30 @@ const TaskItem = memo(({
                         >
                             {task.text}
                         </span>
-                        {/* 마감 시간 */}
-                        {(task.dueTime || task.dueDate) && (
-                            <span className={`flex items-center gap-1 mt-0.5 ${task.completed ? `${theme.task.timeDefault} opacity-50` :
+                        {/* 마감 시간 & 반복 정보 */}
+                        {(task.dueTime || task.dueDate || (task.recurrence && task.recurrence !== 'none')) && (
+                            <span className={`flex flex-wrap items-center gap-1 mt-0.5 ${task.completed ? `${theme.task.timeDefault} opacity-50` :
                                 (task.alerted && notifications.some(n => n.taskId === task.id)) ? 'text-red-400 font-bold animate-pulse' :
                                     theme.task.timeDefault
                                 } 
                                 ${(isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel'))
                                     ? 'text-[10px]'
                                     : getSubTextSizeClass(fontSize)}`}>
-                                <Clock className="w-2.5 h-2.5" />
-                                {task.dueDate && <span className="mr-1">{task.dueDate.slice(5).replace('-', '/')}</span>}
-                                {formatTimeDisplay(task.dueTime)}
+                                {(task.dueTime || task.dueDate) && (
+                                    <>
+                                        <Clock className="w-2.5 h-2.5" />
+                                        {task.dueDate && <span className="mr-1">{task.dueDate.slice(5).replace('-', '/')}</span>}
+                                        {formatTimeDisplay(task.dueTime)}
+                                    </>
+                                )}
+                                {task.recurrence && task.recurrence !== 'none' && (
+                                    <span className={`flex items-center gap-0.5 ${(task.dueTime || task.dueDate) ? 'ml-1 border-l pl-1.5' : ''} ${currentTheme === 'princess' ? 'border-[var(--c-light)]' : 'border-slate-500'}`}>
+                                        <Repeat className="w-2.5 h-2.5" />
+                                        <span className={currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : ''}>
+                                            {getRecurrenceDisplayText(task)}
+                                        </span>
+                                    </span>
+                                )}
                             </span>
                         )}
                     </>
@@ -168,6 +293,15 @@ const TaskItem = memo(({
             {/* Action Buttons (Hover) */}
             {editingTaskId !== task.id && (
                 <div className={`absolute right-5 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-300 ${theme.category?.actionButton ? theme.category.actionButton.wrapper : 'gap-2'}`}>
+                    {/* Duplicate Button */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); duplicateTask(task); }}
+                        className={theme.category?.actionButton ? theme.category.actionButton.button : theme.task.actionBtn}
+                        title="복제"
+                    >
+                        <Copy className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
+                    </button>
+
                     {/* Edit Button */}
                     <button
                         onClick={(e) => { e.stopPropagation(); startEditing(task); }}

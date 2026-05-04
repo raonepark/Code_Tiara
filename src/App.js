@@ -4,7 +4,8 @@ import {
   Terminal, Command, Settings, X, Save, RotateCcw, AlertTriangle,
   Download, Upload, Timer, Pause, Play, ChevronUp, ChevronDown, Clock, Bell,
   Star, Coffee, Music, Home, Briefcase, Heart, Sun, Moon, Hourglass,
-  PanelTopClose, PanelTopOpen, Edit2, Check, Grid2X2, Calendar, Minus, GripVertical, Menu, Gift
+  PanelTopClose, PanelTopOpen, Edit2, Check, Grid2X2, Calendar, Minus, GripVertical, Menu, Gift,
+  ChevronLeft, ChevronRight, Repeat
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
@@ -191,6 +192,20 @@ const CodeTiara = () => {
   const [taskHour, setTaskHour] = useState('');
   const [taskMinute, setTaskMinute] = useState('');
   const [taskAmpm, setTaskAmpm] = useState('오전');
+  
+  // ✨ 반복 및 필터 State
+  const [taskRecurrence, setTaskRecurrence] = useState('none');
+  const [taskRecurrenceInterval, setTaskRecurrenceInterval] = useState(1);
+  const [editingRecurrence, setEditingRecurrence] = useState('none');
+  const [editingRecurrenceInterval, setEditingRecurrenceInterval] = useState(1);
+  const [taskRecurrenceDays, setTaskRecurrenceDays] = useState([]);
+  const [editingRecurrenceDays, setEditingRecurrenceDays] = useState([]);
+  const [filterMode, setFilterMode] = useState(() => {
+    return localStorage.getItem('lumora_filter_mode') || 'all';
+  });
+  const [filterDate, setFilterDate] = useState(() => {
+    return localStorage.getItem('lumora_filter_date') || new Date().toISOString().slice(0, 10);
+  });
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -242,7 +257,9 @@ const CodeTiara = () => {
     localStorage.setItem('lumora_font_size', fontSize);
     localStorage.setItem('lumora_theme', currentTheme); // ✨ 테마 저장
     localStorage.setItem('lumora_popped_out', JSON.stringify(poppedOutCategories));
-  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, currentTheme, poppedOutCategories]);
+    localStorage.setItem('lumora_filter_mode', filterMode);
+    localStorage.setItem('lumora_filter_date', filterDate);
+  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, currentTheme, poppedOutCategories, filterMode, filterDate]);
 
   // ✨ Storage Event Listener for Cross-Window Sync
   useEffect(() => {
@@ -255,6 +272,10 @@ const CodeTiara = () => {
         try { setPoppedOutCategories(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_theme') {
         if (e.newValue) setCurrentTheme(e.newValue);
+      } else if (e.key === 'lumora_filter_mode') {
+        if (e.newValue) setFilterMode(e.newValue);
+      } else if (e.key === 'lumora_filter_date') {
+        if (e.newValue) setFilterDate(e.newValue);
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -434,11 +455,6 @@ const CodeTiara = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // --- 계산 로직 ---
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const progressPercentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-
   // --- Actions: Tasks ---
   const addTask = (e, forcedCatId = null) => {
     e.preventDefault();
@@ -456,7 +472,10 @@ const CodeTiara = () => {
       completed: false,
       dueDate: taskDate, // ✨ 날짜 저장
       dueTime: finalDueTime,
-      alerted: false
+      alerted: false,
+      recurrence: taskRecurrence, // ✨ 반복
+      recurrenceInterval: taskRecurrenceInterval,
+      recurrenceDays: taskRecurrenceDays
     };
     
     setTasks(prevTasks => {
@@ -481,6 +500,9 @@ const CodeTiara = () => {
     setTaskHour('');
     setTaskMinute('');
     setTaskAmpm('오전');
+    setTaskRecurrence('none');
+    setTaskRecurrenceInterval(1);
+    setTaskRecurrenceDays([]);
 
     // ✨ Close the quick add form if it was open
     if (forcedCatId) {
@@ -513,13 +535,213 @@ const CodeTiara = () => {
     setConfirmingDeleteId(null);
   };
 
+  // ✨ Date Navigation Helpers
+  const shiftFilterDate = (direction) => {
+    const d = new Date(filterDate);
+    const amount = direction === 'next' ? 1 : -1;
+    if (filterMode === 'daily') d.setDate(d.getDate() + amount);
+    else if (filterMode === 'weekly') d.setDate(d.getDate() + (amount * 7));
+    else if (filterMode === 'monthly') d.setMonth(d.getMonth() + amount);
+    setFilterDate(d.toISOString().slice(0, 10));
+  };
+
+  const getFilterDisplayString = () => {
+    const d = new Date(filterDate);
+    if (filterMode === 'daily') {
+      const isToday = filterDate === new Date().toISOString().slice(0, 10);
+      return isToday ? '오늘' : `${d.getMonth() + 1}월 ${d.getDate()}일 (${['일', '월', '화', '수', '목', '금', '토'][d.getDay()]})`;
+    }
+    if (filterMode === 'weekly') {
+      const day = d.getDay();
+      const start = new Date(d);
+      start.setDate(d.getDate() - day);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return `${start.getMonth() + 1}.${start.getDate()} ~ ${end.getMonth() + 1}.${end.getDate()}`;
+    }
+    if (filterMode === 'monthly') {
+      return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+    }
+    return '';
+  };
+
+  const checkRecurrenceMatch = (startDate, checkDate, type, interval, days) => {
+    if (checkDate < startDate) return false;
+    const msPerDay = 1000 * 60 * 60 * 24;
+    
+    if (type === 'daily') return true;
+    if (type === 'weekly') {
+      const activeDays = (days && days.length > 0) ? days : [startDate.getDay()];
+      return activeDays.includes(checkDate.getDay());
+    }
+    if (type === 'monthly') {
+      const checkLastDayOfMonth = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
+      const targetDay = startDate.getDate();
+      if (checkDate.getDate() === targetDay) return true;
+      if (targetDay > checkLastDayOfMonth && checkDate.getDate() === checkLastDayOfMonth) return true;
+      return false;
+    }
+    if (type === 'custom') {
+      const diffTime = checkDate.getTime() - startDate.getTime();
+      const diffDays = Math.round(diffTime / msPerDay);
+      return diffDays % (interval || 1) === 0;
+    }
+    return false;
+  };
+
+  const isTaskMatchingDateFilter = (task) => {
+    if (filterMode === 'all') return true;
+    
+    if (!task.dueDate && (!task.recurrence || task.recurrence === 'none')) return false;
+
+    const baseDateStr = task.dueDate || new Date().toISOString().slice(0, 10);
+    const tDate = new Date(baseDateStr);
+    tDate.setHours(0, 0, 0, 0);
+    const refDate = new Date(filterDate);
+    refDate.setHours(0, 0, 0, 0);
+
+    let checkStart = new Date(refDate);
+    let checkEnd = new Date(refDate);
+    
+    if (filterMode === 'daily') {
+      // same day
+    } else if (filterMode === 'weekly') {
+      const day = refDate.getDay();
+      checkStart.setDate(refDate.getDate() - day);
+      checkEnd = new Date(checkStart);
+      checkEnd.setDate(checkStart.getDate() + 6);
+    } else if (filterMode === 'monthly') {
+      checkStart.setDate(1);
+      checkEnd = new Date(checkStart.getFullYear(), checkStart.getMonth() + 1, 0);
+    }
+
+    checkStart.setHours(0,0,0,0);
+    checkEnd.setHours(23,59,59,999);
+
+    if (!task.recurrence || task.recurrence === 'none') {
+      return tDate >= checkStart && tDate <= checkEnd;
+    }
+
+    if (checkEnd < tDate) return false;
+
+    let currentCheckDate = new Date(checkStart < tDate ? tDate : checkStart);
+    currentCheckDate.setHours(0,0,0,0);
+
+    while (currentCheckDate <= checkEnd) {
+      if (checkRecurrenceMatch(tDate, currentCheckDate, task.recurrence, task.recurrenceInterval, task.recurrenceDays)) {
+        return true;
+      }
+      currentCheckDate.setDate(currentCheckDate.getDate() + 1);
+    }
+    
+    return false;
+  };
+
+  const getRecurrenceHint = (dateStr, type) => {
+    if (type !== 'monthly') return '';
+    const d = new Date(dateStr || new Date().toISOString().slice(0, 10));
+    if (type === 'monthly') return `(매월 ${d.getDate()}일)`;
+    return '';
+  };
+
+  const renderDayPicker = (currentDays, setDays, referenceDateStr) => {
+    const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+    const defaultDay = new Date(referenceDateStr || new Date().toISOString().slice(0, 10)).getDay();
+    const activeDays = (currentDays && currentDays.length > 0) ? currentDays : [defaultDay];
+
+    const toggleDay = (idx) => {
+      if (activeDays.includes(idx)) {
+        if (activeDays.length === 1) return;
+        setDays(activeDays.filter(d => d !== idx));
+      } else {
+        setDays([...activeDays, idx].sort());
+      }
+    };
+
+    return (
+      <div className="flex gap-0.5 ml-2">
+        {daysArr.map((dayLabel, idx) => {
+          const isActive = activeDays.includes(idx);
+          let btnClass = '';
+          if (currentTheme === 'princess') {
+            btnClass = isActive ? 'bg-[var(--c-dark)] text-white shadow-sm' : 'bg-white text-[var(--c-dark)] border border-[var(--c-light)] opacity-70';
+          } else if (currentTheme === 'excel') {
+            btnClass = isActive ? 'bg-[#107C41] text-white border border-[#107C41]' : 'bg-[#F3F2F1] text-slate-500 border border-[#D1D1D1]';
+          } else {
+            btnClass = isActive ? 'bg-[#007ACC] text-white' : 'bg-[#2D2D30] text-[#ABB2BF] border border-[#3E3E42]';
+          }
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => toggleDay(idx)}
+              className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-bold transition-all ${btnClass}`}
+            >
+              {dayLabel}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // --- 계산 로직 (필터 적용된 할 일 기준) ---
+  const filteredTotalTasks = tasks.filter(isTaskMatchingDateFilter);
+  const totalTasks = filteredTotalTasks.length;
+  const completedTasks = filteredTotalTasks.filter(t => t.completed).length;
+  const progressPercentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+  const calculateNextRecurrence = (dateStr, type, interval, days) => {
+    if (!dateStr) {
+      dateStr = new Date().toISOString().slice(0, 10);
+    }
+    const date = new Date(dateStr);
+    if (type === 'daily') {
+      date.setDate(date.getDate() + 1);
+    } else if (type === 'weekly') {
+      if (days && days.length > 0) {
+        let count = 0;
+        do {
+          date.setDate(date.getDate() + 1);
+          count++;
+        } while (!days.includes(date.getDay()) && count < 8);
+      } else {
+        date.setDate(date.getDate() + 7);
+      }
+    } else if (type === 'monthly') {
+      date.setMonth(date.getMonth() + 1);
+    } else if (type === 'custom') {
+      date.setDate(date.getDate() + parseInt(interval || 1, 10));
+    }
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
   const toggleTask = (id) => {
     setTasks(prevTasks => {
       const taskToToggle = prevTasks.find(t => t.id === id);
       if (!taskToToggle) return prevTasks;
       
+      let newTasks = [...prevTasks];
       const updatedTask = { ...taskToToggle, completed: !taskToToggle.completed };
-      const newTasks = prevTasks.map(t => t.id === id ? updatedTask : t);
+      
+      // ✨ 반복 할 일이 완료되었을 때 복제
+      if (updatedTask.completed && taskToToggle.recurrence && taskToToggle.recurrence !== 'none') {
+        const nextDate = calculateNextRecurrence(taskToToggle.dueDate, taskToToggle.recurrence, taskToToggle.recurrenceInterval, taskToToggle.recurrenceDays);
+        const clonedTask = {
+          ...taskToToggle,
+          id: Date.now() + Math.random(),
+          dueDate: nextDate,
+          completed: false, // Ensure clone is not completed
+          alerted: false
+        };
+        newTasks.push(clonedTask);
+      }
+      
+      newTasks = newTasks.map(t => t.id === id ? updatedTask : t);
       
       const categoryId = taskToToggle.categoryId;
       const catTasks = newTasks.filter(t => t.categoryId === categoryId);
@@ -541,11 +763,50 @@ const CodeTiara = () => {
     });
   };
 
+  const duplicateTask = (task) => {
+    const newTask = {
+      ...task,
+      id: Date.now() + Math.random(),
+      text: `${task.text} (복사본)`,
+      alerted: false
+    };
+
+    setTasks(prevTasks => {
+      const targetCategoryId = task.categoryId;
+      const catTasks = prevTasks.filter(t => t.categoryId === targetCategoryId);
+      const originalIndex = catTasks.findIndex(t => t.id === task.id);
+      
+      const newCatTasks = [...catTasks];
+      if (originalIndex !== -1) {
+        newCatTasks.splice(originalIndex + 1, 0, newTask);
+      } else {
+        newCatTasks.push(newTask);
+      }
+      
+      const incompleteTasks = newCatTasks.filter(t => !t.completed);
+      const completedTasks = newCatTasks.filter(t => t.completed);
+      const sortedCatTasks = [...incompleteTasks, ...completedTasks];
+
+      let finalTasks = [];
+      categories.forEach(cat => {
+        if (cat.id === targetCategoryId) {
+          finalTasks.push(...sortedCatTasks);
+        } else {
+          finalTasks.push(...prevTasks.filter(t => t.categoryId === cat.id));
+        }
+      });
+      return finalTasks;
+    });
+  };
+
   // --- Actions: Edit Task ---
   const startEditing = (task) => {
     setEditingTaskId(task.id);
     setEditingText(task.text);
     setEditingDate(task.dueDate || ''); // ✨ 날짜 로드
+    setEditingRecurrence(task.recurrence || 'none');
+    setEditingRecurrenceInterval(task.recurrenceInterval || 1);
+    setEditingRecurrenceDays(task.recurrenceDays || []);
     if (task.dueTime) {
       // 24시간제 -> 12시간제 변환
       let [h, m] = task.dueTime.split(':');
@@ -570,6 +831,9 @@ const CodeTiara = () => {
     setEditingHour('');
     setEditingMinute('');
     setEditingAmpm('오전');
+    setEditingRecurrence('none');
+    setEditingRecurrenceInterval(1);
+    setEditingRecurrenceDays([]);
   };
 
   const saveEditing = (id) => {
@@ -583,7 +847,10 @@ const CodeTiara = () => {
       text: editingText,
       dueDate: editingDate, // ✨ 날짜 저장
       dueTime: finalDueTime,
-      alerted: false // 시간 수정 시 알림 리셋
+      alerted: false, // 시간 수정 시 알림 리셋
+      recurrence: editingRecurrence,
+      recurrenceInterval: editingRecurrenceInterval,
+      recurrenceDays: editingRecurrenceDays
     } : t));
 
     cancelEditing();
@@ -1049,11 +1316,28 @@ const CodeTiara = () => {
             </button>
           </div>
           <div className={`text-[10px] ${currentTheme === 'excel' ? 'text-white' : theme.header.text} ${isMiniMode ? 'flex' : 'hidden min-[220px]:flex'} items-center gap-1 font-bold absolute left-1/2 -translate-x-1/2`}>
-            {getIcon(theme.iconType, 'w-3 h-3')}
             {/* ✨ Title (Dynamic) */}
-            <span className={`truncate max-w-[150px] sm:max-w-[200px] ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}>
-              {currentTheme === 'princess' ? <>나의 다이어리 <span className="text-xs">🎀</span></> : projectTitle}
-            </span>
+            {isEditingTitle ? (
+              <input
+                type="text"
+                autoFocus
+                className={`bg-transparent outline-none text-center border-b border-dashed ${currentTheme === 'princess' ? 'border-[#FF6B81] text-[#FF6B81] font-bold' : 'border-current uppercase tracking-widest font-bold'} max-w-[150px]`}
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                onBlur={() => setIsEditingTitle(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingTitle(false); }}
+                style={{ WebkitAppRegion: 'no-drag' }}
+              />
+            ) : (
+              <span 
+                onClick={() => setIsEditingTitle(true)}
+                title="클릭하여 이름 변경"
+                className={`cursor-pointer truncate max-w-[150px] sm:max-w-[200px] hover:opacity-80 transition-opacity ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}
+                style={{ WebkitAppRegion: 'no-drag' }}
+              >
+                {currentTheme === 'princess' && projectTitle === defaultTitle ? <>나의 다이어리 <span className="text-xs">🎀</span></> : projectTitle}
+              </span>
+            )}
           </div>
           <div className="flex gap-1.5 items-center" style={{ WebkitAppRegion: 'no-drag' }}>
             {/* ✨ Calendar Icon (Princess) */}
@@ -1374,9 +1658,46 @@ const CodeTiara = () => {
                   /* ✨ Default: Date & Progress or Excel Formula Bar */
                   currentTheme === 'excel' ? (
                     /* 📊 Excel Formula Bar Style */
-                    <div className="flex items-center gap-2 px-1 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-xs font-sans text-[#444]">
-                      <div className="font-serif italic text-slate-500 font-bold px-1">fx</div>
-                      <div className="flex-1 bg-white border border-[#D1D5DB] px-2 py-0.5 text-slate-700 h-[22px] flex items-center gap-2 shadow-sm inset-shadow">
+                    <div className="flex flex-wrap items-center gap-1.5 px-1 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[11px] font-sans text-[#444]">
+                      <div className="font-serif italic text-slate-500 font-bold px-1 shrink-0">fx</div>
+                      
+                      {/* Date Filter Integrated into Formula Bar */}
+                      <div className="flex items-center gap-1 bg-white border border-[#D1D5DB] px-1 h-[22px] shadow-sm inset-shadow shrink-0">
+                        <CustomDatePicker
+                          value={filterDate}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              setFilterDate(e.target.value);
+                              setFilterMode('daily');
+                            }
+                          }}
+                          currentTheme={currentTheme}
+                          customTrigger={<Calendar className="w-3 h-3 text-[#217346] hover:scale-110 cursor-pointer transition-transform" />}
+                        />
+                        <select
+                          value={filterMode}
+                          onChange={(e) => {
+                            setFilterMode(e.target.value);
+                            setFilterDate(new Date().toISOString().slice(0, 10));
+                          }}
+                          className="bg-transparent outline-none cursor-pointer border-none font-bold text-slate-600"
+                          title="기간 필터"
+                        >
+                          <option value="all" className="bg-white text-slate-800">전체 날짜</option>
+                          <option value="daily" className="bg-white text-slate-800">일간</option>
+                          <option value="weekly" className="bg-white text-slate-800">주간</option>
+                          <option value="monthly" className="bg-white text-slate-800">월간</option>
+                        </select>
+                        {filterMode !== 'all' && (
+                          <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-[#E1E1E1]">
+                            <button onClick={() => shiftFilterDate('prev')} className="hover:bg-slate-100 p-0.5 rounded"><ChevronLeft className="w-3 h-3" /></button>
+                            <span className="min-w-[50px] text-center font-medium">{getFilterDisplayString()}</span>
+                            <button onClick={() => shiftFilterDate('next')} className="hover:bg-slate-100 p-0.5 rounded"><ChevronRight className="w-3 h-3" /></button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 bg-white border border-[#D1D5DB] px-2 py-0.5 text-slate-700 h-[22px] flex items-center gap-2 shadow-sm inset-shadow min-w-max">
                         <span className="font-bold text-[#217346]">Total:</span> {totalTasks}
                         <span className="w-px h-3 bg-slate-300 mx-1"></span>
                         <span className="font-bold text-[#217346]">Done:</span> {completedTasks}
@@ -1391,10 +1712,41 @@ const CodeTiara = () => {
                     <>
                       {/* 1. Statistics Row (Date Left, Count Right) */}
                       <div className="flex justify-between items-end mb-1">
-                        {/* Left: Today's Date */}
+                        {/* Left: Date Navigation Filter */}
                         <div className={`flex items-center gap-1 text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
-                          <Calendar className="w-3 h-3" />
-                          <span>{`${new Date().getMonth() + 1}월 ${new Date().getDate()}일 (${['일', '월', '화', '수', '목', '금', '토'][new Date().getDay()]})`}</span>
+                          <CustomDatePicker
+                            value={filterDate}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                setFilterDate(e.target.value);
+                                setFilterMode('daily');
+                              }
+                            }}
+                            currentTheme={currentTheme}
+                            customTrigger={<Calendar className="w-3 h-3 hover:scale-110 cursor-pointer transition-transform" />}
+                          />
+                          <select
+                            value={filterMode}
+                            onChange={(e) => {
+                              setFilterMode(e.target.value);
+                              setFilterDate(new Date().toISOString().slice(0, 10));
+                            }}
+                            className={`outline-none cursor-pointer ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
+                            title="보기 모드"
+                          >
+                            <option value="all" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>전체 날짜</option>
+                            <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>일간</option>
+                            <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>주간</option>
+                            <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>월간</option>
+                          </select>
+                          
+                          {filterMode !== 'all' && (
+                            <div className="flex items-center gap-0.5 ml-1">
+                              <button onClick={() => shiftFilterDate('prev')} className={`p-0.5 rounded transition-colors hover:scale-110 active:scale-95 ${currentTheme === 'princess' ? 'hover:bg-[#FFC0CB]/30' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}><ChevronLeft className="w-3 h-3" /></button>
+                              <span className="min-w-[50px] text-center">{getFilterDisplayString()}</span>
+                              <button onClick={() => shiftFilterDate('next')} className={`p-0.5 rounded transition-colors hover:scale-110 active:scale-95 ${currentTheme === 'princess' ? 'hover:bg-[#FFC0CB]/30' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}><ChevronRight className="w-3 h-3" /></button>
+                            </div>
+                          )}
                         </div>
 
                         {/* Right: Task Count */}
@@ -1498,6 +1850,35 @@ const CodeTiara = () => {
 
                         {currentTheme === 'princess' && <span className="text-pink-200">|</span>}
 
+                        {/* ✨ Recurrence Picker */}
+                        <div className={`flex items-center gap-1 ${currentTheme === 'princess' ? 'bg-transparent' : ''}`}>
+                          <select
+                            value={taskRecurrence}
+                            onChange={(e) => setTaskRecurrence(e.target.value)}
+                            className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[#FF6B81] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D5DB] h-8 px-1' : 'text-slate-400')}`}
+                            title="반복 설정"
+                          >
+                            <option value="none">🔁 반복 안함</option>
+                            <option value="daily">🔁 매일</option>
+                            <option value="weekly">🔁 매주</option>
+                            <option value="monthly">🔁 매월</option>
+                            <option value="custom">🔁 N일마다</option>
+                          </select>
+                          {taskRecurrence === 'custom' && (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="1"
+                                value={taskRecurrenceInterval}
+                                onChange={(e) => setTaskRecurrenceInterval(e.target.value)}
+                                className={`w-10 text-center outline-none bg-transparent text-xs ${currentTheme === 'princess' ? 'border-b border-[#FF6B81] text-[#FF6B81] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D5DB] h-8' : 'border-b border-slate-500 text-slate-300')}`}
+                              />
+                              <span className={`text-[10px] ${currentTheme === 'princess' ? 'text-pink-300 font-bold' : 'text-slate-500'}`}>일마다</span>
+                            </div>
+                          )}
+                        </div>
+                        {currentTheme === 'princess' && <span className="text-pink-200">|</span>}
+
                         <div className={`flex items-center gap-1 h-8 px-1
                           ${currentTheme === 'princess'
                             ? 'bg-transparent'
@@ -1547,7 +1928,7 @@ const CodeTiara = () => {
                 <div className="space-y-3 flex-1">
                   {(popoutCategoryId ? categories.filter(c => c.id === popoutCategoryId) : categories).map(category => {
                     const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
-                    const categoryTasks = tasks.filter(t => t.categoryId === category.id);
+                    const categoryTasks = tasks.filter(t => t.categoryId === category.id && isTaskMatchingDateFilter(t));
                     const colorStyles = getThemeStyles(category.colorTheme);
 
                     // Constants moved to top of file
@@ -1776,11 +2157,18 @@ const CodeTiara = () => {
                                         setEditingMinute={setEditingMinute}
                                         editingAmpm={editingAmpm}
                                         setEditingAmpm={setEditingAmpm}
+                                        editingRecurrence={editingRecurrence}
+                                        setEditingRecurrence={setEditingRecurrence}
+                                        editingRecurrenceInterval={editingRecurrenceInterval}
+                                        setEditingRecurrenceInterval={setEditingRecurrenceInterval}
+                                        editingRecurrenceDays={editingRecurrenceDays}
+                                        setEditingRecurrenceDays={setEditingRecurrenceDays}
                                         confirmingDeleteId={confirmingDeleteId}
                                         setConfirmingDeleteId={setConfirmingDeleteId}
                                         finalDeleteTask={finalDeleteTask}
                                         notifications={notifications}
                                         editFormRef={editFormRef}
+                                        duplicateTask={duplicateTask}
                                       />
                                     )}
                                   </Draggable>
@@ -1839,6 +2227,46 @@ const CodeTiara = () => {
                                           ${currentTheme === 'princess' ? `text-[var(--c-dark)] font-bold text-left ${isMiniMode ? 'text-[11px] w-20' : 'text-xs w-24'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 w-24 text-xs p-1 text-center' : 'bg-[#1E1E1E] text-[#CE9178] w-24 border-none text-xs text-center')}`}
                                   currentTheme={currentTheme}
                                 />
+
+                                {/* ✨ Recurrence Picker */}
+                                <div className={`flex flex-wrap items-center gap-1`}>
+                                  <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
+                                    <Repeat className="w-3 h-3" />
+                                  </div>
+                                  <select
+                                    value={taskRecurrence}
+                                    onChange={(e) => setTaskRecurrence(e.target.value)}
+                                    className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
+                                    title="반복 설정"
+                                  >
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>안함</option>
+                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매일</option>
+                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매주</option>
+                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매월</option>
+                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>N일</option>
+                                  </select>
+                                  {taskRecurrence === 'weekly' && renderDayPicker(taskRecurrenceDays, setTaskRecurrenceDays, taskDate)}
+                                  {taskRecurrence === 'monthly' && (
+                                    <span className={`text-[10px] ml-1 whitespace-nowrap ${currentTheme === 'princess' ? 'text-[var(--c-dark)] opacity-70 font-bold' : (currentTheme === 'excel' ? 'text-slate-500' : 'text-[#ABB2BF] opacity-70')}`}>
+                                      {getRecurrenceHint(taskDate, taskRecurrence)}
+                                    </span>
+                                  )}
+                                  {taskRecurrence === 'custom' && (
+                                    <div className="flex items-center">
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={taskRecurrenceInterval}
+                                        onChange={(e) => setTaskRecurrenceInterval(e.target.value)}
+                                        className={`w-8 text-center outline-none bg-transparent text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentTheme === 'princess' ? 'border-b border-[var(--c-dark)] text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6' : 'border-b border-[#3E3E42] text-[#D19A66]')}`}
+                                      />
+                                      <div className="flex flex-col ml-0.5">
+                                        <button type="button" onClick={() => setTaskRecurrenceInterval(p => Math.max(1, Number(p) + 1))} className={`p-0 hover:bg-black/10 rounded-t ${currentTheme === 'princess' ? 'text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'text-slate-600' : 'text-slate-400')}`}><ChevronUp className="w-2.5 h-2.5" /></button>
+                                        <button type="button" onClick={() => setTaskRecurrenceInterval(p => Math.max(1, Number(p) - 1))} className={`p-0 hover:bg-black/10 rounded-b ${currentTheme === 'princess' ? 'text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'text-slate-600' : 'text-slate-400')}`}><ChevronDown className="w-2.5 h-2.5" /></button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                                 {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
                                 <div className="flex items-center gap-1">
                                   <input type="text" value={taskHour} onChange={(e) => setTaskHour(e.target.value.replace(/[^0-9]/g, ''))} placeholder="12" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
