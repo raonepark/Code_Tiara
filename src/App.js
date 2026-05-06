@@ -1291,8 +1291,9 @@ const CodeTiara = () => {
 
         {/* Terminal Header Bar */}
         {!popoutCategoryId && (
-        <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-20 shrink-0 select-none`} style={{ WebkitAppRegion: 'drag' }}>
-          <div className="flex gap-1.5" style={{ WebkitAppRegion: 'no-drag' }}>
+        <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} style={{ WebkitAppRegion: 'drag' }}>
+          {/* Left: Window Controls */}
+          <div className="flex gap-1.5 z-10" style={{ WebkitAppRegion: 'no-drag' }}>
             <button
               onClick={() => sendIPC('close-window')}
               className={`w-2.5 h-2.5 rounded-full bg-[#FF5F56] hover:bg-[#FF5F56]/80 transition-colors cursor-pointer flex items-center justify-center group`}
@@ -1315,31 +1316,20 @@ const CodeTiara = () => {
               <Plus className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
             </button>
           </div>
-          <div className={`text-[10px] ${currentTheme === 'excel' ? 'text-white' : theme.header.text} ${isMiniMode ? 'flex' : 'hidden min-[220px]:flex'} items-center gap-1 font-bold absolute left-1/2 -translate-x-1/2`}>
-            {/* ✨ Title (Dynamic) */}
-            {isEditingTitle ? (
-              <input
-                type="text"
-                autoFocus
-                className={`bg-transparent outline-none text-center border-b border-dashed ${currentTheme === 'princess' ? 'border-[#FF6B81] text-[#FF6B81] font-bold' : 'border-current uppercase tracking-widest font-bold'} max-w-[150px]`}
-                value={projectTitle}
-                onChange={(e) => setProjectTitle(e.target.value)}
-                onBlur={() => setIsEditingTitle(false)}
-                onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingTitle(false); }}
-                style={{ WebkitAppRegion: 'no-drag' }}
-              />
-            ) : (
+
+          {/* Center: Title (Display Only - Drag Friendly) */}
+          <div className={`flex-1 flex justify-center text-[10px] ${currentTheme === 'excel' ? 'text-white' : theme.header.text} font-bold px-4 pointer-events-none`}>
+            <div className={`${isMiniMode ? 'flex' : 'hidden min-[220px]:flex'} items-center gap-1`}>
               <span 
-                onClick={() => setIsEditingTitle(true)}
-                title="클릭하여 이름 변경"
-                className={`cursor-pointer truncate max-w-[150px] sm:max-w-[200px] hover:opacity-80 transition-opacity ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}
-                style={{ WebkitAppRegion: 'no-drag' }}
+                className={`truncate max-w-[150px] sm:max-w-[200px] ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}
               >
                 {currentTheme === 'princess' && projectTitle === defaultTitle ? <>나의 다이어리 <span className="text-xs">🎀</span></> : projectTitle}
               </span>
-            )}
+            </div>
           </div>
-          <div className="flex gap-1.5 items-center" style={{ WebkitAppRegion: 'no-drag' }}>
+
+          {/* Right: Icons Group */}
+          <div className="flex gap-1.5 items-center z-10" style={{ WebkitAppRegion: 'no-drag' }}>
             {/* ✨ Calendar Icon (Princess) */}
             {/* ✨ Calendar Icon (Princess) - DELETED per request */}
 
@@ -1547,6 +1537,9 @@ const CodeTiara = () => {
             currentTheme={currentTheme}
             setCurrentTheme={setCurrentTheme}
             theme={theme}
+            projectTitle={projectTitle}
+            setProjectTitle={setProjectTitle}
+            defaultTitle={defaultTitle}
             focusDuration={focusDuration}
             setFocusDuration={setFocusDuration}
             breakDuration={breakDuration}

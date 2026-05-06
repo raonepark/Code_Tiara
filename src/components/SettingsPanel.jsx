@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
 
 const SettingsPanel = ({
     isOpen, onClose, currentTheme, setCurrentTheme, theme,
+    projectTitle, setProjectTitle, defaultTitle,
     focusDuration, setFocusDuration, breakDuration, setBreakDuration,
     fontSize, setFontSize, categories, onDragEndCategories,
     activePicker, setActivePicker, updateCategory, addCategory,
@@ -14,12 +15,70 @@ const SettingsPanel = ({
     importData, handleResetRequest, isResetConfirming, getIcon
 }) => {
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const nameInputRef = useRef(null);
+
+    useEffect(() => {
+        if (isEditingName && nameInputRef.current) {
+            nameInputRef.current.focus();
+            nameInputRef.current.select();
+        }
+    }, [isEditingName]);
 
     if (!isOpen) return null;
 
     return (
         <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 overflow-y-auto custom-scrollbar">
             <div className="max-w-md mx-auto w-full space-y-4">
+                {/* 📝 Board Name Card */}
+                <div className={theme.settings.wrapper}>
+                    <div className={theme.settings.header}>
+                        보드 이름
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {isEditingName ? (
+                            <input
+                                ref={nameInputRef}
+                                type="text"
+                                value={projectTitle}
+                                onChange={(e) => setProjectTitle(e.target.value)}
+                                onBlur={() => setIsEditingName(false)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') setIsEditingName(false);
+                                    if (e.key === 'Escape') setIsEditingName(false);
+                                }}
+                                className={`flex-1 ${theme.settings.input} transition-all`}
+                                placeholder={defaultTitle || 'My Board'}
+                            />
+                        ) : (
+                            <div
+                                onClick={() => setIsEditingName(true)}
+                                className={`flex-1 flex items-center justify-between cursor-pointer group px-3 py-2 transition-all ${currentTheme === 'developer'
+                                    ? 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] hover:border-[#61AFEF]'
+                                    : currentTheme === 'excel'
+                                        ? 'bg-white border border-[#D1D5DB] text-[#000] hover:border-[#217346]'
+                                        : 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] text-slate-600 hover:border-[#FF6B81]'
+                                    }`}
+                            >
+                                <span className={`text-sm font-bold truncate ${
+                                    currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
+                                        ? 'text-[#FF6B81]'
+                                        : ''
+                                }`}>
+                                    {currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
+                                        ? <>나의 다이어리 <span className="text-xs">🎀</span></>
+                                        : projectTitle
+                                    }
+                                </span>
+                                <Edit2 className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ${
+                                    currentTheme === 'developer' ? 'text-[#61AFEF]'
+                                        : currentTheme === 'excel' ? 'text-[#217346]'
+                                            : 'text-[#FF6B81]'
+                                }`} />
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* 🏷️ Header */}
                 <div className="flex justify-between items-center mb-2">
