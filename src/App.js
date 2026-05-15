@@ -2106,7 +2106,7 @@ const CodeTiara = () => {
 
                             return (
                               <div
-                                className={`p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                                 style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}
