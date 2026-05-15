@@ -1140,7 +1140,125 @@ const CodeTiara = () => {
     }
   };
 
-  // --- Styling Helpers ---
+  const renderTimerUI = () => (
+    <div className={`flex items-center justify-between w-full ${popoutCategoryId === 'timer' ? 'h-full p-4' : 'animate-in fade-in slide-in-from-top-1 duration-300'}`} style={popoutCategoryId === 'timer' ? { WebkitAppRegion: 'drag' } : {}}>
+      {/* ✨ Excel Theme Timer: Active Cell Style */}
+      {currentTheme === 'excel' ? (
+        <div className={`flex ${popoutCategoryId === 'timer' ? 'flex-col justify-center' : 'items-center'} gap-2 w-full`} style={popoutCategoryId === 'timer' ? { WebkitAppRegion: 'no-drag' } : {}}>
+          {/* Mode Indicator (Name Box Style) */}
+          <div className="flex items-center justify-center bg-white border border-[#D1D5DB] h-[28px] px-2 min-w-[60px] shadow-sm inset-shadow">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${timerMode === 'focus' ? 'text-[#217346]' : 'text-slate-500'}`}>
+              {timerMode === 'focus' ? 'Focus' : 'Break'}
+            </span>
+          </div>
+
+          {/* Separator */}
+          {popoutCategoryId !== 'timer' && <div className="h-4 w-px bg-slate-300"></div>}
+
+          {/* Time Display (Active Cell Style) */}
+          <div className={`flex items-center bg-white border-2 border-[#217346] ${popoutCategoryId === 'timer' ? 'flex-1 h-[50px] my-1' : 'h-[32px] flex-1'} px-3 shadow-sm relative w-full`}>
+            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-[#217346]"></div> {/* Drag Handle */}
+            <span className={`${popoutCategoryId === 'timer' ? 'text-3xl' : 'text-xl'} font-mono font-bold tracking-widest text-slate-800 w-full text-right tabular-nums`}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+
+          {/* Controls (Toolbar Style) */}
+          <div className={`flex items-center bg-[#F3F2F1] rounded border border-[#D1D1D1] h-[28px] ${popoutCategoryId === 'timer' ? 'w-full justify-center' : ''}`}>
+            <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="Switch Mode">
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={toggleTimer} className={`p-1.5 hover:bg-[#E1E1E1] transition-colors border-r border-[#E1E1E1] ${isTimerRunning ? 'text-[#217346]' : 'text-slate-700'}`}>
+              {isTimerRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+            </button>
+            {popoutCategoryId !== 'timer' ? (
+              <>
+                <button onClick={() => { setIsTimerOpen(false); sendIPC('open-popout', 'timer'); }} className="p-1.5 hover:bg-[#E1E1E1] text-slate-500 hover:text-slate-800 transition-colors border-r border-[#E1E1E1]" title="팝업으로 분리">
+                  <PanelTopOpen className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => setIsTimerOpen(false)} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <button onClick={() => { sendIPC('close-popout'); setIsTimerOpen(true); }} className="p-1.5 hover:bg-[#E1E1E1] text-[#217346] hover:bg-[#217346] hover:text-white transition-colors" title="메인 화면으로 복귀">
+                <PanelTopOpen className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Generic / Princess / Developer Timer */
+        <div className={`flex w-full ${popoutCategoryId === 'timer' ? 'flex-col items-center justify-center h-full gap-2' : 'items-center justify-between'}`}>
+          <div className={`${popoutCategoryId === 'timer' ? 'flex justify-between w-full items-center mb-1' : 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all'} 
+            ${popoutCategoryId !== 'timer' ? (currentTheme === 'developer'
+              ? (timerMode === 'focus' ? 'text-[#E06C75] font-mono tracking-widest' : 'text-[#98C379] font-mono tracking-widest')
+              : (timerMode === 'focus'
+                ? (currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81] border border-[#FF6B81]/20' : 'bg-red-500 text-white')
+                : (currentTheme === 'princess' ? 'bg-[#A0C4FF]/10 text-[#5B85AA] border border-[#A0C4FF]/20' : 'bg-green-500 text-white')
+              )) : ''
+            }`}>
+            {popoutCategoryId === 'timer' ? (
+              <div className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${currentTheme === 'developer'
+              ? (timerMode === 'focus' ? 'text-[#E06C75] font-mono tracking-widest' : 'text-[#98C379] font-mono tracking-widest')
+              : (timerMode === 'focus'
+                ? (currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81] border border-[#FF6B81]/20' : 'bg-red-500 text-white')
+                : (currentTheme === 'princess' ? 'bg-[#A0C4FF]/10 text-[#5B85AA] border border-[#A0C4FF]/20' : 'bg-green-500 text-white'))}`}>
+                {currentTheme === 'developer'
+                  ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
+                  : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
+                }
+              </div>
+            ) : (
+              currentTheme === 'developer'
+                ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
+                : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
+            )}
+
+            {popoutCategoryId === 'timer' && (
+              <div className="flex gap-1" style={{ WebkitAppRegion: 'no-drag' }}>
+                <button onClick={switchTimerMode} className={`p-1.5 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="모드 전환">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => { sendIPC('close-popout'); setIsTimerOpen(true); }} className={`p-1.5 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="메인 화면으로 복귀">
+                  <PanelTopOpen className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className={`tabular-nums tracking-widest ${popoutCategoryId === 'timer' ? 'text-5xl my-1' : 'text-2xl'} ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'text-[#FF6B81]' : 'text-[#89CFF0]'} font-gamja font-medium` : 'text-slate-200 font-mono font-bold'}`}>
+            {formatTime(timeLeft)}
+          </div>
+
+          {popoutCategoryId !== 'timer' ? (
+            <div className="flex items-center gap-2">
+              <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="모드 전환">
+                <RotateCcw className="w-3 h-3" />
+              </button>
+              <button onClick={toggleTimer} className={`p-2 rounded-full transition-transform hover:scale-110 ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81]/10 text-[#FF6B81] hover:bg-[#FF6B81]/20' : 'bg-[#A0C4FF]/10 text-[#5B85AA] hover:bg-[#A0C4FF]/20'}` : (currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : 'bg-slate-700 text-slate-200')}`}>
+                {isTimerRunning ? <Pause className="w-4 h-4 ml-px" /> : <Play className="w-4 h-4 ml-0.5" />}
+              </button>
+              <button onClick={() => { setIsTimerOpen(false); sendIPC('open-popout', 'timer'); }} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="팝업으로 분리">
+                <PanelTopOpen className="w-4 h-4" />
+              </button>
+              <button onClick={() => setIsTimerOpen(false)} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex w-full justify-center" style={{ WebkitAppRegion: 'no-drag' }}>
+              <button onClick={toggleTimer} className={`p-3 rounded-full transition-transform hover:scale-110 shadow-sm ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81] text-white shadow-[#FFC0CB]' : 'bg-[#89CFF0] text-white shadow-[#A0C4FF]'}` : (currentTheme === 'developer' ? 'bg-[#61AFEF] text-slate-900 shadow-none' : 'bg-green-500 text-white')}`}>
+                {isTimerRunning ? <Pause className="w-5 h-5 ml-px" /> : <Play className="w-5 h-5 ml-1" />}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // --- Main Render ---
   const getThemeStyles = (color) => {
     // ✨ Normalize Color Inputs (Handle Aliases)
     let normalizedColor = color;
@@ -1301,7 +1419,14 @@ const CodeTiara = () => {
 
       {/* Size Change: Full Window Mode & No Limits */}
       <div className={`${popoutCategoryId ? 'h-full flex flex-col' : `${cardClassName} h-full`}`}>
+        {popoutCategoryId === 'timer' && (
+          <div className={`flex-1 flex flex-col items-center justify-center shadow-lg ${currentTheme === 'developer' ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-lg m-1' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] rounded-none' : 'bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl m-1')} overflow-hidden`} style={{ WebkitAppRegion: 'drag' }}>
+            {renderTimerUI()}
+          </div>
+        )}
 
+        {popoutCategoryId !== 'timer' && (
+          <>
         {/* Terminal Header Bar */}
         {!popoutCategoryId && (
         <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}>
@@ -1585,76 +1710,7 @@ const CodeTiara = () => {
 
                 {isTimerOpen ? (
                   /* ✨ Compact Timer UI (Replaces Date/Progress) */
-                  <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-300">
-                    {/* ✨ Excel Theme Timer: Active Cell Style */}
-                    {currentTheme === 'excel' ? (
-                      <div className="flex items-center gap-2 w-full">
-                        {/* Mode Indicator (Name Box Style) */}
-                        <div className="flex items-center justify-center bg-white border border-[#D1D5DB] h-[28px] px-2 min-w-[60px] shadow-sm inset-shadow">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${timerMode === 'focus' ? 'text-[#217346]' : 'text-slate-500'}`}>
-                            {timerMode === 'focus' ? 'Focus' : 'Break'}
-                          </span>
-                        </div>
-
-                        {/* Separator */}
-                        <div className="h-4 w-px bg-slate-300"></div>
-
-                        {/* Time Display (Active Cell Style) */}
-                        <div className="flex-1 flex items-center bg-white border-2 border-[#217346] h-[32px] px-3 shadow-sm relative">
-                          <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-[#217346]"></div> {/* Drag Handle */}
-                          <span className="text-xl font-mono font-bold tracking-widest text-slate-800 w-full text-right tabular-nums">
-                            {formatTime(timeLeft)}
-                          </span>
-                        </div>
-
-                        {/* Controls (Toolbar Style) */}
-                        <div className="flex items-center bg-[#F3F2F1] rounded border border-[#D1D1D1] h-[28px]">
-                          <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="Switch Mode">
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={toggleTimer} className={`p-1.5 hover:bg-[#E1E1E1] transition-colors border-r border-[#E1E1E1] ${isTimerRunning ? 'text-[#217346]' : 'text-slate-700'}`}>
-                            {isTimerRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                          </button>
-                          <button onClick={() => setIsTimerOpen(false)} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Generic / Princess / Developer Timer */
-                      <>
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all
-                          ${currentTheme === 'developer'
-                            ? (timerMode === 'focus' ? 'text-[#E06C75] font-mono tracking-widest' : 'text-[#98C379] font-mono tracking-widest')
-                            : (timerMode === 'focus'
-                              ? (currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81] border border-[#FF6B81]/20' : 'bg-red-500 text-white')
-                              : (currentTheme === 'princess' ? 'bg-[#A0C4FF]/10 text-[#5B85AA] border border-[#A0C4FF]/20' : 'bg-green-500 text-white')
-                            )
-                          }`}>
-                          {currentTheme === 'developer'
-                            ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
-                            : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
-                          }
-                        </div>
-
-                        <div className={`text-2xl tabular-nums tracking-widest ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'text-[#FF6B81]' : 'text-[#89CFF0]'} font-gamja font-medium` : 'text-slate-200 font-mono font-bold'}`}>
-                          {formatTime(timeLeft)}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="모드 전환">
-                            <RotateCcw className="w-3 h-3" />
-                          </button>
-                          <button onClick={toggleTimer} className={`p-2 rounded-full transition-transform hover:scale-110 ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81]/10 text-[#FF6B81] hover:bg-[#FF6B81]/20' : 'bg-[#A0C4FF]/10 text-[#5B85AA] hover:bg-[#A0C4FF]/20'}` : (currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : 'bg-slate-700 text-slate-200')}`}>
-                            {isTimerRunning ? <Pause className="w-4 h-4 ml-px" /> : <Play className="w-4 h-4 ml-0.5" />}
-                          </button>
-                          <button onClick={() => setIsTimerOpen(false)} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`}>
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  renderTimerUI()
                 ) : (
                   /* ✨ Default: Date & Progress or Excel Formula Bar */
                   currentTheme === 'excel' ? (
