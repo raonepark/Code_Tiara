@@ -1291,7 +1291,7 @@ const CodeTiara = () => {
 
         {/* Terminal Header Bar */}
         {!popoutCategoryId && (
-        <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} style={{ WebkitAppRegion: 'drag' }}>
+        <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}>
           {/* Left: Window Controls */}
           <div className="flex gap-1.5 z-10" style={{ WebkitAppRegion: 'no-drag' }}>
             <button
@@ -2009,8 +2009,7 @@ const CodeTiara = () => {
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] m-0' : '')
-                            )} transition-all duration-300`}
-                        style={{ WebkitAppRegion: 'no-drag' }}>
+                            )} transition-all duration-300`}>
                         <div
                           className={`${theme.category.header} 
                             ${currentTheme === 'princess'
@@ -2032,11 +2031,11 @@ const CodeTiara = () => {
                               onClick={(e) => { e.stopPropagation(); setMiniModeAdderId(miniModeAdderId === category.id ? null : category.id); }}
                               data-trigger-id={category.id}
                               style={currentTheme === 'princess' ? {
-                                WebkitAppRegion: 'no-drag',
+                                WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto',
                                 color: miniModeAdderId === category.id ? '#FFFFFF' : (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'),
                                 backgroundColor: miniModeAdderId === category.id ? (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185') : 'transparent',
                                 borderColor: (CATEGORY_HUES[category.colorTheme] || '#FBCFE8')
-                              } : { WebkitAppRegion: 'no-drag' }}
+                              } : { WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto' }}
                               className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95 group
                               ${currentTheme === 'princess'
                                   ? 'w-6 h-6 rounded-[8px] border hover:shadow-md'
@@ -2065,11 +2064,11 @@ const CodeTiara = () => {
                                 }
                               }}
                               style={currentTheme === 'princess' ? {
-                                WebkitAppRegion: 'no-drag',
+                                WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto',
                                 color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
                                 backgroundColor: 'transparent',
                                 borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8'
-                              } : { WebkitAppRegion: 'no-drag' }}
+                              } : { WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto' }}
                               onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
                               onMouseLeave={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
                               className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95
