@@ -963,6 +963,19 @@ const CodeTiara = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [miniModeAdderId]);
 
+  const menuRef = useRef(null);
+
+  // ✨ Click Outside for Menu
+  useEffect(() => {
+    const handleClickOutsideMenu = (e) => {
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(e.target) && !e.target.closest('button[title="메뉴"]')) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutsideMenu);
+    return () => document.removeEventListener('mousedown', handleClickOutsideMenu);
+  }, [isMenuOpen]);
+
   // ✨ Click Outside for Notifications
   useEffect(() => {
     const handleClickOutsideNotif = (e) => {
@@ -1366,11 +1379,8 @@ const CodeTiara = () => {
                 {/* ✨ Dropdown Menu (Under Gear) */}
                 {isMenuOpen && (
                   <>
-                    {/* Backdrop to close */}
-                    <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-
                     {/* Menu Card */}
-                    <div className="absolute right-0 top-8 w-40 bg-white border-2 border-[#FFC0CB] rounded-[15px] shadow-[0_10px_20px_rgba(255,182,193,0.3)] z-50 overflow-hidden text-slate-600 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                    <div ref={menuRef} className="absolute right-0 top-8 w-40 bg-white border-2 border-[#FFC0CB] rounded-[15px] shadow-[0_10px_20px_rgba(255,182,193,0.3)] z-50 overflow-hidden text-slate-600 flex flex-col animate-in fade-in zoom-in-95 duration-200">
                       {/* 🎀 Princess Arrow */}
                       <div className="absolute -top-1.5 right-2 w-3 h-3 bg-white border-t-2 border-l-2 border-[#FFC0CB] rotate-45"></div>
 
@@ -1438,9 +1448,7 @@ const CodeTiara = () => {
                 {/* ✨ Dropdown Menu (Under Gear) - Non-Princess */}
                 {isMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                    <div className={`absolute right-0 top-8 w-40 z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200
+                    <div ref={menuRef} className={`absolute right-0 top-8 w-40 z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200
                       ${currentTheme === 'excel'
                         ? 'bg-white border border-[#217346] rounded-none shadow-xl'
                         : theme.settings.popover
@@ -2011,7 +2019,7 @@ const CodeTiara = () => {
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] m-0' : '')
                             )} transition-all duration-300`}>
                         <div
-                          className={`${theme.category.header} 
+                          className={`${theme.category.header} ${popoutCategoryId ? 'pt-2 pb-1.5' : ''}
                             ${currentTheme === 'princess'
                               ? (isMiniMode ? 'bg-transparent border-none px-3 py-1.5 rounded-t-[15px]' : colorStyles.border + ' border-b-2 border-dashed mx-[6px] mt-[6px] rounded-t-[15px]') // ✨ Mini Mode: Compact Header with Rounded Top
                               : (currentTheme === 'developer' ? 'bg-black/10 border-inherit' : '')}`}
