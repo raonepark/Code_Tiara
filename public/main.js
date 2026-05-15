@@ -84,10 +84,9 @@ function createWindow() {
             return;
         }
 
-        const isTimer = categoryId === 'timer';
         const popoutWin = new BrowserWindow({
-            width: isTimer ? 280 : 320,
-            height: isTimer ? 140 : 400,
+            width: 320,
+            height: 400,
             useContentSize: true,
             webPreferences: {
                 nodeIntegration: true,
@@ -98,7 +97,6 @@ function createWindow() {
             transparent: true,
             backgroundColor: '#00000000',
             alwaysOnTop: true, // Always on top as requested
-            resizable: !isTimer, // Prevent resizing for timer
             icon: path.join(__dirname, '../assets/icons/icon.ico')
         });
 
