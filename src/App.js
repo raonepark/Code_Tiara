@@ -296,6 +296,14 @@ const CodeTiara = () => {
       return JSON.parse(localStorage.getItem('lumora_popped_out')) || [];
     } catch { return []; }
   });
+  const [pinnedCategories, setPinnedCategories] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lumora_pinned_categories')) || [];
+    } catch { return []; }
+  });
+
+  const poppedCategory = popoutCategoryId ? categories.find(c => String(c.id) === String(popoutCategoryId)) : null;
+  const poppedCategoryColor = poppedCategory ? (CATEGORY_HUES[poppedCategory.colorTheme] || '#FBCFE8') : null;
 
   // ✨ Mini Mode Detection (< 450px)
   const [isMiniMode, setIsMiniMode] = useState(window.innerWidth < 450);
@@ -314,9 +322,10 @@ const CodeTiara = () => {
     localStorage.setItem('lumora_font_family', fontFamily);
     localStorage.setItem('lumora_theme', currentTheme); // ✨ 테마 저장
     localStorage.setItem('lumora_popped_out', JSON.stringify(poppedOutCategories));
+    localStorage.setItem('lumora_pinned_categories', JSON.stringify(pinnedCategories));
     localStorage.setItem('lumora_filter_mode', filterMode);
     localStorage.setItem('lumora_filter_date', filterDate);
-  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, fontFamily, currentTheme, poppedOutCategories, filterMode, filterDate]);
+  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, fontFamily, currentTheme, poppedOutCategories, pinnedCategories, filterMode, filterDate]);
 
   // ✨ Storage Event Listener and IPC listener for Cross-Window Sync
   useEffect(() => {
@@ -327,6 +336,8 @@ const CodeTiara = () => {
         try { setCategories(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_popped_out') {
         try { setPoppedOutCategories(JSON.parse(e.newValue) || []); } catch (err) {}
+      } else if (e.key === 'lumora_pinned_categories') {
+        try { setPinnedCategories(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_theme') {
         if (e.newValue) setCurrentTheme(e.newValue);
       } else if (e.key === 'lumora_font_size') {
@@ -412,6 +423,15 @@ const CodeTiara = () => {
       sendIPC('set-always-on-top', { categoryId: 'timer', isPinned: isTimerPinned });
     }
   }, [isTimerPinned, popoutCategoryId]);
+
+  // --- 📌 카테고리 항상 위에 고정 상태 변경 핸들러 ---
+  useEffect(() => {
+    localStorage.setItem('lumora_pinned_categories', JSON.stringify(pinnedCategories));
+    if (popoutCategoryId && popoutCategoryId !== 'timer' && popoutCategoryId !== 'onboarding') {
+      const isPinned = pinnedCategories.includes(Number(popoutCategoryId)) || pinnedCategories.includes(popoutCategoryId) || pinnedCategories.includes(String(popoutCategoryId));
+      sendIPC('set-always-on-top', { categoryId: popoutCategoryId, isPinned });
+    }
+  }, [pinnedCategories, popoutCategoryId]);
 
   useEffect(() => {
     if (categories.length > 0 && !categories.find(c => c.id === selectedCategoryId)) {
@@ -1188,6 +1208,67 @@ const CodeTiara = () => {
   const editFormRef = useRef(null); // ✨ Ref for Edit Task Form
   const notifRef = useRef(null); // ✨ Ref for Notifications
 
+  // ✨ Auto-resize popout window when Quick Add Form toggles
+  useEffect(() => {
+    if (!popoutCategoryId || popoutCategoryId === 'timer' || popoutCategoryId === 'onboarding') return;
+
+    // We only run this if the initial size calculation has already occurred
+    if (lastCalculatedHeightRef.current === null) return;
+
+    const wrapper = document.getElementById('popout-content-wrapper');
+    if (!wrapper) return;
+
+    const resizePopoutOnFormToggle = () => {
+      const headerEl = wrapper.firstElementChild;
+      const listEl = wrapper.querySelector('.custom-scrollbar');
+      if (!headerEl || !listEl) return;
+
+      const headerHeight = headerEl.offsetHeight;
+      let trueListHeight = 0;
+      const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
+      if (validChildren.length > 0) {
+          const first = validChildren[0];
+          const last = validChildren[validChildren.length - 1];
+          trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+          trueListHeight += 16; // Add container padding buffer
+      } else {
+          trueListHeight = 60; // Minimum height for empty list
+      }
+
+      let quickAddHeight = 0;
+      const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
+      if (isFormActive) {
+        const lastEl = wrapper.lastElementChild;
+        if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
+          quickAddHeight = lastEl.scrollHeight || lastEl.offsetHeight;
+        }
+      }
+
+      let buffer = 16;
+      if (currentTheme === 'developer') {
+        buffer = isFormActive ? 42 : 16;
+      } else if (currentTheme === 'princess') {
+        buffer = isFormActive ? 26 : 8;
+      } else if (currentTheme === 'excel') {
+        buffer = isFormActive ? 30 : 8;
+      }
+
+      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
+      const targetHeight = Math.min(naturalHeight, isFormActive ? 600 : 550);
+      const targetWidth = Math.round(window.innerWidth);
+
+      lastCalculatedHeightRef.current = targetHeight;
+      sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
+    };
+
+    // Delay slightly to allow React to update the DOM classes
+    const timeoutId = setTimeout(() => {
+      resizePopoutOnFormToggle();
+    }, 80);
+
+    return () => clearTimeout(timeoutId);
+  }, [miniModeAdderId, popoutCategoryId]);
+
   // ✨ Click Outside to Close Quick Add Form
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1545,7 +1626,11 @@ const CodeTiara = () => {
         }
         /* 스크롤바 핸들 (막대) */
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: ${theme.scrollbar.thumb} !important;
+          background-color: ${
+            popoutCategoryId && currentTheme === 'princess' && poppedCategoryColor
+              ? hexToRgba(poppedCategoryColor, 0.65)
+              : theme.scrollbar.thumb
+          } !important;
           border-radius: 10px !important;
         }
         /* 스크롤바 버튼 숨김 (네모 방지) */
@@ -1558,12 +1643,20 @@ const CodeTiara = () => {
         }
         /* 스크롤바 핸들 호버 */
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: ${theme.scrollbar.thumbHover} !important;
+          background: ${
+            popoutCategoryId && currentTheme === 'princess' && poppedCategoryColor
+              ? poppedCategoryColor
+              : theme.scrollbar.thumbHover
+          } !important;
         }
         /* Firefox 지원 */
         .custom-scrollbar {
           scrollbar-width: thin;
-          scrollbar-color: ${theme.scrollbar.thumb} transparent;
+          scrollbar-color: ${
+            popoutCategoryId && currentTheme === 'princess' && poppedCategoryColor
+              ? hexToRgba(poppedCategoryColor, 0.65)
+              : theme.scrollbar.thumb
+          } transparent;
         }
       `}</style>
 
@@ -2500,10 +2593,14 @@ const CodeTiara = () => {
                     return (
                       <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${theme.category.container} 
                         ${currentTheme === 'princess'
-                          ? (isMiniMode ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto ${popoutCategoryId ? 'm-0' : 'mb-3 mx-2 mt-2'}` : colorStyles.border) 
+                          ? (isMiniMode 
+                              ? (popoutCategoryId 
+                                  ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-[2px] ${colorStyles.border} m-0` 
+                                  : `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2`) 
+                              : colorStyles.border) 
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
-                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] m-0' : '')
+                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] m-0' : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden' : ''} transition-all duration-300`}
                         style={popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}}
                       >
@@ -2553,38 +2650,87 @@ const CodeTiara = () => {
                               <Plus className={`${currentTheme === 'princess' ? 'w-3.5 h-3.5 stroke-[3px]' : 'w-3.5 h-3.5'}`} />
                             </button>
 
-                            {/* ✨ Pop-out / Return Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (popoutCategoryId) {
-                                  // Return to main window
-                                  const updated = poppedOutCategories.filter(id => id !== category.id);
-                                  setPoppedOutCategories(updated);
-                                  localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
-                                  sendIPC('close-popout');
-                                } else {
-                                  // Pop out
-                                  setPoppedOutCategories([...poppedOutCategories, category.id]);
-                                  sendIPC('open-popout', category.id);
-                                }
-                              }}
-                              style={currentTheme === 'princess' ? {
-                                WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto',
-                                color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
-                                backgroundColor: 'transparent',
-                                borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8'
-                              } : { WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto' }}
-                              onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
-                              onMouseLeave={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
-                              className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95
-                              ${currentTheme === 'princess'
-                                  ? 'w-6 h-6 rounded-[8px] border hover:shadow-md group'
-                                  : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
-                              title={popoutCategoryId ? "메인 화면으로 복귀" : "팝업으로 분리 (Pop-out)"}
-                            >
-                              {popoutCategoryId ? <X className="w-3.5 h-3.5" /> : <PanelTopOpen className="w-3.5 h-3.5" />}
-                            </button>
+                             {/* 📌 Pin/Unpin Button for Pop-out Window */}
+                             {popoutCategoryId && (
+                               <button
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   const isCurrentlyPinned = pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id));
+                                   let newPinned;
+                                   if (isCurrentlyPinned) {
+                                     newPinned = pinnedCategories.filter(id => String(id) !== String(category.id));
+                                   } else {
+                                     newPinned = [...pinnedCategories, category.id];
+                                   }
+                                   setPinnedCategories(newPinned);
+                                   localStorage.setItem('lumora_pinned_categories', JSON.stringify(newPinned));
+                                 }}
+                                 style={currentTheme === 'princess' ? {
+                                   WebkitAppRegion: 'no-drag',
+                                   color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                                   backgroundColor: 'transparent',
+                                   borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8'
+                                 } : { WebkitAppRegion: 'no-drag' }}
+                                 onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
+                                 onMouseLeave={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
+                                 className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95
+                                 ${currentTheme === 'princess'
+                                     ? 'w-6 h-6 rounded-[8px] border hover:shadow-md'
+                                     : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
+                                 title={pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id)) ? "고정 해제" : "항상 위에 고정"}
+                               >
+                                 {pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id)) ? (
+                                   <Pin className="w-3.5 h-3.5" />
+                                 ) : (
+                                   <PinOff className="w-3.5 h-3.5 opacity-60" />
+                                 )}
+                               </button>
+                             )}
+
+                             {/* ✨ Pop-out / Return Button */}
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 if (popoutCategoryId) {
+                                   // Return to main window
+                                   const updated = poppedOutCategories.filter(id => id !== category.id);
+                                   setPoppedOutCategories(updated);
+                                   localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                                   sendIPC('close-popout');
+                                 } else {
+                                   // Pop out
+                                   const updated = [...poppedOutCategories, category.id];
+                                   setPoppedOutCategories(updated);
+                                   localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+
+                                   // Add to pinned categories by default if not already there
+                                   const isCurrentlyPinned = pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id));
+                                   let newPinned = pinnedCategories;
+                                   if (!isCurrentlyPinned) {
+                                     newPinned = [...pinnedCategories, category.id];
+                                     setPinnedCategories(newPinned);
+                                     localStorage.setItem('lumora_pinned_categories', JSON.stringify(newPinned));
+                                   }
+
+                                   sendIPC('open-popout', { categoryId: category.id, isPinned: true });
+                                 }
+                               }}
+                               style={currentTheme === 'princess' ? {
+                                 WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto',
+                                 color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                                 backgroundColor: 'transparent',
+                                 borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8'
+                               } : { WebkitAppRegion: popoutCategoryId ? 'no-drag' : 'auto' }}
+                               onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
+                               onMouseLeave={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
+                               className={`flex items-center justify-center transition-all duration-300 mr-2 shadow-sm active:scale-95
+                               ${currentTheme === 'princess'
+                                   ? 'w-6 h-6 rounded-[8px] border hover:shadow-md group'
+                                   : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
+                               title={popoutCategoryId ? "메인 화면으로 복귀" : "팝업으로 분리 (Pop-out)"}
+                             >
+                               {popoutCategoryId ? <X className="w-3.5 h-3.5" /> : <PanelTopOpen className="w-3.5 h-3.5" />}
+                             </button>
 
                             <span
                               style={currentTheme === 'princess' ? {
@@ -2814,9 +2960,9 @@ const CodeTiara = () => {
             </div>
 
 
-            {/* Footer - ✨ HIDDEN IN MINI MODE */}
+            {/* Footer - ✨ HIDDEN IN MINI MODE & POP-OUT WINDOWS */}
             {
-              !isSettingsOpen && !isMiniMode && (
+              !popoutCategoryId && !isSettingsOpen && !isMiniMode && (
                 <div className={`mt-auto p-2 border-t ${currentTheme === 'princess'
                   ? 'border-[#FFC0CB] bg-[#FFF0F5]'
                   : (currentTheme === 'developer'

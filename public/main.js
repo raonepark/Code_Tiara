@@ -103,7 +103,16 @@ function createWindow() {
     });
 
     // ✨ IPC Handler for Pop-out Windows
-    ipcMain.on('open-popout', (event, categoryId) => {
+    ipcMain.on('open-popout', (event, arg) => {
+        let categoryId;
+        let isPinned = true;
+        if (typeof arg === 'object' && arg !== null) {
+            categoryId = arg.categoryId;
+            isPinned = arg.isPinned !== undefined ? arg.isPinned : true;
+        } else {
+            categoryId = arg;
+        }
+
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].focus();
             return;
@@ -135,7 +144,7 @@ function createWindow() {
             frame: false, // Frameless for sticky note look
             transparent: true,
             backgroundColor: '#00000000',
-            alwaysOnTop: true, // Always on top as requested
+            alwaysOnTop: isPinned, // Dynamic always on top
             icon: path.join(__dirname, '../assets/icons/icon.ico'),
             show: false // ✨ Hide initially to prevent size flashing
         });
