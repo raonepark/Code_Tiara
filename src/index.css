@@ -31,3 +31,24 @@ code {
     font-weight: 400 !important;
     -webkit-text-stroke: 0.25px currentColor;
 }
+
+/* 🌟 Premium Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(150, 150, 150, 0.3);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.5);
+}
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(150, 150, 150, 0.3) transparent;
+}

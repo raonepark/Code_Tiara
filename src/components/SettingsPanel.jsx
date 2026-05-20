@@ -25,7 +25,8 @@ const SettingsPanel = ({
     confirmingCategoryDeleteId, setConfirmingCategoryDeleteId,
     finalDeleteCategory, categoryToDelete, setCategoryToDelete,
     confirmDeleteCategory, exportData, triggerImport, fileInputRef,
-    importData, handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide
+    importData, handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide,
+    user, onSignOut, onLoginClick
 }) => {
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -467,14 +468,29 @@ const SettingsPanel = ({
                     className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                 >
                     <BookOpen className="w-3.5 h-3.5" />
-                    사용 설명서 다시 보기
+                    사용 설명서
                 </button>
+                {user && user.uid === "guest_user" ? (
+                    <button
+                        onClick={onLoginClick}
+                        className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                    >
+                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔑</span> 로그인
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
+                        className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                    >
+                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> 로그아웃
+                    </button>
+                )}
                 <button
                     onClick={handleResetRequest}
                     className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn} w-full sm:w-auto`}
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    {isResetConfirming ? '정말 초기화 할까요?' : '데이터 초기화'}
+                    {isResetConfirming ? '정말요?' : '초기화'}
                 </button>
             </div>
 

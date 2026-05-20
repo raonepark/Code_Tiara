@@ -11,11 +11,27 @@ import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
 import SettingsPanel from './components/SettingsPanel';
 import OnboardingPanel from './components/OnboardingPanel';
+import AuthScreen from './components/AuthScreen';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba } from './constants';
+import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, getLocalDateString, parseLocalDate } from './constants';
 import { THEME_CONFIG } from './constants/themeConfig';
+import {
+  auth,
+  db,
+  signOut,
+  onAuthStateChanged,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  collection,
+  query,
+  where
+} from './firebase/firebaseConfig';
 
 // ✨ Constants imported from constants.js
+console.log('App.js imports:', { AuthScreen, CustomDatePicker, TaskItem, SettingsPanel, OnboardingPanel });
 
 const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -76,6 +92,10 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
 };
 
 const CodeTiara = () => {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
 
 
@@ -146,7 +166,7 @@ const CodeTiara = () => {
 
   // --- 🎨 테마 설정 State ---
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('lumora_theme') || 'developer';
+    return localStorage.getItem('lumora_theme') || 'princess';
   });
 
   // --- 🧊 Modal States ---
@@ -239,7 +259,7 @@ const CodeTiara = () => {
     return localStorage.getItem('lumora_filter_mode') || 'all';
   });
   const [filterDate, setFilterDate] = useState(() => {
-    return localStorage.getItem('lumora_filter_date') || new Date().toISOString().slice(0, 10);
+    return localStorage.getItem('lumora_filter_date') || getLocalDateString();
   });
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '');
@@ -309,23 +329,336 @@ const CodeTiara = () => {
   const [isMiniMode, setIsMiniMode] = useState(window.innerWidth < 450);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ✨ Menu Toggle State
 
-  // useEffect for resize removed to allow manual control without override
-
-  // --- 데이터 자동 저장 ---
+  // --- Firebase Authentication State Observer ---
   useEffect(() => {
-    localStorage.setItem('lumora_categories', JSON.stringify(categories));
-    localStorage.setItem('lumora_tasks', JSON.stringify(tasks));
-    localStorage.setItem('lumora_title', projectTitle);
-    localStorage.setItem('lumora_focus_duration', focusDuration);
-    localStorage.setItem('lumora_break_duration', breakDuration);
-    localStorage.setItem('lumora_font_size', fontSize);
-    localStorage.setItem('lumora_font_family', fontFamily);
-    localStorage.setItem('lumora_theme', currentTheme); // ✨ 테마 저장
-    localStorage.setItem('lumora_popped_out', JSON.stringify(poppedOutCategories));
-    localStorage.setItem('lumora_pinned_categories', JSON.stringify(pinnedCategories));
-    localStorage.setItem('lumora_filter_mode', filterMode);
-    localStorage.setItem('lumora_filter_date', filterDate);
-  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, fontFamily, currentTheme, poppedOutCategories, pinnedCategories, filterMode, filterDate]);
+    if (!auth) {
+      setAuthLoading(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+      } else {
+        setUser(null);
+        // Reset states on logout
+        setTasks([]);
+        setCategories([]);
+        setIsInitialLoadComplete(false);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleAuthSuccess = (mockUser) => {
+    if (mockUser) {
+      setUser(mockUser);
+    }
+    setIsAuthModalOpen(false);
+  };
+
+  // --- Load User Data from Firestore ---
+  useEffect(() => {
+    if (!user) return;
+
+    const loadUserData = async () => {
+      setIsInitialLoadComplete(false);
+      try {
+        console.log("Loading user data from Firestore for UID:", user.uid);
+
+        let savedTheme = localStorage.getItem('lumora_theme') || 'developer';
+        let savedTitle = defaultTitle;
+        let savedFocus = 25;
+        let savedBreak = 5;
+        let savedFontSize = 14;
+        let savedFontFamily = 'default';
+        let savedFilterMode = 'all';
+        let savedFilterDate = getLocalDateString();
+        let savedPoppedOut = [];
+        let savedPinned = [];
+
+        if (user.uid !== "guest_user") {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            savedTheme = data.currentTheme || savedTheme;
+            savedTitle = data.projectTitle || savedTitle;
+            savedFocus = data.focusDuration || savedFocus;
+            savedBreak = data.breakDuration || savedBreak;
+            savedFontSize = data.fontSize || savedFontSize;
+            savedFontFamily = data.fontFamily || savedFontFamily;
+            savedFilterMode = data.filterMode || savedFilterMode;
+            savedFilterDate = data.filterDate || savedFilterDate;
+            savedPoppedOut = data.poppedOutCategories || savedPoppedOut;
+            savedPinned = data.pinnedCategories || savedPinned;
+          }
+        } else {
+          // If Guest user, use localStorage or defaults
+          savedTheme = localStorage.getItem('lumora_theme') || 'developer';
+          savedTitle = localStorage.getItem('lumora_title') || defaultTitle;
+          savedFocus = parseInt(localStorage.getItem('lumora_focus_duration')) || 25;
+          savedBreak = parseInt(localStorage.getItem('lumora_break_duration')) || 5;
+          savedFontSize = parseInt(localStorage.getItem('lumora_font_size')) || 14;
+          savedFontFamily = localStorage.getItem('lumora_font_family') || 'default';
+          savedFilterMode = localStorage.getItem('lumora_filter_mode') || 'all';
+          savedFilterDate = localStorage.getItem('lumora_filter_date') || getLocalDateString();
+          try { savedPoppedOut = JSON.parse(localStorage.getItem('lumora_popped_out')) || []; } catch(e) {}
+          try { savedPinned = JSON.parse(localStorage.getItem('lumora_pinned_categories')) || []; } catch(e) {}
+        }
+
+        // Apply settings states
+        setCurrentTheme(savedTheme);
+        setProjectTitle(savedTitle);
+        setBoardTitle(savedTitle);
+        setFocusDuration(savedFocus);
+        setBreakDuration(savedBreak);
+        setFontSize(savedFontSize);
+        setFontFamily(savedFontFamily);
+        setFilterMode(savedFilterMode);
+        setFilterDate(savedFilterDate);
+        setPoppedOutCategories(savedPoppedOut);
+        setPinnedCategories(savedPinned);
+
+        // 2. Load Categories
+        let loadedCategories = [];
+        if (user.uid !== "guest_user") {
+          const catQuery = query(collection(db, 'categories'), where('userId', '==', user.uid));
+          const catSnapshot = await getDocs(catQuery);
+          catSnapshot.forEach((doc) => {
+            loadedCategories.push({ ...doc.data(), id: doc.id });
+          });
+        } else {
+          try {
+            const saved = localStorage.getItem('lumora_categories');
+            loadedCategories = saved ? JSON.parse(saved) : defaultCategories;
+          } catch(e) { loadedCategories = defaultCategories; }
+        }
+
+        if (loadedCategories.length === 0) {
+          loadedCategories = defaultCategories;
+          if (user.uid !== "guest_user") {
+            loadedCategories.forEach(async (cat) => {
+              await setDoc(doc(db, 'categories', cat.id), { ...cat, userId: user.uid });
+            });
+          }
+        }
+        setCategories(loadedCategories);
+
+        // 3. Load Tasks
+        let loadedTasks = [];
+        if (user.uid !== "guest_user") {
+          const taskQuery = query(collection(db, 'tasks'), where('userId', '==', user.uid));
+          const taskSnapshot = await getDocs(taskQuery);
+          taskSnapshot.forEach((doc) => {
+            loadedTasks.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
+          });
+        } else {
+          try {
+            const saved = localStorage.getItem('lumora_tasks');
+            loadedTasks = saved ? JSON.parse(saved) : defaultTasks;
+          } catch(e) { loadedTasks = defaultTasks; }
+        }
+
+        if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
+          loadedTasks = defaultTasks;
+          if (user.uid !== "guest_user") {
+            loadedTasks.forEach(async (task) => {
+              await setDoc(doc(db, 'tasks', String(task.id)), { ...task, userId: user.uid });
+            });
+          }
+        }
+        setTasks(loadedTasks);
+
+        console.log("Initial load complete from Firestore");
+      } catch (err) {
+        console.error("Failed to load user data:", err);
+      } finally {
+        setIsInitialLoadComplete(true);
+      }
+    };
+
+    loadUserData();
+  }, [user]);
+
+  // --- Firestore Diff-and-Sync for Tasks ---
+  const prevTasksRef = useRef([]);
+  useEffect(() => {
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) {
+      prevTasksRef.current = tasks;
+      return;
+    }
+
+    const prevTasks = prevTasksRef.current;
+    const added = tasks.filter(t => !prevTasks.some(p => p.id === t.id));
+    const deleted = prevTasks.filter(p => !tasks.some(t => t.id === p.id));
+    const updated = tasks.filter(t => {
+      const prev = prevTasks.find(p => p.id === t.id);
+      return prev && JSON.stringify(prev) !== JSON.stringify(t);
+    });
+
+    added.forEach(async (t) => {
+      await setDoc(doc(db, 'tasks', String(t.id)), { ...t, userId: user.uid });
+    });
+
+    updated.forEach(async (t) => {
+      await setDoc(doc(db, 'tasks', String(t.id)), { ...t, userId: user.uid });
+    });
+
+    deleted.forEach(async (t) => {
+      await deleteDoc(doc(db, 'tasks', String(t.id)));
+    });
+
+    prevTasksRef.current = tasks;
+  }, [tasks, user, isInitialLoadComplete]);
+
+  // --- Firestore Diff-and-Sync for Categories ---
+  const prevCategoriesRef = useRef([]);
+  useEffect(() => {
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) {
+      prevCategoriesRef.current = categories;
+      return;
+    }
+
+    const prevCategories = prevCategoriesRef.current;
+    const added = categories.filter(c => !prevCategories.some(p => p.id === c.id));
+    const deleted = prevCategories.filter(p => !categories.some(c => c.id === p.id));
+    const updated = categories.filter(c => {
+      const prev = prevCategories.find(p => p.id === c.id);
+      return prev && JSON.stringify(prev) !== JSON.stringify(c);
+    });
+
+    added.forEach(async (c) => {
+      await setDoc(doc(db, 'categories', String(c.id)), { ...c, userId: user.uid });
+    });
+
+    updated.forEach(async (c) => {
+      await setDoc(doc(db, 'categories', String(c.id)), { ...c, userId: user.uid });
+    });
+
+    deleted.forEach(async (c) => {
+      await deleteDoc(doc(db, 'categories', String(c.id)));
+    });
+
+    prevCategoriesRef.current = categories;
+  }, [categories, user, isInitialLoadComplete]);
+
+  // --- Firestore Settings Save ---
+  useEffect(() => {
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) return;
+
+    const saveSettings = async () => {
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          projectTitle,
+          focusDuration,
+          breakDuration,
+          fontSize,
+          fontFamily,
+          currentTheme,
+          poppedOutCategories,
+          pinnedCategories,
+          filterMode,
+          filterDate
+        }, { merge: true });
+      } catch (err) {
+        console.error("Failed to save settings to Firestore:", err);
+      }
+    };
+
+    const timer = setTimeout(saveSettings, 300);
+    return () => clearTimeout(timer);
+  }, [
+    user,
+    isInitialLoadComplete,
+    projectTitle,
+    focusDuration,
+    breakDuration,
+    fontSize,
+    fontFamily,
+    currentTheme,
+    poppedOutCategories,
+    pinnedCategories,
+    filterMode,
+    filterDate
+  ]);
+
+  // --- 데이터 자동 저장 (최적화: 개별 감지 및 즉각 저장) ---
+  useEffect(() => {
+    const val = JSON.stringify(categories);
+    if (localStorage.getItem('lumora_categories') !== val) {
+      localStorage.setItem('lumora_categories', val);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    const val = JSON.stringify(tasks);
+    if (localStorage.getItem('lumora_tasks') !== val) {
+      localStorage.setItem('lumora_tasks', val);
+    }
+  }, [tasks]);
+
+  useEffect(() => {
+    if (localStorage.getItem('lumora_title') !== projectTitle) {
+      localStorage.setItem('lumora_title', projectTitle);
+    }
+  }, [projectTitle]);
+
+  useEffect(() => {
+    if (Number(localStorage.getItem('lumora_focus_duration')) !== focusDuration) {
+      localStorage.setItem('lumora_focus_duration', String(focusDuration));
+    }
+  }, [focusDuration]);
+
+  useEffect(() => {
+    if (Number(localStorage.getItem('lumora_break_duration')) !== breakDuration) {
+      localStorage.setItem('lumora_break_duration', String(breakDuration));
+    }
+  }, [breakDuration]);
+
+  useEffect(() => {
+    if (Number(localStorage.getItem('lumora_font_size')) !== fontSize) {
+      localStorage.setItem('lumora_font_size', String(fontSize));
+    }
+  }, [fontSize]);
+
+  useEffect(() => {
+    if (localStorage.getItem('lumora_font_family') !== fontFamily) {
+      localStorage.setItem('lumora_font_family', fontFamily);
+    }
+  }, [fontFamily]);
+
+  useEffect(() => {
+    if (localStorage.getItem('lumora_theme') !== currentTheme) {
+      localStorage.setItem('lumora_theme', currentTheme);
+    }
+  }, [currentTheme]);
+
+  useEffect(() => {
+    const val = JSON.stringify(poppedOutCategories);
+    if (localStorage.getItem('lumora_popped_out') !== val) {
+      localStorage.setItem('lumora_popped_out', val);
+    }
+  }, [poppedOutCategories]);
+
+  useEffect(() => {
+    const val = JSON.stringify(pinnedCategories);
+    if (localStorage.getItem('lumora_pinned_categories') !== val) {
+      localStorage.setItem('lumora_pinned_categories', val);
+    }
+  }, [pinnedCategories]);
+
+  useEffect(() => {
+    if (localStorage.getItem('lumora_filter_mode') !== filterMode) {
+      localStorage.setItem('lumora_filter_mode', filterMode);
+    }
+  }, [filterMode]);
+
+  useEffect(() => {
+    if (localStorage.getItem('lumora_filter_date') !== filterDate) {
+      localStorage.setItem('lumora_filter_date', filterDate);
+    }
+  }, [filterDate]);
 
   // ✨ Storage Event Listener and IPC listener for Cross-Window Sync
   useEffect(() => {
@@ -801,18 +1134,18 @@ const CodeTiara = () => {
 
   // ✨ Date Navigation Helpers
   const shiftFilterDate = (direction) => {
-    const d = new Date(filterDate);
+    const d = parseLocalDate(filterDate);
     const amount = direction === 'next' ? 1 : -1;
     if (filterMode === 'daily') d.setDate(d.getDate() + amount);
     else if (filterMode === 'weekly') d.setDate(d.getDate() + (amount * 7));
     else if (filterMode === 'monthly') d.setMonth(d.getMonth() + amount);
-    setFilterDate(d.toISOString().slice(0, 10));
+    setFilterDate(getLocalDateString(d));
   };
 
   const getFilterDisplayString = () => {
-    const d = new Date(filterDate);
+    const d = parseLocalDate(filterDate);
     if (filterMode === 'daily') {
-      const isToday = filterDate === new Date().toISOString().slice(0, 10);
+      const isToday = filterDate === getLocalDateString();
       return isToday ? '오늘' : `${d.getMonth() + 1}월 ${d.getDate()}일 (${['일', '월', '화', '수', '목', '금', '토'][d.getDay()]})`;
     }
     if (filterMode === 'weekly') {
@@ -858,10 +1191,10 @@ const CodeTiara = () => {
     
     if (!task.dueDate && (!task.recurrence || task.recurrence === 'none')) return false;
 
-    const baseDateStr = task.dueDate || new Date().toISOString().slice(0, 10);
-    const tDate = new Date(baseDateStr);
+    const baseDateStr = task.dueDate || getLocalDateString();
+    const tDate = parseLocalDate(baseDateStr);
     tDate.setHours(0, 0, 0, 0);
-    const refDate = new Date(filterDate);
+    const refDate = parseLocalDate(filterDate);
     refDate.setHours(0, 0, 0, 0);
 
     let checkStart = new Date(refDate);
@@ -903,14 +1236,14 @@ const CodeTiara = () => {
 
   const getRecurrenceHint = (dateStr, type) => {
     if (type !== 'monthly') return '';
-    const d = new Date(dateStr || new Date().toISOString().slice(0, 10));
+    const d = parseLocalDate(dateStr || getLocalDateString());
     if (type === 'monthly') return `(매월 ${d.getDate()}일)`;
     return '';
   };
 
   const renderDayPicker = (currentDays, setDays, referenceDateStr) => {
     const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
-    const defaultDay = new Date(referenceDateStr || new Date().toISOString().slice(0, 10)).getDay();
+    const defaultDay = parseLocalDate(referenceDateStr || getLocalDateString()).getDay();
     const activeDays = (currentDays && currentDays.length > 0) ? currentDays : [defaultDay];
 
     const toggleDay = (idx) => {
@@ -958,9 +1291,9 @@ const CodeTiara = () => {
 
   const calculateNextRecurrence = (dateStr, type, interval, days) => {
     if (!dateStr) {
-      dateStr = new Date().toISOString().slice(0, 10);
+      dateStr = getLocalDateString();
     }
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     if (type === 'daily') {
       date.setDate(date.getDate() + 1);
     } else if (type === 'weekly') {
@@ -1416,7 +1749,7 @@ const CodeTiara = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dashboard_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `dashboard_backup_${getLocalDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1569,6 +1902,28 @@ const CodeTiara = () => {
       }
     } catch (e) { console.error('IPC Error', e); }
   };
+
+  if (authLoading) {
+    const loaderTheme = THEME_CONFIG[currentTheme] || THEME_CONFIG.developer;
+    return (
+      <div className={`h-screen w-screen flex flex-col items-center justify-center ${loaderTheme.root} font-mono`}>
+        <div className="text-center space-y-4">
+          <div className={`w-8 h-8 border-4 border-dashed rounded-full animate-spin ${currentTheme === 'princess' ? 'border-[#FF6B81]' : (currentTheme === 'excel' ? 'border-[#107C41]' : 'border-[#61AFEF]')}`}></div>
+          <div className="text-xs opacity-75">AUTHENTICATING...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen 
+        currentTheme={currentTheme} 
+        onAuthSuccess={handleAuthSuccess} 
+        onThemeChange={setCurrentTheme}
+      />
+    );
+  }
 
   return (
       <div
@@ -1999,10 +2354,9 @@ const CodeTiara = () => {
             {/* Notification Dropdown (Compact) with Custom Scrollbar */}
 
             {/* Notification Dropdown (Compact) with Custom Scrollbar */}
-            {/* Notification Dropdown (Compact) with Custom Scrollbar */}
             {isNotifOpen && (
               <div ref={notifRef} className={`absolute z-50 overflow-hidden animate-in slide-in-from-top-2 
-                ${currentTheme === 'princess' ? 'top-10 right-4 w-64 max-w-[calc(100vw-2rem)]' : (currentTheme === 'developer' ? 'right-12 top-8 w-64' : 'right-2 top-7 w-64')} 
+                ${currentTheme === 'princess' ? 'top-10 right-4 w-64 max-w-[calc(100vw-2rem)]' : (currentTheme === 'developer' ? 'right-2 top-8 w-64 max-w-[calc(100vw-1rem)]' : 'right-2 top-7 w-64 max-w-[calc(100vw-1rem)]')} 
                 ${theme.notification.container}`}>
                 {/* 🎀 Princess Arrow */}
                 {currentTheme === 'princess' && <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white border-t-2 border-l-2 border-[#FFC0CB] rotate-45"></div>}
@@ -2122,6 +2476,12 @@ const CodeTiara = () => {
             isResetConfirming={isResetConfirming}
             getIcon={getIcon}
             openOnboardingGuide={() => sendIPC('open-popout', 'onboarding')}
+            user={user}
+            onSignOut={() => signOut(auth)}
+            onLoginClick={() => {
+              setIsAuthModalOpen(true);
+              setIsSettingsOpen(false);
+            }}
           />
 
 
@@ -2259,7 +2619,7 @@ const CodeTiara = () => {
                           value={filterMode}
                           onChange={(e) => {
                             setFilterMode(e.target.value);
-                            setFilterDate(new Date().toISOString().slice(0, 10));
+                            setFilterDate(getLocalDateString());
                           }}
                           className="bg-transparent outline-none cursor-pointer border-none font-bold text-slate-600"
                           title="기간 필터"
@@ -2310,7 +2670,7 @@ const CodeTiara = () => {
                             value={filterMode}
                             onChange={(e) => {
                               setFilterMode(e.target.value);
-                              setFilterDate(new Date().toISOString().slice(0, 10));
+                              setFilterDate(getLocalDateString());
                             }}
                             className={`outline-none cursor-pointer ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
                             title="보기 모드"
@@ -3166,6 +3526,27 @@ const CodeTiara = () => {
         )}
       </>
     )}
+        {isAuthModalOpen && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[9999] overflow-y-auto flex justify-center p-4">
+            <div className="relative w-full max-w-md my-auto flex-shrink-0">
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(false)}
+                className={`absolute top-3 right-3 p-1 hover:bg-slate-700/10 transition-colors z-[10000] border-0 bg-transparent cursor-pointer ${currentTheme === 'excel' ? 'text-black' : (currentTheme === 'developer' ? 'text-[#ABB2BF]' : 'text-[#FF6B81]')}`}
+                title="닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <AuthScreen 
+                currentTheme={currentTheme} 
+                onAuthSuccess={handleAuthSuccess} 
+                onThemeChange={setCurrentTheme}
+                isModal={true}
+              />
+            </div>
+          </div>
+        )}
       </div >
     </div >
   );

@@ -3,7 +3,7 @@ import {
     Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
-import { CATEGORY_HUES, hexToRgba } from '../constants';
+import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate } from '../constants';
 
 const getFontScaleMultiplier = (fontFamily) => {
     switch (fontFamily) {
@@ -40,14 +40,14 @@ const TaskItem = memo(({
 }) => {
     const getRecurrenceHint = (dateStr, type) => {
         if (type !== 'monthly') return '';
-        const d = new Date(dateStr || new Date().toISOString().slice(0, 10));
+        const d = parseLocalDate(dateStr || getLocalDateString());
         if (type === 'monthly') return `(매월 ${d.getDate()}일)`;
         return '';
     };
 
     const renderDayPicker = (currentDays, setDays, referenceDateStr) => {
         const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
-        const defaultDay = new Date(referenceDateStr || new Date().toISOString().slice(0, 10)).getDay();
+        const defaultDay = parseLocalDate(referenceDateStr || getLocalDateString()).getDay();
         const activeDays = (currentDays && currentDays.length > 0) ? currentDays : [defaultDay];
 
         const toggleDay = (idx) => {
@@ -92,7 +92,7 @@ const TaskItem = memo(({
         
         if (taskObj.recurrence === 'daily') return '매일';
         if (taskObj.recurrence === 'monthly') {
-            const d = new Date(taskObj.dueDate || new Date().toISOString().slice(0, 10));
+            const d = parseLocalDate(taskObj.dueDate || getLocalDateString());
             return `매월 ${d.getDate()}일`;
         }
         if (taskObj.recurrence === 'custom') return `${taskObj.recurrenceInterval || 1}일마다`;
@@ -102,7 +102,7 @@ const TaskItem = memo(({
                 const dayStrings = taskObj.recurrenceDays.map(d => daysArr[d]).join(', ');
                 return `매주 ${dayStrings}요일`;
             } else {
-                const d = new Date(taskObj.dueDate || new Date().toISOString().slice(0, 10));
+                const d = parseLocalDate(taskObj.dueDate || getLocalDateString());
                 return `매주 ${daysArr[d.getDay()]}요일`;
             }
         }
