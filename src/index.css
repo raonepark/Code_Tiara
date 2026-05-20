@@ -17,8 +17,9 @@ code {
         monospace;
 }
 
-/* 폰트 적용 (Gamja Flower) */
-@import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap');
+/* 폰트 적용 (Pretendard 및 Google Fonts) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Gaegu:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Nanum+Pen+Script&family=Jua&family=Dongle:wght@300;400;700&family=Single+Day&display=swap');
 
 /* Princess 테마 가짜 굵기(Faux Bold) 방지 및 커스텀 굵기 렌더링 */
 .theme-princess .font-bold {

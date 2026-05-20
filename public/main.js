@@ -56,6 +56,31 @@ function createWindow() {
         }
     });
 
+    // ✨ Fix: Track normal bounds to restore correctly when dragged from maximized state
+    let normalBounds = { width: 320, height: 560 };
+
+    mainWindow.on('resize', () => {
+        if (mainWindow && !mainWindow.isMaximized() && !mainWindow.isMinimized()) {
+            const bounds = mainWindow.getBounds();
+            // Only save if it's a normal size (not fullscreen/snapped bounds which are huge)
+            if (bounds.width < screen.getPrimaryDisplay().workAreaSize.width) {
+                normalBounds = { width: bounds.width, height: bounds.height };
+            }
+        }
+    });
+
+    mainWindow.on('unmaximize', () => {
+        if (mainWindow) {
+            const currentBounds = mainWindow.getBounds();
+            mainWindow.setBounds({
+                x: currentBounds.x,
+                y: currentBounds.y,
+                width: normalBounds.width,
+                height: normalBounds.height
+            });
+        }
+    });
+
     // ✨ IPC Handlers for Custom Title Bar
     ipcMain.on('minimize-window', () => {
         if (mainWindow) mainWindow.minimize();
@@ -119,6 +144,9 @@ function createWindow() {
 
         popoutWin.on('closed', () => {
             delete popoutWindows[categoryId];
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('popout-closed', categoryId);
+            }
         });
 
         const popoutUrl = isDev
@@ -148,10 +176,19 @@ function createWindow() {
         }
     });
 
+    // ✨ Toggle always-on-top for popout windows
+    ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
+        if (popoutWindows[categoryId]) {
+            popoutWindows[categoryId].setAlwaysOnTop(isPinned);
+        }
+    });
+
     // ✨ Auto-resize popout window based on content
     ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
         if (popoutWindows[categoryId]) {
-            popoutWindows[categoryId].setSize(width, height, true);
+            const w = Math.round(width) || 350;
+            const h = Math.round(height) || 450;
+            popoutWindows[categoryId].setSize(w, h, true);
         }
     });
 

@@ -5,11 +5,12 @@ import {
   Download, Upload, Timer, Pause, Play, ChevronUp, ChevronDown, Clock, Bell,
   Star, Coffee, Music, Home, Briefcase, Heart, Sun, Moon, Hourglass,
   PanelTopClose, PanelTopOpen, Edit2, Check, Grid2X2, Calendar, Minus, GripVertical, Menu, Gift,
-  ChevronLeft, ChevronRight, Repeat
+  ChevronLeft, ChevronRight, Repeat, Pin, PinOff
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
 import SettingsPanel from './components/SettingsPanel';
+import OnboardingPanel from './components/OnboardingPanel';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba } from './constants';
 import { THEME_CONFIG } from './constants/themeConfig';
@@ -124,7 +125,23 @@ const CodeTiara = () => {
 
   // --- 🔠 폰트 크기 State ---
   const [fontSize, setFontSize] = useState(() => {
-    return localStorage.getItem('lumora_font_size') || 'small';
+    const saved = localStorage.getItem('lumora_font_size');
+    if (!saved) return 14;
+    if (isNaN(saved)) {
+      switch (saved) {
+        case 'x-small': return 12;
+        case 'small': return 14;
+        case 'medium': return 16;
+        case 'large': return 18;
+        case 'x-large': return 22;
+        default: return 14;
+      }
+    }
+    return Number(saved);
+  });
+
+  const [fontFamily, setFontFamily] = useState(() => {
+    return localStorage.getItem('lumora_font_family') || 'default';
   });
 
   // --- 🎨 테마 설정 State ---
@@ -153,8 +170,22 @@ const CodeTiara = () => {
   const rootClassName = `h-screen w-screen theme-${currentTheme} ${theme.root} flex overflow-hidden`;
   const cardClassName = `w-full h-full ${theme.card} overflow-hidden flex flex-col relative transition-all`;
 
+  const getFontScaleMultiplier = (fontFamily) => {
+    switch (fontFamily) {
+      case 'Dongle':
+        return 1.45; // Dongle is exceptionally tiny
+      case 'Gaegu':
+        return 1.15; // Gaegu is slightly small
+      case 'Nanum Pen Script':
+        return 1.25; // Nanum Pen Script is handwritten and thin
+      default:
+        return 1.0;
+    }
+  };
+
   // 폰트 크기에 따른 텍스트 클래스 매핑
   const getTextSizeClass = (size) => {
+    if (typeof size === 'number') return '';
     switch (size) {
       case 'x-small': return 'text-xs';
       case 'small': return 'text-sm';
@@ -166,6 +197,7 @@ const CodeTiara = () => {
   };
 
   const getSubTextSizeClass = (size) => {
+    if (typeof size === 'number') return '';
     switch (size) {
       case 'x-small': return 'text-[10px]';
       case 'small': return 'text-[11px]';
@@ -224,11 +256,32 @@ const CodeTiara = () => {
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
-  // --- 🍅 포모도로 타이머 State ---
+  // --- 🍅 포모도로 타이머 State (동적 동기화 구현) ---
   const [isTimerOpen, setIsTimerOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(focusDuration * 60);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerMode, setTimerMode] = useState('focus');
+  const [timerMode, setTimerMode] = useState(() => {
+    return localStorage.getItem('lumora_timer_mode') || 'focus';
+  });
+  const [isTimerRunning, setIsTimerRunning] = useState(() => {
+    return localStorage.getItem('lumora_timer_running') === 'true';
+  });
+  const [isTimerPinned, setIsTimerPinned] = useState(() => {
+    return localStorage.getItem('lumora_timer_pinned') !== 'false';
+  });
+  const [timerTargetTime, setTimerTargetTime] = useState(() => {
+    return Number(localStorage.getItem('lumora_timer_target_time')) || 0;
+  });
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const running = localStorage.getItem('lumora_timer_running') === 'true';
+    if (running) {
+      const target = Number(localStorage.getItem('lumora_timer_target_time')) || 0;
+      return Math.max(0, Math.ceil((target - Date.now()) / 1000));
+    } else {
+      const savedTime = localStorage.getItem('lumora_timer_time_left');
+      if (savedTime !== null) return Number(savedTime);
+      const focus = Number(localStorage.getItem('lumora_focus_duration')) || 25;
+      return focus * 60;
+    }
+  });
 
   // --- 창 제목(Document Title) 업데이트 ---
   const [boardTitle, setBoardTitle] = useState(() => localStorage.getItem('lumora_title') || defaultTitle);
@@ -258,13 +311,14 @@ const CodeTiara = () => {
     localStorage.setItem('lumora_focus_duration', focusDuration);
     localStorage.setItem('lumora_break_duration', breakDuration);
     localStorage.setItem('lumora_font_size', fontSize);
+    localStorage.setItem('lumora_font_family', fontFamily);
     localStorage.setItem('lumora_theme', currentTheme); // ✨ 테마 저장
     localStorage.setItem('lumora_popped_out', JSON.stringify(poppedOutCategories));
     localStorage.setItem('lumora_filter_mode', filterMode);
     localStorage.setItem('lumora_filter_date', filterDate);
-  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, currentTheme, poppedOutCategories, filterMode, filterDate]);
+  }, [categories, tasks, projectTitle, focusDuration, breakDuration, fontSize, fontFamily, currentTheme, poppedOutCategories, filterMode, filterDate]);
 
-  // ✨ Storage Event Listener for Cross-Window Sync
+  // ✨ Storage Event Listener and IPC listener for Cross-Window Sync
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'lumora_tasks') {
@@ -275,14 +329,60 @@ const CodeTiara = () => {
         try { setPoppedOutCategories(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_theme') {
         if (e.newValue) setCurrentTheme(e.newValue);
+      } else if (e.key === 'lumora_font_size') {
+        if (e.newValue) setFontSize(Number(e.newValue));
+      } else if (e.key === 'lumora_font_family') {
+        if (e.newValue) setFontFamily(e.newValue);
       } else if (e.key === 'lumora_filter_mode') {
         if (e.newValue) setFilterMode(e.newValue);
       } else if (e.key === 'lumora_filter_date') {
         if (e.newValue) setFilterDate(e.newValue);
+      } else if (e.key === 'lumora_timer_mode') {
+        if (e.newValue) setTimerMode(e.newValue);
+      } else if (e.key === 'lumora_timer_running') {
+        setIsTimerRunning(e.newValue === 'true');
+      } else if (e.key === 'lumora_timer_target_time') {
+        setTimerTargetTime(Number(e.newValue) || 0);
+      } else if (e.key === 'lumora_timer_time_left') {
+        setTimeLeft(Number(e.newValue) || 0);
+      } else if (e.key === 'lumora_timer_pinned') {
+        setIsTimerPinned(e.newValue !== 'false');
+      } else if (e.key === 'lumora_focus_duration') {
+        if (e.newValue) setFocusDuration(Number(e.newValue) || 25);
+      } else if (e.key === 'lumora_break_duration') {
+        if (e.newValue) setBreakDuration(Number(e.newValue) || 5);
       }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    // ✨ Register IPC popout-closed listener
+    let ipc = null;
+    try {
+      if (window.require) {
+        ipc = window.require('electron').ipcRenderer;
+      } else if (window.electron && window.electron.ipcRenderer) {
+        ipc = window.electron.ipcRenderer;
+      }
+    } catch (e) {}
+
+    const handlePopoutClosed = (event, closedId) => {
+      setPoppedOutCategories(prev => {
+        const updated = prev.filter(id => id !== closedId);
+        localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+        return updated;
+      });
+    };
+
+    if (ipc) {
+      ipc.on('popout-closed', handlePopoutClosed);
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (ipc) {
+        ipc.removeListener('popout-closed', handlePopoutClosed);
+      }
+    };
   }, []);
 
   // --- 🔔 시스템 알림 권한 요청 ---
@@ -291,6 +391,27 @@ const CodeTiara = () => {
       Notification.requestPermission();
     }
   }, []);
+
+  // --- 📖 최초 실행 시 온보딩 설명서 자동 팝업 ---
+  useEffect(() => {
+    if (!popoutCategoryId) {
+      const onboardingCompleted = localStorage.getItem('lumora_onboarding_completed') === 'true';
+      if (!onboardingCompleted) {
+        const timer = setTimeout(() => {
+          sendIPC('open-popout', 'onboarding');
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [popoutCategoryId]);
+
+  // --- ⏱️ 타이머 항상 위에 고정 상태 변경 핸들러 ---
+  useEffect(() => {
+    localStorage.setItem('lumora_timer_pinned', isTimerPinned ? 'true' : 'false');
+    if (popoutCategoryId === 'timer') {
+      sendIPC('set-always-on-top', { categoryId: 'timer', isPinned: isTimerPinned });
+    }
+  }, [isTimerPinned, popoutCategoryId]);
 
   useEffect(() => {
     if (categories.length > 0 && !categories.find(c => c.id === selectedCategoryId)) {
@@ -310,6 +431,28 @@ const CodeTiara = () => {
     const updateSize = () => {
       // If we already set the initial size, do NOT run again!
       if (lastCalculatedHeightRef.current !== null) return;
+      
+      if (popoutCategoryId === 'timer') {
+        const targetWidth = 280;
+        const targetHeight = 115;
+        lastCalculatedHeightRef.current = targetHeight;
+        sendIPC('resize-popout-window', { categoryId: 'timer', width: targetWidth, height: targetHeight });
+        setTimeout(() => {
+          sendIPC('show-popout-window', { categoryId: 'timer' });
+        }, 50);
+        return;
+      }
+
+      if (popoutCategoryId === 'onboarding') {
+        const targetWidth = 340;
+        const targetHeight = 480;
+        lastCalculatedHeightRef.current = targetHeight;
+        sendIPC('resize-popout-window', { categoryId: 'onboarding', width: targetWidth, height: targetHeight });
+        setTimeout(() => {
+          sendIPC('show-popout-window', { categoryId: 'onboarding' });
+        }, 50);
+        return;
+      }
       
       const wrapper = document.getElementById('popout-content-wrapper');
       if (!wrapper) return;
@@ -335,12 +478,13 @@ const CodeTiara = () => {
          quickAddHeight = lastEl.offsetHeight;
       }
       
-      const naturalHeight = headerHeight + trueListHeight + quickAddHeight + 16;
+      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + 16);
       const targetHeight = Math.min(naturalHeight, 550);
+      const targetWidth = Math.round(window.innerWidth);
       
       // Mark that we have set the size once!
       lastCalculatedHeightRef.current = targetHeight;
-      sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: window.innerWidth, height: targetHeight });
+      sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
       
       // Delay slightly to ensure the window has been resized before making it visible
       setTimeout(() => {
@@ -366,7 +510,11 @@ const CodeTiara = () => {
     const durationsChanged = prev.focus !== focusDuration || prev.break !== breakDuration;
 
     if (!isTimerRunning && durationsChanged) {
-      setTimeLeft(timerMode === 'focus' ? focusDuration * 60 : breakDuration * 60);
+      const seconds = timerMode === 'focus' ? focusDuration * 60 : breakDuration * 60;
+      setTimeLeft(seconds);
+      localStorage.setItem('lumora_timer_time_left', String(seconds));
+      // Notify other windows of the time left update
+      window.dispatchEvent(new Event('storage'));
     }
     prevDurationsRef.current = { focus: focusDuration, break: breakDuration };
   }, [focusDuration, breakDuration, isTimerRunning, timerMode]);
@@ -444,49 +592,105 @@ const CodeTiara = () => {
   }, [tasks]);
 
 
-  // --- 타이머 로직 ---
+
+
+  // --- 타이머 로직 (동기화 기반) ---
   useEffect(() => {
     let interval = null;
-    if (isTimerRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isTimerRunning) {
-      setIsTimerRunning(false);
-      // 타이머 종료 시 알림
-      const title = timerMode === 'focus' ? '집중 시간 끝!' : '휴식 시간 끝!';
-      const msg = timerMode === 'focus' ? '수고했어! 이제 좀 쉬자.' : '자, 다시 집중해볼까?';
-      setNotifications(prev => [{
-        id: Date.now(),
-        title,
-        message: msg,
-        time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
-        read: false
-      }, ...prev]);
+    if (isTimerRunning) {
+      const updateTime = () => {
+        const target = Number(localStorage.getItem('lumora_timer_target_time')) || timerTargetTime;
+        const remaining = Math.max(0, Math.ceil((target - Date.now()) / 1000));
+        setTimeLeft(remaining);
+        
+        if (remaining === 0) {
+          setIsTimerRunning(false);
+          localStorage.setItem('lumora_timer_running', 'false');
+          
+          const notifiedTimestamp = Number(localStorage.getItem('lumora_timer_notified_timestamp')) || 0;
+          if (Math.abs(target - notifiedTimestamp) > 5000) {
+            localStorage.setItem('lumora_timer_notified_timestamp', String(target));
+            
+            const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
+            const title = mode === 'focus' ? '집중 시간 끝!' : '휴식 시간 끝!';
+            const msg = mode === 'focus' ? '수고했어! 이제 좀 쉬자.' : '자, 다시 집중해볼까?';
+            setNotifications(prev => [{
+              id: Date.now(),
+              title,
+              message: msg,
+              time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
+              read: false
+            }, ...prev]);
 
-      // 타이머 종료 시스템 알림
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification('Code Tiara', {
-          body: msg,
-          silent: false
-        });
-      }
+            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+              new Notification('Code Tiara', {
+                body: msg,
+                silent: false
+              });
+            }
+          }
+        }
+      };
+      
+      updateTime();
+      interval = setInterval(updateTime, 1000);
     }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, timeLeft, timerMode]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerRunning, timerTargetTime, timerMode]);
 
-  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
+  const toggleTimer = () => {
+    const newRunning = !isTimerRunning;
+    setIsTimerRunning(newRunning);
+    localStorage.setItem('lumora_timer_running', String(newRunning));
+    
+    if (newRunning) {
+      const target = Date.now() + timeLeft * 1000;
+      setTimerTargetTime(target);
+      localStorage.setItem('lumora_timer_target_time', String(target));
+    } else {
+      localStorage.setItem('lumora_timer_time_left', String(timeLeft));
+    }
+  };
 
   const resetTimer = () => {
     setIsTimerRunning(false);
-    setTimeLeft(timerMode === 'focus' ? focusDuration * 60 : breakDuration * 60);
+    localStorage.setItem('lumora_timer_running', 'false');
+    const duration = timerMode === 'focus' ? focusDuration : breakDuration;
+    const seconds = duration * 60;
+    setTimeLeft(seconds);
+    localStorage.setItem('lumora_timer_time_left', String(seconds));
   };
 
   const switchTimerMode = () => {
     const newMode = timerMode === 'focus' ? 'break' : 'focus';
     setTimerMode(newMode);
-    setTimeLeft(newMode === 'focus' ? focusDuration * 60 : breakDuration * 60);
+    localStorage.setItem('lumora_timer_mode', newMode);
+    
+    const duration = newMode === 'focus' ? focusDuration : breakDuration;
+    const seconds = duration * 60;
+    setTimeLeft(seconds);
+    localStorage.setItem('lumora_timer_time_left', String(seconds));
+    
     setIsTimerRunning(false);
+    localStorage.setItem('lumora_timer_running', 'false');
+  };
+
+  const handleTimerPopout = () => {
+    if (popoutCategoryId === 'timer') {
+      const updated = poppedOutCategories.filter(id => id !== 'timer');
+      setPoppedOutCategories(updated);
+      localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+      sendIPC('close-popout-by-id', 'timer');
+    } else {
+      if (!poppedOutCategories.includes('timer')) {
+        const updated = [...poppedOutCategories, 'timer'];
+        setPoppedOutCategories(updated);
+        localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+      }
+      sendIPC('open-popout', 'timer');
+    }
   };
 
   const formatTime = (seconds) => {
@@ -1233,7 +1437,6 @@ const CodeTiara = () => {
         case 'table': return <div className="text-sm">📊</div>;
         case 'book': return <div className="text-sm">📚</div>;
         case 'gift': return <div className="text-sm">🎁</div>;
-        case 'gift': return <div className="text-sm">🎁</div>;
         case 'zap': return <div className="text-lg">✨</div>;
         case 'code': return <div className="text-sm">📝</div>;
         case 'sun': return <div className="text-sm">☀️</div>;
@@ -1266,7 +1469,6 @@ const CodeTiara = () => {
       case 'hourglass': return <Hourglass className={className} />;
       case 'terminal': return <Laptop className={className} />;
       case 'table': return <Grid2X2 className={className} />;
-      case 'book': return <BookOpen className={className} />;
       case 'gift': return <Gift className={className} />;
       case 'calendar': return <Calendar className={className} />;
       default: return <Terminal className={className} />;
@@ -1298,6 +1500,35 @@ const CodeTiara = () => {
       {/* Custom Scrollbar Styles injected here 
       */}
       <style>{`
+        /* 글로벌 사용자 폰트 패밀리 지정 (폰트 미리보기 아이템 및 그 자식들은 예외 처리) */
+        ${fontFamily !== 'default' ? `
+          body, 
+          body *:not(.font-preview-item):not(.font-preview-item *), 
+          input:not(.font-preview-item), 
+          select:not(.font-preview-item), 
+          textarea:not(.font-preview-item), 
+          button:not(.font-preview-item) {
+            font-family: '${fontFamily}', sans-serif !important;
+          }
+        ` : ''}
+
+        /* 특정 폰트(동글, 개구, 나눔손글씨 펜)에 대한 전체 Tailwind font-size 스케일 보정 */
+        ${['Dongle', 'Gaegu', 'Nanum Pen Script'].includes(fontFamily) ? (() => {
+          const mult = fontFamily === 'Dongle' ? 1.45 : fontFamily === 'Nanum Pen Script' ? 1.25 : 1.15;
+          return `
+            .text-xs:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.75rem * ${mult}) !important; }
+            .text-sm:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.875rem * ${mult}) !important; }
+            .text-base:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1rem * ${mult}) !important; }
+            .text-lg:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.125rem * ${mult}) !important; }
+            .text-xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.25rem * ${mult}) !important; }
+            .text-2xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.5rem * ${mult}) !important; }
+            .text-3xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.875rem * ${mult}) !important; }
+            .text-4xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(2.25rem * ${mult}) !important; }
+            .text-\\[10px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(10px * ${mult}) !important; }
+            .text-\\[11px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(11px * ${mult}) !important; }
+          `;
+        })() : ''}
+
         /* 폰트 강제 적용 클래스 */
         .font-gamja {
           font-family: 'Gamja Flower', cursive !important;
@@ -1341,6 +1572,147 @@ const CodeTiara = () => {
 
       {/* Size Change: Full Window Mode & No Limits */}
       <div className={`${popoutCategoryId ? 'h-full flex flex-col' : `${cardClassName} h-full`}`}>
+        {popoutCategoryId === 'timer' ? (
+          <div 
+            className={`h-screen w-screen flex flex-col overflow-hidden transition-all duration-500 p-2
+              ${currentTheme === 'princess' 
+                ? 'bg-gradient-to-tr from-[#FFF5F7] to-[#FFF0F3] border-2 border-[#FFC0CB] rounded-3xl shadow-[0_8px_24px_rgba(255,182,193,0.35)]' 
+                : currentTheme === 'excel'
+                  ? 'bg-[#F3F2F1] border-2 border-[#0E6032] rounded-none shadow-md'
+                  : 'bg-[#181A1F] border border-[#282C34] rounded-lg shadow-[0_12px_24px_rgba(0,0,0,0.5)]'
+              }`}
+            style={{ WebkitAppRegion: 'drag' }}
+          >
+            {/* Header dragging area & Controls */}
+            <div className={`flex items-center justify-between shrink-0 mb-1 px-1.5 pt-1`} style={{ WebkitAppRegion: 'drag' }}>
+              <span className={`text-[10px] font-bold select-none flex items-center gap-1.5
+                ${currentTheme === 'princess' 
+                  ? 'text-[#FF6B81] font-gamja' 
+                  : currentTheme === 'excel' 
+                    ? 'text-[#217346] font-sans' 
+                    : 'text-[#ABB2BF] font-mono'
+                }`}
+              >
+                {currentTheme === 'princess' ? (
+                  <>🎀 포커스 타이머</>
+                ) : currentTheme === 'excel' ? (
+                  <>📊 FOCUS TIMER (Sheet1)</>
+                ) : (
+                  <><span className="text-[#98C379]">&gt;_</span> FOCUS_TIMER.sh</>
+                )}
+              </span>
+              <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' }}>
+                {/* 📌 Pin/Unpin Toggle Button */}
+                <button
+                  onClick={() => setIsTimerPinned(!isTimerPinned)}
+                  className={`p-1 transition-colors cursor-pointer flex items-center justify-center
+                    ${currentTheme === 'princess'
+                      ? 'rounded-full text-slate-400 hover:text-[#FF6B81] hover:bg-white/60'
+                      : currentTheme === 'excel'
+                        ? 'rounded-none text-slate-600 hover:bg-[#D1D5DB]'
+                        : 'rounded text-slate-400 hover:text-[#61AFEF] hover:bg-[#282C34]'
+                    }`}
+                  title={isTimerPinned ? "고정 해제" : "항상 위에 고정"}
+                >
+                  {isTimerPinned ? (
+                    <Pin className={`w-3.5 h-3.5 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : currentTheme === 'excel' ? 'text-[#107C41]' : 'text-[#61AFEF]'}`} />
+                  ) : (
+                    <PinOff className="w-3.5 h-3.5 opacity-60" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => {
+                    const updated = poppedOutCategories.filter(id => id !== 'timer');
+                    setPoppedOutCategories(updated);
+                    localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                    sendIPC('close-popout-by-id', 'timer');
+                  }}
+                  className={`p-1 transition-colors cursor-pointer flex items-center justify-center
+                    ${currentTheme === 'princess' 
+                      ? 'rounded-full text-slate-400 hover:text-[#FF6B81] hover:bg-white/60' 
+                      : currentTheme === 'excel'
+                        ? 'rounded-none text-slate-600 hover:bg-[#D1D5DB]'
+                        : 'rounded text-slate-400 hover:text-[#E06C75] hover:bg-[#282C34]'
+                    }`}
+                  title="메인 화면으로 복귀"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Timer Display & Main Controls */}
+            <div className={`flex-1 flex items-center justify-between px-3 border select-none
+              ${currentTheme === 'princess' 
+                ? 'bg-white/85 border-[1.5px] border-dashed border-[#FFC0CB] rounded-2xl shadow-inner' 
+                : currentTheme === 'excel'
+                  ? 'bg-white border border-[#D1D1D1] rounded-none'
+                  : 'bg-[#21252B] border border-[#282C34] rounded-md shadow-inner'
+              }`} style={{ WebkitAppRegion: 'no-drag' }}>
+              {/* Mode Tag */}
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold transition-all
+                ${currentTheme === 'developer'
+                  ? (timerMode === 'focus' ? 'text-[#E06C75] bg-[#E06C75]/10 border border-[#E06C75]/20 font-mono uppercase tracking-wider' : 'text-[#98C379] bg-[#98C379]/10 border border-[#98C379]/20 font-mono uppercase tracking-wider')
+                  : currentTheme === 'princess'
+                    ? (timerMode === 'focus' ? 'bg-[#FF6B81] text-white rounded-full px-2 shadow-sm font-gamja' : 'bg-[#FFEBEF] text-[#FF6B81] border border-[#FFCCD5] rounded-full px-2 shadow-sm font-gamja')
+                    : (timerMode === 'focus' ? 'bg-[#E6F2EA] text-[#107C41] border border-[#107C41]' : 'bg-[#F3F2F1] text-[#333333] border border-[#D1D5DB]')
+                }`}>
+                {timerMode === 'focus' ? '🔥 집중' : '☕ 휴식'}
+              </div>
+
+              {/* Time */}
+              <div className={`text-3xl tabular-nums tracking-widest leading-none font-bold
+                ${currentTheme === 'princess' 
+                  ? `${timerMode === 'focus' ? 'text-[#FF6B81]' : 'text-[#FF8DA1]'} font-gamja font-black` 
+                  : currentTheme === 'excel' 
+                    ? 'text-[#333333] font-sans' 
+                    : (timerMode === 'focus' 
+                        ? 'text-[#E06C75] font-mono drop-shadow-[0_0_6px_rgba(224,108,117,0.4)]' 
+                        : 'text-[#98C379] font-mono drop-shadow-[0_0_6px_rgba(152,195,121,0.4)]'
+                      )
+                }`}
+              >
+                {formatTime(timeLeft)}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={switchTimerMode} 
+                  className={`p-1 transition-colors flex items-center justify-center
+                    ${currentTheme === 'developer' 
+                      ? 'text-[#ABB2BF] hover:text-[#61AFEF] hover:bg-[#2C313A] border border-[#3E4451] rounded' 
+                      : currentTheme === 'princess' 
+                        ? 'text-[#FFB6C1] hover:text-[#FF6B81] hover:bg-[#FFF0F3] border border-[#FFE4E1] rounded-full' 
+                        : 'text-slate-600 hover:text-black hover:bg-[#F3F2F1] border border-[#D1D5DB] rounded-none'
+                    }`} 
+                  title="모드 전환"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  onClick={toggleTimer} 
+                  className={`p-1.5 transition-all flex items-center justify-center hover:scale-105 active:scale-95
+                    ${currentTheme === 'princess' 
+                      ? 'text-white bg-gradient-to-r from-[#FF6B81] to-[#FF8DA1] hover:from-[#FF5271] hover:to-[#FF6B81] shadow-[0_3px_8px_rgba(255,107,129,0.3)] rounded-full' 
+                      : currentTheme === 'excel' 
+                        ? 'text-white bg-[#107C41] hover:bg-[#0E6032] border border-[#107C41] rounded-none' 
+                        : 'text-[#21252B] bg-[#61AFEF] border border-[#61AFEF] hover:bg-[#4d97ff] hover:border-[#4d97ff] hover:shadow-[0_0_8px_rgba(97,175,239,0.5)] rounded'
+                    }`}
+                >
+                  {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : popoutCategoryId === 'onboarding' ? (
+          <OnboardingPanel
+            currentTheme={currentTheme}
+            theme={theme}
+            onClose={() => sendIPC('close-popout-by-id', 'onboarding')}
+          />
+        ) : (
+          <>
 
         {/* Terminal Header Bar */}
         {!popoutCategoryId && (
@@ -1542,28 +1914,69 @@ const CodeTiara = () => {
                 {/* 🎀 Princess Arrow */}
                 {currentTheme === 'princess' && <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white border-t-2 border-l-2 border-[#FFC0CB] rotate-45"></div>}
 
-                <div className={`px-3 py-2.5 flex justify-between items-center ${theme.notification.header}`}>
-                  <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs' : (currentTheme === 'developer' ? 'text-xs' : 'text-xs')}`}>알림 ({unreadCount})</span>
+                <div className={`px-3 py-2 flex justify-between items-center ${theme.notification.header}`}>
+                  <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs font-sans' : (currentTheme === 'developer' ? 'text-[10px] font-mono tracking-wider' : 'text-xs font-gamja')}`}>
+                    {currentTheme === 'developer' ? '// ACTIVE_ALERTS.log' : (currentTheme === 'princess' ? '🎀 새 소식' : '알림 내역')} ({unreadCount})
+                  </span>
                   {unreadCount > 0 && (
-                    <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-1 rounded transition-colors ${theme.notification.clearBtn}`}>지우기</button>
+                    <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-0.5 rounded transition-colors ${theme.notification.clearBtn}`}>
+                      {currentTheme === 'developer' ? 'clear()' : (currentTheme === 'princess' ? '모두 지우기' : '모두 삭제')}
+                    </button>
                   )}
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar">
                   {unreadCount === 0 ? (
-                    <p className={`p-4 text-center text-sm opacity-60 ${currentTheme === 'princess' ? 'text-[#F472B6] font-[Gaegu]' : 'text-inherit'}`}>알림이 없습니다 {currentTheme === 'princess' ? '🎀' : ''}</p>
+                    <p className={`p-4 text-center text-sm opacity-60 ${currentTheme === 'princess' ? 'text-[#F472B6] font-gamja font-bold' : 'text-inherit'}`}>알림이 없습니다 {currentTheme === 'princess' ? '🎀' : ''}</p>
                   ) : (
-                    notifications.map(n => (
-                      <div key={n.id} className={`p-3 border-b hover:bg-black/5 flex gap-3 items-start group transition-colors ${currentTheme === 'princess' ? 'border-[#FFC0CB] border-dashed' : 'border-inherit'}`}>
-                        <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 shadow-sm ${currentTheme === 'princess' ? 'bg-red-400 ring-2 ring-red-100' : 'bg-red-500'}`}></div>
-                        <div className="flex-1 space-y-1">
-                          <p className={`font-bold tracking-tight ${theme.notification.title}`}>{n.title} <span className={`font-normal ml-1 opacity-70 ${theme.notification.time}`}>{n.time}</span></p>
-                          <p className={`leading-snug ${theme.notification.message}`}>{n.message}</p>
+                    notifications.map(n => {
+                      if (currentTheme === 'developer') {
+                        return (
+                          <div key={n.id} className="p-2.5 border-b border-[#3E3E42] hover:bg-[#2C313C]/35 flex gap-2 items-start group transition-colors">
+                            <span className="text-[#98C379] mt-0.5 text-xs select-none">{'>'}</span>
+                            <div className="flex-1 font-mono text-[11px] leading-relaxed">
+                              <span className="text-[#5C6370]">{n.time}</span>{' '}
+                              <span className="text-[#61AFEF] font-bold">{n.title}</span>
+                              <p className="text-[#ABB2BF] mt-0.5 pl-3 border-l border-[#3E3E42]">{n.message}</p>
+                            </div>
+                            <button onClick={() => clearNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-[#5C6370] hover:text-[#E06C75]">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      }
+                      if (currentTheme === 'princess') {
+                        const isBreakNotif = n.title.includes('휴식');
+                        return (
+                          <div key={n.id} className="p-3 border-b border-[#FFC0CB]/30 border-dashed hover:bg-[#FFF5F8]/50 flex gap-2.5 items-start group transition-colors">
+                            <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ring-4 shadow-sm animate-pulse
+                              ${isBreakNotif ? 'bg-[#FF8DA1] ring-[#FFD1DC]' : 'bg-[#FF6B81] ring-[#FFD1DC]'}`}></div>
+                            <div className="flex-1 font-gamja text-sm space-y-0.5">
+                              <p className={`font-black tracking-wide flex items-center gap-1.5 ${isBreakNotif ? 'text-[#FF8DA1]' : 'text-[#FF6B81]'}`}>
+                                {n.title}
+                                <span className="text-[10px] text-pink-400 font-normal">{n.time}</span>
+                              </p>
+                              <p className="text-slate-600 font-bold text-xs">{n.message} 🧁</p>
+                            </div>
+                            <button onClick={() => clearNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-pink-300 hover:text-[#FF6B81]">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      }
+                      // Excel & Generic
+                      return (
+                        <div key={n.id} className="p-2.5 border-b border-[#E1E1E1] hover:bg-[#F3F2F1] flex gap-2.5 items-start group transition-colors">
+                          <div className="mt-1.5 w-1.5 h-1.5 rounded-none shrink-0 bg-[#107C41]"></div>
+                          <div className="flex-1 font-sans text-xs">
+                            <p className="font-bold text-[#107C41]">{n.title} <span className="text-[10px] text-slate-500 font-normal ml-1">{n.time}</span></p>
+                            <p className="text-[#333333] mt-0.5">{n.message}</p>
+                          </div>
+                          <button onClick={() => clearNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-slate-400 hover:text-red-600">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button onClick={() => clearNotification(n.id)} className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 ${theme.notification.closeBtn}`}>
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -1594,6 +2007,8 @@ const CodeTiara = () => {
             setBreakDuration={setBreakDuration}
             fontSize={fontSize}
             setFontSize={setFontSize}
+            fontFamily={fontFamily}
+            setFontFamily={setFontFamily}
             categories={categories}
             onDragEndCategories={onDragEndCategories}
             activePicker={activePicker}
@@ -1613,6 +2028,7 @@ const CodeTiara = () => {
             handleResetRequest={handleResetRequest}
             isResetConfirming={isResetConfirming}
             getIcon={getIcon}
+            openOnboardingGuide={() => sendIPC('open-popout', 'onboarding')}
           />
 
 
@@ -1624,77 +2040,108 @@ const CodeTiara = () => {
               <div className={`shrink-0 transition-all min-h-[58px] flex flex-col justify-center ${currentTheme === 'princess' ? 'bg-white px-6 py-2 border-b border-[#FFC0CB]/30' : 'px-4 pt-4 pb-2 border-b border-slate-800/50'}`}>
 
                 {isTimerOpen ? (
-                  /* ✨ Compact Timer UI (Replaces Date/Progress) */
-                  <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-300">
-                    {/* ✨ Excel Theme Timer: Active Cell Style */}
-                    {currentTheme === 'excel' ? (
-                      <div className="flex items-center gap-2 w-full">
-                        {/* Mode Indicator (Name Box Style) */}
-                        <div className="flex items-center justify-center bg-white border border-[#D1D5DB] h-[28px] px-2 min-w-[60px] shadow-sm inset-shadow">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${timerMode === 'focus' ? 'text-[#217346]' : 'text-slate-500'}`}>
-                            {timerMode === 'focus' ? 'Focus' : 'Break'}
-                          </span>
-                        </div>
-
-                        {/* Separator */}
-                        <div className="h-4 w-px bg-slate-300"></div>
-
-                        {/* Time Display (Active Cell Style) */}
-                        <div className="flex-1 flex items-center bg-white border-2 border-[#217346] h-[32px] px-3 shadow-sm relative">
-                          <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-[#217346]"></div> {/* Drag Handle */}
-                          <span className="text-xl font-mono font-bold tracking-widest text-slate-800 w-full text-right tabular-nums">
-                            {formatTime(timeLeft)}
-                          </span>
-                        </div>
-
-                        {/* Controls (Toolbar Style) */}
-                        <div className="flex items-center bg-[#F3F2F1] rounded border border-[#D1D1D1] h-[28px]">
-                          <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="Switch Mode">
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={toggleTimer} className={`p-1.5 hover:bg-[#E1E1E1] transition-colors border-r border-[#E1E1E1] ${isTimerRunning ? 'text-[#217346]' : 'text-slate-700'}`}>
-                            {isTimerRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                          </button>
-                          <button onClick={() => setIsTimerOpen(false)} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                  poppedOutCategories.includes('timer') ? (
+                    /* ⏱️ Popped Out Timer Placeholder */
+                    <div className="flex items-center justify-between w-full gap-2 animate-in fade-in slide-in-from-top-1 duration-300 select-none min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 select-none ${currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81]' : (currentTheme === 'excel' ? 'bg-[#107C41]/10 text-[#107C41]' : 'bg-[#E5C07B]/10 text-[#E5C07B]')}`}>
+                          POPOUT
+                        </span>
+                        <span className={`text-xs whitespace-nowrap truncate ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-400'}`}>
+                          ⏱️ 타이머 분리됨
+                        </span>
                       </div>
-                    ) : (
-                      /* Generic / Princess / Developer Timer */
-                      <>
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all
-                          ${currentTheme === 'developer'
-                            ? (timerMode === 'focus' ? 'text-[#E06C75] font-mono tracking-widest' : 'text-[#98C379] font-mono tracking-widest')
-                            : (timerMode === 'focus'
-                              ? (currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81] border border-[#FF6B81]/20' : 'bg-red-500 text-white')
-                              : (currentTheme === 'princess' ? 'bg-[#A0C4FF]/10 text-[#5B85AA] border border-[#A0C4FF]/20' : 'bg-green-500 text-white')
-                            )
-                          }`}>
-                          {currentTheme === 'developer'
-                            ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
-                            : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
-                          }
-                        </div>
+                      <button 
+                        onClick={() => {
+                          const updated = poppedOutCategories.filter(id => id !== 'timer');
+                          setPoppedOutCategories(updated);
+                          localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                          sendIPC('close-popout-by-id', 'timer');
+                        }}
+                        className={`text-xs px-2.5 py-1 whitespace-nowrap shrink-0 transition-colors font-bold ${currentTheme === 'princess' ? 'bg-[#FF6B81]/15 text-[#FF6B81] hover:bg-[#FF6B81]/25 rounded-full' : (currentTheme === 'excel' ? 'bg-[#107C41]/15 text-[#107C41] hover:bg-[#107C41]/25 rounded-none border border-[#107C41]/30' : 'bg-[#61AFEF]/15 text-[#61AFEF] hover:bg-[#61AFEF]/25 rounded')}`}
+                      >
+                        다시 부르기
+                      </button>
+                    </div>
+                  ) : (
+                    /* ✨ Compact Timer UI (Replaces Date/Progress) */
+                    <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-300">
+                      {/* ✨ Excel Theme Timer: Active Cell Style */}
+                      {currentTheme === 'excel' ? (
+                        <div className="flex items-center gap-2 w-full">
+                          {/* Mode Indicator (Name Box Style) */}
+                          <div className="flex items-center justify-center bg-white border border-[#D1D5DB] h-[28px] px-2 min-w-[60px] shadow-sm inset-shadow">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${timerMode === 'focus' ? 'text-[#217346]' : 'text-slate-500'}`}>
+                              {timerMode === 'focus' ? 'Focus' : 'Break'}
+                            </span>
+                          </div>
 
-                        <div className={`text-2xl tabular-nums tracking-widest ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'text-[#FF6B81]' : 'text-[#89CFF0]'} font-gamja font-medium` : 'text-slate-200 font-mono font-bold'}`}>
-                          {formatTime(timeLeft)}
-                        </div>
+                          {/* Separator */}
+                          <div className="h-4 w-px bg-slate-300"></div>
 
-                        <div className="flex items-center gap-2">
-                          <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`} title="모드 전환">
-                            <RotateCcw className="w-3 h-3" />
-                          </button>
-                          <button onClick={toggleTimer} className={`p-2 rounded-full transition-transform hover:scale-110 ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81]/10 text-[#FF6B81] hover:bg-[#FF6B81]/20' : 'bg-[#A0C4FF]/10 text-[#5B85AA] hover:bg-[#A0C4FF]/20'}` : (currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : 'bg-slate-700 text-slate-200')}`}>
-                            {isTimerRunning ? <Pause className="w-4 h-4 ml-px" /> : <Play className="w-4 h-4 ml-0.5" />}
-                          </button>
-                          <button onClick={() => setIsTimerOpen(false)} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`}>
-                            <X className="w-4 h-4" />
-                          </button>
+                          {/* Time Display (Active Cell Style) */}
+                          <div className="flex-1 flex items-center bg-white border-2 border-[#217346] h-[32px] px-3 shadow-sm relative">
+                            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-[#217346]"></div> {/* Drag Handle */}
+                            <span className="text-xl font-mono font-bold tracking-widest text-slate-800 w-full text-right tabular-nums">
+                              {formatTime(timeLeft)}
+                            </span>
+                          </div>
+
+                          {/* Controls (Toolbar Style) */}
+                          <div className="flex items-center bg-[#F3F2F1] rounded border border-[#D1D1D1] h-[28px]">
+                            <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="Switch Mode">
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={toggleTimer} className={`p-1.5 hover:bg-[#E1E1E1] transition-colors border-r border-[#E1E1E1] ${isTimerRunning ? 'text-[#217346]' : 'text-slate-700'}`}>
+                              {isTimerRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                            </button>
+                            <button onClick={handleTimerPopout} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="팝업으로 분리">
+                              <PanelTopOpen className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => setIsTimerOpen(false)} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
+                      ) : (
+                        /* Generic / Princess / Developer Timer */
+                        <>
+                          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all
+                            ${currentTheme === 'developer'
+                              ? (timerMode === 'focus' ? 'text-[#E06C75] font-mono tracking-widest' : 'text-[#98C379] font-mono tracking-widest')
+                              : (timerMode === 'focus'
+                                ? (currentTheme === 'princess' ? 'bg-[#FF6B81]/10 text-[#FF6B81] border border-[#FF6B81]/20' : 'bg-red-500 text-white')
+                                : (currentTheme === 'princess' ? 'bg-[#FFB6C1]/10 text-[#FF6B81] border border-[#FFB6C1]/20' : 'bg-green-500 text-white')
+                              )
+                            }`}>
+                            {currentTheme === 'developer'
+                              ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
+                              : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
+                            }
+                          </div>
+
+                          <div className={`text-2xl tabular-nums tracking-widest ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'text-[#FF6B81]' : 'text-[#FF8DA1]'} font-gamja font-medium` : 'text-slate-200 font-mono font-bold'}`}>
+                            {formatTime(timeLeft)}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title="모드 전환">
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={toggleTimer} className={`p-2 rounded-full transition-transform hover:scale-110 ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81]/10 text-[#FF6B81] hover:bg-[#FF6B81]/20' : 'bg-[#FFB6C1]/10 text-[#FF6B81] hover:bg-[#FFB6C1]/20'}` : (currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : 'bg-slate-700 text-slate-200')}`}>
+                              {isTimerRunning ? <Pause className="w-4 h-4 ml-px" /> : <Play className="w-4 h-4 ml-0.5" />}
+                            </button>
+                            <button onClick={handleTimerPopout} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title="팝업으로 분리">
+                              <PanelTopOpen className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => setIsTimerOpen(false)} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`}>
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
                 ) : (
                   /* ✨ Default: Date & Progress or Excel Formula Bar */
                   currentTheme === 'excel' ? (
@@ -1945,7 +2392,7 @@ const CodeTiara = () => {
                             placeholder="00" maxLength={2}
                             className={`w-5 bg-transparent text-center text-[10px] focus:outline-none ${currentTheme === 'princess' ? 'text-slate-600 placeholder:text-pink-300 font-bold text-xs' : ''}`}
                           />
-                          <button type="button" onClick={() => setTaskAmpm(prev => prev === '오전' ? '오후' : '오전')} className={`ml-1 px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors ${currentTheme === 'princess' ? (taskAmpm === '오전' ? 'bg-[#FF6B81] text-white' : 'bg-[#A0C4FF] text-white') : (currentTheme === 'excel' ? (taskAmpm === '오전' ? 'bg-[#217346] text-white' : 'bg-[#E2F0D9] text-[#217346]') : 'bg-slate-200 text-slate-600')}`}>
+                          <button type="button" onClick={() => setTaskAmpm(prev => prev === '오전' ? '오후' : '오전')} className={`ml-1 px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors ${currentTheme === 'princess' ? (taskAmpm === '오전' ? 'bg-[#FF6B81] text-white' : 'bg-[#FF8DA1] text-white') : (currentTheme === 'excel' ? (taskAmpm === '오전' ? 'bg-[#217346] text-white' : 'bg-[#E2F0D9] text-[#217346]') : 'bg-slate-200 text-slate-600')}`}>
                             {taskAmpm === '오전' ? 'AM' : 'PM'}
                           </button>
                         </div>
@@ -2071,7 +2518,16 @@ const CodeTiara = () => {
                           }}
                         >
                           {getIcon(category.icon, `${isMiniMode ? 'w-3 h-3' : 'w-4 h-4'} ${colorStyles.icon}`)}
-                          <h3 className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}>{category.label}</h3>
+                          <h3 
+                            className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}
+                            style={typeof fontSize === 'number' ? (() => {
+                              const mult = getFontScaleMultiplier(fontFamily);
+                              const base = isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : fontSize;
+                              return { fontSize: `${Math.round(base * mult)}px` };
+                            })() : {}}
+                          >
+                            {category.label}
+                          </h3>
                           <div className="flex items-center gap-2 ml-auto">
                             <span className={`${currentTheme === 'princess' ? (isMiniMode ? 'hidden' : 'inline') : (currentTheme === 'developer' || currentTheme === 'excel' ? 'hidden' : 'inline')}`} style={{ opacity: 0.3 }}>
                               {/* Line or Decoration */}
@@ -2177,6 +2633,7 @@ const CodeTiara = () => {
                                         theme={theme}
                                         isMiniMode={isMiniMode}
                                         fontSize={fontSize}
+                                        fontFamily={fontFamily}
                                         getTextSizeClass={getTextSizeClass}
                                         getSubTextSizeClass={getSubTextSizeClass}
                                         formatTimeDisplay={formatTimeDisplay}
@@ -2560,9 +3017,9 @@ const CodeTiara = () => {
               )
             }
           </>
-
-        )
-        }
+        )}
+      </>
+    )}
       </div >
     </div >
   );

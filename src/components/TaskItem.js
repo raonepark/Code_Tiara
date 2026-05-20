@@ -5,10 +5,23 @@ import {
 import CustomDatePicker from './CustomDatePicker';
 import { CATEGORY_HUES, hexToRgba } from '../constants';
 
+const getFontScaleMultiplier = (fontFamily) => {
+    switch (fontFamily) {
+        case 'Dongle':
+            return 1.45; // Dongle is exceptionally tiny
+        case 'Gaegu':
+            return 1.15; // Gaegu is slightly small
+        case 'Nanum Pen Script':
+            return 1.25; // Nanum Pen Script is handwritten and thin
+        default:
+            return 1.0;
+    }
+};
+
 const TaskItem = memo(({
     task, index, provided, snapshot,
     currentTheme, theme, isMiniMode,
-    fontSize,
+    fontSize, fontFamily,
     getTextSizeClass, getSubTextSizeClass, formatTimeDisplay,
     category, borderIdle, borderHover, CATEGORY_ICON_HUES,
     toggleTask,
@@ -149,6 +162,7 @@ const TaskItem = memo(({
                                 }}
                                 autoFocus
                                 className={`w-full bg-transparent focus:outline-none transition-all ${theme.task.editInputBg}`}
+                                style={typeof fontSize === 'number' ? { fontSize: `${Math.round(fontSize * getFontScaleMultiplier(fontFamily))}px` } : {}}
                                 placeholder={currentTheme === 'excel' ? '할 일을 수정하세요...' : "Edit task..."}
                             />
                         </div>
@@ -257,6 +271,11 @@ const TaskItem = memo(({
                                     ? 'text-xs'
                                     : getTextSizeClass(fontSize)}
                             ${task.completed ? theme.task.textDone : theme.task.textDefault}`}
+                            style={typeof fontSize === 'number' ? (() => {
+                                const mult = getFontScaleMultiplier(fontFamily);
+                                const base = isMiniMode ? Math.min(17, Math.max(11, fontSize - 2), fontSize) : fontSize;
+                                return { fontSize: `${Math.round(base * mult)}px` };
+                            })() : {}}
                         >
                             {task.text}
                         </span>
@@ -268,7 +287,13 @@ const TaskItem = memo(({
                                 } 
                                 ${(isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel'))
                                     ? 'text-[10px]'
-                                    : getSubTextSizeClass(fontSize)}`}>
+                                    : getSubTextSizeClass(fontSize)}`}
+                            style={typeof fontSize === 'number' ? (() => {
+                                const mult = getFontScaleMultiplier(fontFamily);
+                                const base = isMiniMode ? Math.min(14, Math.max(9, fontSize - 5), fontSize - 3) : Math.max(10, fontSize - 3);
+                                return { fontSize: `${Math.round(base * mult)}px` };
+                            })() : {}}
+                        >
                                 {(task.dueTime || task.dueDate) && (
                                     <>
                                         <Clock className="w-2.5 h-2.5" />

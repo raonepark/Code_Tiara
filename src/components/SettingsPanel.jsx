@@ -1,21 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2 } from 'lucide-react';
+import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
+
+const FONTS_LIST = [
+    { id: 'default', name: '테마 기본 폰트' },
+    { id: 'Pretendard', name: 'Pretendard (깔끔한 고딕)' },
+    { id: 'Gamja Flower', name: '감자꽃 (귀여운 손글씨)' },
+    { id: 'Gaegu', name: '개구 (몽글몽글체)' },
+    { id: 'Single Day', name: '싱글데이 (명랑한 글씨)' },
+    { id: 'Jua', name: '주아 (둥근 고딕)' },
+    { id: 'Dongle', name: '동글 (길쭉둥글)' },
+    { id: 'Nanum Gothic', name: '나눔고딕 (부드러운 고딕)' },
+    { id: 'Nanum Myeongjo', name: '나눔명조 (우아한 바탕)' },
+    { id: 'Nanum Pen Script', name: '나눔손글씨 펜 (흘림체)' }
+];
 
 const SettingsPanel = ({
     isOpen, onClose, currentTheme, setCurrentTheme, theme,
     projectTitle, setProjectTitle, defaultTitle,
     focusDuration, setFocusDuration, breakDuration, setBreakDuration,
-    fontSize, setFontSize, categories, onDragEndCategories,
+    fontSize, setFontSize, fontFamily, setFontFamily, categories, onDragEndCategories,
     activePicker, setActivePicker, updateCategory, addCategory,
     confirmingCategoryDeleteId, setConfirmingCategoryDeleteId,
     finalDeleteCategory, categoryToDelete, setCategoryToDelete,
     confirmDeleteCategory, exportData, triggerImport, fileInputRef,
-    importData, handleResetRequest, isResetConfirming, getIcon
+    importData, handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide
 }) => {
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
+    const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const nameInputRef = useRef(null);
 
     useEffect(() => {
@@ -24,6 +38,16 @@ const SettingsPanel = ({
             nameInputRef.current.select();
         }
     }, [isEditingName]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isFontDropdownOpen && !event.target.closest('.font-select-dropdown')) {
+                setIsFontDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isFontDropdownOpen]);
 
     if (!isOpen) return null;
 
@@ -165,20 +189,103 @@ const SettingsPanel = ({
                     </div>
 
                     {/* Font Size */}
-                    <div className={`pt-3 border-t ${theme.divider}`}>
-                        <div className={`text-xs mb-2 font-bold ml-1 ${theme.settings.sectionTitle}`}>
-                            텍스트 크기
+                    <div className={`pt-3 border-t ${theme.divider} mb-4`}>
+                        <div className="flex justify-between items-center mb-2 ml-1">
+                            <span className={`text-xs font-bold ${theme.settings.sectionTitle}`}>텍스트 크기</span>
+                            <span className={`text-xs font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-[#61AFEF]')}`}>{fontSize}px</span>
                         </div>
-                        <div className={`flex p-1 ${currentTheme === 'princess' ? 'bg-slate-100/50 border border-slate-200 rounded-full overflow-x-auto custom-scrollbar' : (currentTheme === 'excel' ? 'bg-slate-100/50 border border-slate-200 overflow-x-auto custom-scrollbar' : 'bg-slate-100/50 border border-slate-200 rounded-lg overflow-x-auto custom-scrollbar')}`}>
-                            {['x-small', 'small', 'medium', 'large', 'x-large'].map(size => (
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="range"
+                                min="10"
+                                max="28"
+                                value={fontSize}
+                                onChange={(e) => setFontSize(Number(e.target.value))}
+                                className={`flex-1 h-1.5 rounded-lg appearance-none cursor-pointer ${
+                                    currentTheme === 'princess' ? 'bg-[#FFD1DC] accent-[#FF6B81]' : 
+                                    currentTheme === 'excel' ? 'bg-[#E1E1E1] accent-[#217346]' : 
+                                    'bg-[#3E3E42] accent-[#61AFEF]'
+                                }`}
+                            />
+                        </div>
+                        {/* Quick Presets */}
+                        <div className="flex gap-1.5 mt-2 justify-between">
+                            {[12, 14, 16, 18, 22].map((size) => (
                                 <button
                                     key={size}
+                                    type="button"
                                     onClick={() => setFontSize(size)}
-                                    className={`flex-1 min-w-[45px] py-1.5 text-[10px] sm:text-xs transition-all font-bold duration-300 ${fontSize === size ? `${theme.accent.bg} ${theme.root.includes('text-[#ABB2BF]') ? 'text-[#282C34]' : 'text-white'} shadow-sm scale-105 ${theme.radius}` : `text-slate-400 hover:text-slate-600 hover:bg-black/5 ${theme.radius}`}`}
+                                    className={`flex-1 py-1 text-[10px] transition-all font-bold rounded-[8px] ${
+                                        fontSize === size
+                                            ? (currentTheme === 'princess' ? 'bg-[#FF6B81] text-white' : (currentTheme === 'excel' ? 'bg-[#217346] text-white' : 'bg-[#61AFEF] text-slate-900'))
+                                            : (currentTheme === 'princess' ? 'bg-white border border-[#FFD1DC] text-[#FFB6C1] hover:bg-[#FFF0F5]' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] text-slate-600 hover:bg-[#E1E1E1]' : 'bg-[#2D2D30] text-slate-400 hover:text-white'))
+                                    }`}
                                 >
-                                    {size === 'x-small' ? '초소형' : size === 'small' ? '작게' : size === 'medium' ? '보통' : size === 'large' ? '크게' : '초대형'}
+                                    {size === 12 ? '작게' : size === 14 ? '기본' : size === 16 ? '보통' : size === 18 ? '크게' : '아주크게'}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Font Family */}
+                    <div className={`pt-3 border-t ${theme.divider}`}>
+                        <div className={`text-xs mb-2 font-bold ml-1 ${theme.settings.sectionTitle}`}>
+                            글꼴 선택
+                        </div>
+                        <div className="relative font-select-dropdown">
+                            <button
+                                type="button"
+                                onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                                className={`w-full ${theme.settings.input} text-sm transition-all focus:outline-none flex justify-between items-center py-2 px-3 border border-pink-200/50 shadow-sm`}
+                                style={fontFamily !== 'default' ? { fontFamily: `'${fontFamily}', sans-serif` } : {}}
+                            >
+                                <span>{FONTS_LIST.find(f => f.id === fontFamily)?.name || '테마 기본 폰트'}</span>
+                                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isFontDropdownOpen ? 'rotate-180' : ''} ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-slate-400')}`} />
+                            </button>
+                            
+                            {isFontDropdownOpen && (
+                                <div 
+                                    className={`absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-xl border custom-scrollbar transition-all animate-in fade-in slide-in-from-top-2 duration-200 ${
+                                        currentTheme === 'princess' 
+                                            ? 'bg-white/95 backdrop-blur-md border-[#FFD1DC] rounded-[16px] text-slate-800' 
+                                            : (currentTheme === 'excel' 
+                                                ? 'bg-[#F3F2F1] border-[#D1D1D1] text-slate-800' 
+                                                : 'bg-[#252526] border-[#3E3E42] text-[#D4D4D4] rounded-lg')
+                                    }`}
+                                >
+                                    {FONTS_LIST.map(f => {
+                                        const isSelected = fontFamily === f.id;
+                                        let hoverClass = '';
+                                        if (currentTheme === 'princess') {
+                                            hoverClass = isSelected ? 'bg-[#FFE4E1] text-[#FF6B81]' : 'hover:bg-[#FFF0F5] text-slate-700';
+                                        } else if (currentTheme === 'excel') {
+                                            hoverClass = isSelected ? 'bg-[#E1DFDD] text-[#217346]' : 'hover:bg-[#EDEBE9] text-slate-700';
+                                        } else {
+                                            hoverClass = isSelected ? 'bg-[#007ACC] text-white' : 'hover:bg-[#2D2D30] text-[#ABB2BF]';
+                                        }
+
+                                        return (
+                                            <button
+                                                key={f.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFontFamily(f.id);
+                                                    setIsFontDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left py-2 px-3 text-xs sm:text-sm font-medium transition-colors flex flex-col gap-0.5 border-b last:border-b-0 font-preview-item ${
+                                                    currentTheme === 'princess' ? 'border-[#FFF0F5]' : (currentTheme === 'excel' ? 'border-[#E1E1E1]' : 'border-[#2D2D30]')
+                                                } ${hoverClass}`}
+                                                style={{ fontFamily: f.id === 'default' ? "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif" : `'${f.id}', sans-serif` }}
+                                            >
+                                                <span className="font-semibold">{f.name}</span>
+                                                <span className="text-[10px] opacity-60">
+                                                    {f.id === 'default' ? '나의 소중한 할 일들' : '가나다라마바사 abc 123'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -353,11 +460,18 @@ const SettingsPanel = ({
                 </div>
             </div>
 
-            {/* Reset Button */}
-            <div className="flex justify-center pt-4">
+            {/* Actions Footer */}
+            <div className={`flex flex-col sm:flex-row items-center justify-center gap-3 pt-6 border-t ${theme.divider} mt-6 max-w-md mx-auto`}>
+                <button
+                    onClick={openOnboardingGuide}
+                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    사용 설명서 다시 보기
+                </button>
                 <button
                     onClick={handleResetRequest}
-                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn}`}
+                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn} w-full sm:w-auto`}
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
                     {isResetConfirming ? '정말 초기화 할까요?' : '데이터 초기화'}

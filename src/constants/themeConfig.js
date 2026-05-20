@@ -156,21 +156,21 @@ export const THEME_CONFIG = {
             }
         },
         settings: {
-            bg: 'bg-white',
-            wrapper: 'w-full bg-white border-2 border-[#FFC0CB] rounded-[24px] shadow-sm p-3',
-            header: 'p-3 text-[#FF6B81] font-bold text-lg mb-4 tracking-widest',
-            input: 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] px-3 py-2 text-center text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#FF6B81] placeholder-[#FBCFE8]',
-            sectionTitle: 'text-[#F472B6]',
-            button: { default: 'bg-[#F472B6] text-white hover:bg-[#F472B6]/90 rounded-[24px] shadow-sm border-0' },
+            bg: 'bg-[#FFF5F8]',
+            wrapper: 'w-full bg-[#FFF5F8] border-2 border-[#FFD1DC] rounded-[24px] shadow-sm p-4 relative',
+            header: 'p-1 text-[#FF6B81] font-bold text-lg mb-3 flex items-center gap-2',
+            input: 'w-full bg-white border-2 border-[#FFE4E1] rounded-[20px] px-4 py-2.5 text-center text-[#FF6B81] font-bold focus:outline-none focus:border-[#FFB6C1] focus:ring-4 focus:ring-[#FFF0F5] transition-all placeholder-[#FFC0CB]/60 shadow-inner',
+            sectionTitle: 'text-[#FF8DA1] text-sm mb-2 flex items-center gap-1 font-bold',
+            button: { default: 'bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] text-white hover:shadow-[0_4px_15px_rgba(255,182,193,0.5)] hover:-translate-y-0.5 rounded-[20px] shadow-sm font-bold border-0 transition-all px-4 py-2' },
             listRow: {
-                wrapper: 'flex items-center gap-2 p-2 rounded-[20px] bg-[#FFF0F5] border border-[#FFC0CB]',
-                iconTrigger: 'bg-white rounded-full border border-[#FFC0CB] text-lg shadow-sm hover:scale-110 pt-1',
-                input: 'bg-white border border-[#FFC0CB] rounded-[15px] focus:ring-[#FF6B81]',
-                colorTrigger: 'rounded-full border-2 border-white shadow-sm',
-                deleteBtn: 'text-[#FF6B81] bg-[#FFF0F5] border border-[#FFC0CB] rounded-full hover:bg-[#FF6B81] hover:text-white'
+                wrapper: 'flex items-center gap-2 p-2.5 mb-2 rounded-[16px] bg-white border border-[#FFE4E1] shadow-sm hover:shadow-md transition-shadow',
+                iconTrigger: 'bg-[#FFF0F5] rounded-full border border-[#FFD1DC] text-lg shadow-sm hover:scale-110 pt-1 text-[#FF6B81]',
+                input: 'bg-transparent border-none focus:ring-0 text-[#FF6B81] font-bold placeholder-[#FFC0CB]',
+                colorTrigger: 'rounded-full border-[3px] border-white shadow-md',
+                deleteBtn: 'text-[#FFB6C1] bg-transparent hover:bg-[#FFF0F5] rounded-full hover:text-[#FF6B81] p-1.5'
             },
-            popup: "bg-white border border-[#FFC0CB] rounded-[15px] shadow-xl",
-            popover: 'bg-white border border-[#FFC0CB] rounded-[15px] shadow-xl'
+            popup: "bg-white border-2 border-[#FFD1DC] rounded-[20px] shadow-xl p-2",
+            popover: 'bg-white border-2 border-[#FFD1DC] rounded-[20px] shadow-xl p-2'
         },
         scrollbar: {
             track: 'rgba(255, 252, 253, 0)',
@@ -252,7 +252,7 @@ export const THEME_CONFIG = {
         themeBadge: 'bg-slate-100 text-slate-500',
         themeSelectorActive: 'bg-[#E6F2EA] border-2 border-[#107C41] text-[#107C41] rounded-none shadow-sm scale-105',
         themeSelectorInactive: 'bg-white border border-[#D1D5DB] text-[#217346] hover:border-[#107C41] hover:bg-[#F3F2F1] rounded-none shadow-sm',
-        divider: 'border-slate-700/50',
+        divider: 'border-[#E1E1E1]',
         root: 'bg-white text-[#000000] font-[Segoe_UI,Roboto,Helvetica,Arial,sans-serif]',
         windowBorder: '#0E6032',
         card: 'w-full h-full bg-white border-none rounded-none shadow-none flex flex-col',
