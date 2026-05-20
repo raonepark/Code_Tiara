@@ -198,6 +198,9 @@ const CodeTiara = () => {
   const [taskRecurrenceInterval, setTaskRecurrenceInterval] = useState(1);
   const [editingRecurrence, setEditingRecurrence] = useState('none');
   const [editingRecurrenceInterval, setEditingRecurrenceInterval] = useState(1);
+
+  // ✨ Auto-resize height tracking ref
+  const lastCalculatedHeightRef = useRef(null);
   const [taskRecurrenceDays, setTaskRecurrenceDays] = useState([]);
   const [editingRecurrenceDays, setEditingRecurrenceDays] = useState([]);
   const [filterMode, setFilterMode] = useState(() => {
@@ -295,28 +298,65 @@ const CodeTiara = () => {
     }
   }, [categories, selectedCategoryId]);
 
-  // ✨ Auto-resize popout window based on content
+  // ✨ Auto-resize popout window based on content ONCE when opened
+  // The user explicitly requested to NOT auto-resize afterwards to prevent jitter ("드르륵")
+  // and allow them to freely resize it manually.
   useEffect(() => {
+    // Reset the ref whenever the popout state changes
+    lastCalculatedHeightRef.current = null;
+    
     if (!popoutCategoryId) return;
     
-    let observer;
-    const timeoutId = setTimeout(() => {
-      const el = document.getElementById('popout-content-wrapper');
-      if (el) {
-        observer = new ResizeObserver((entries) => {
-          const height = entries[0].target.offsetHeight;
-          
-          // ✨ In popout mode, we remove all outer paddings and margins to completely eliminate invisible areas.
-          // Therefore, the exact height is just the offsetHeight.
-          sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: window.innerWidth, height: height });
-        });
-        observer.observe(el);
+    const updateSize = () => {
+      // If we already set the initial size, do NOT run again!
+      if (lastCalculatedHeightRef.current !== null) return;
+      
+      const wrapper = document.getElementById('popout-content-wrapper');
+      if (!wrapper) return;
+      
+      const headerEl = wrapper.firstElementChild;
+      const listEl = wrapper.querySelector('.custom-scrollbar');
+      if (!headerEl || !listEl) return;
+
+      const headerHeight = headerEl.offsetHeight;
+      let trueListHeight = 0;
+      const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
+      if (validChildren.length > 0) {
+          const first = validChildren[0];
+          const last = validChildren[validChildren.length - 1];
+          trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+          trueListHeight += 16; // Add container padding buffer
+      } else {
+          trueListHeight = 60; // Minimum height for empty list
+      }      
+      let quickAddHeight = 0;
+      const lastEl = wrapper.lastElementChild;
+      if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
+         quickAddHeight = lastEl.offsetHeight;
       }
-    }, 100);
+      
+      const naturalHeight = headerHeight + trueListHeight + quickAddHeight + 16;
+      const targetHeight = Math.min(naturalHeight, 550);
+      
+      // Mark that we have set the size once!
+      lastCalculatedHeightRef.current = targetHeight;
+      sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: window.innerWidth, height: targetHeight });
+      
+      // Delay slightly to ensure the window has been resized before making it visible
+      setTimeout(() => {
+          sendIPC('show-popout-window', { categoryId: popoutCategoryId });
+      }, 50);
+    };
+
+    // We only want to run this exactly ONCE after the content has rendered.
+    // We completely removed ResizeObserver because it was causing severe jitter ("드르륵")
+    // and random resizing when the user was just scrolling or interacting with the window.
+    const timeoutId = setTimeout(() => {
+      updateSize();
+    }, 200);
 
     return () => {
       clearTimeout(timeoutId);
-      if (observer) observer.disconnect();
     };
   }, [popoutCategoryId]);
 
@@ -1926,7 +1966,7 @@ const CodeTiara = () => {
               {/* Task Lists */}
               {/* Task Lists */}
               <DragDropContext onDragEnd={onDragEnd}>
-                <div className="space-y-3 flex-1">
+                <div className={popoutCategoryId ? "flex-1 flex flex-col" : "space-y-3 flex-1"}>
                   {(popoutCategoryId ? categories.filter(c => c.id === popoutCategoryId) : categories).map(category => {
                     const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
                     const categoryTasks = tasks.filter(t => t.categoryId === category.id && isTaskMatchingDateFilter(t));
@@ -2017,9 +2057,11 @@ const CodeTiara = () => {
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] m-0' : '')
-                            )} transition-all duration-300`}>
+                            )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden' : ''} transition-all duration-300`}
+                        style={popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}}
+                      >
                         <div
-                          className={`${theme.category.header} ${popoutCategoryId ? 'pt-2 pb-1.5' : ''}
+                          className={`${theme.category.header} ${popoutCategoryId ? 'pt-2 pb-1.5 shrink-0' : ''}
                             ${currentTheme === 'princess'
                               ? (isMiniMode ? 'bg-transparent border-none px-3 py-1.5 rounded-t-[15px]' : colorStyles.border + ' border-b-2 border-dashed mx-[6px] mt-[6px] rounded-t-[15px]') // ✨ Mini Mode: Compact Header with Rounded Top
                               : (currentTheme === 'developer' ? 'bg-black/10 border-inherit' : '')}`}
@@ -2114,7 +2156,7 @@ const CodeTiara = () => {
 
                             return (
                               <div
-                                className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'flex-1 overflow-y-auto custom-scrollbar' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                                 style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}

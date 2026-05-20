@@ -2,7 +2,7 @@ const electron = require('electron');
 console.log('Electron require type:', typeof electron);
 console.log('Electron require value:', electron);
 console.log('Versions:', process.versions);
-const { app, BrowserWindow, ipcMain, Tray, Menu } = electron;
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen } = electron;
 const path = require('path');
 
 // Basic dev detection
@@ -83,10 +83,24 @@ function createWindow() {
             popoutWindows[categoryId].focus();
             return;
         }
+        let spawnX, spawnY;
+        if (mainWindow && !mainWindow.isMinimized()) {
+            const bounds = mainWindow.getBounds();
+            const currentDisplay = screen.getDisplayMatching(bounds);
+            spawnX = bounds.x + bounds.width + 15; // 15px to the right
+            spawnY = bounds.y;
+            
+            // Prevent spawning off-screen on the right
+            if (spawnX + 320 > currentDisplay.workArea.x + currentDisplay.workArea.width) {
+                spawnX = bounds.x - 320 - 15; // spawn on the left instead
+            }
+        }
 
         const popoutWin = new BrowserWindow({
             width: 320,
             height: 400,
+            x: spawnX,
+            y: spawnY,
             useContentSize: true,
             webPreferences: {
                 nodeIntegration: true,
@@ -97,7 +111,8 @@ function createWindow() {
             transparent: true,
             backgroundColor: '#00000000',
             alwaysOnTop: true, // Always on top as requested
-            icon: path.join(__dirname, '../assets/icons/icon.ico')
+            icon: path.join(__dirname, '../assets/icons/icon.ico'),
+            show: false // ✨ Hide initially to prevent size flashing
         });
 
         popoutWindows[categoryId] = popoutWin;
@@ -136,7 +151,14 @@ function createWindow() {
     // ✨ Auto-resize popout window based on content
     ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
         if (popoutWindows[categoryId]) {
-            popoutWindows[categoryId].setContentSize(width, Math.ceil(height));
+            popoutWindows[categoryId].setSize(width, height, true);
+        }
+    });
+
+    // ✨ Show popout window after it has been resized
+    ipcMain.on('show-popout-window', (event, { categoryId }) => {
+        if (popoutWindows[categoryId]) {
+            popoutWindows[categoryId].show();
         }
     });
 }
