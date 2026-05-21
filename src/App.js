@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Trash2, Plus, CheckCircle2, Circle, Zap, Code, BookOpen, Laptop,
   Terminal, Command, Settings, X, Save, RotateCcw, AlertTriangle,
@@ -902,8 +902,17 @@ const CodeTiara = () => {
          quickAddHeight = lastEl.offsetHeight;
       }
       
-      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + 16);
-      const targetHeight = Math.min(naturalHeight, 550);
+      let buffer = 16;
+      if (currentTheme === 'developer') {
+        buffer = 24;
+      } else if (currentTheme === 'princess') {
+        buffer = 36;
+      } else if (currentTheme === 'excel') {
+        buffer = 24;
+      }
+      
+      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
+      const targetHeight = Math.min(naturalHeight, 640);
       const targetWidth = Math.round(window.innerWidth);
       
       // Mark that we have set the size once!
@@ -1617,66 +1626,68 @@ const CodeTiara = () => {
   const editFormRef = useRef(null); // ✨ Ref for Edit Task Form
   const notifRef = useRef(null); // ✨ Ref for Notifications
 
-  // ✨ Auto-resize popout window when Quick Add Form toggles
-  useEffect(() => {
+  // ✨ Helper function to trigger popout window resizing based on content height
+  const triggerPopoutResize = useCallback(() => {
     if (!popoutCategoryId || popoutCategoryId === 'timer' || popoutCategoryId === 'onboarding') return;
-
-    // We only run this if the initial size calculation has already occurred
     if (lastCalculatedHeightRef.current === null) return;
 
     const wrapper = document.getElementById('popout-content-wrapper');
     if (!wrapper) return;
 
-    const resizePopoutOnFormToggle = () => {
-      const headerEl = wrapper.firstElementChild;
-      const listEl = wrapper.querySelector('.custom-scrollbar');
-      if (!headerEl || !listEl) return;
+    const headerEl = wrapper.firstElementChild;
+    const listEl = wrapper.querySelector('.custom-scrollbar');
+    if (!headerEl || !listEl) return;
 
-      const headerHeight = headerEl.offsetHeight;
-      let trueListHeight = 0;
-      const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
-      if (validChildren.length > 0) {
-          const first = validChildren[0];
-          const last = validChildren[validChildren.length - 1];
-          trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
-          trueListHeight += 16; // Add container padding buffer
-      } else {
-          trueListHeight = 60; // Minimum height for empty list
+    const headerHeight = headerEl.offsetHeight;
+    let trueListHeight = 0;
+    const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
+    if (validChildren.length > 0) {
+        const first = validChildren[0];
+        const last = validChildren[validChildren.length - 1];
+        trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+        trueListHeight += 16; // Add container padding buffer
+    } else {
+        trueListHeight = 60; // Minimum height for empty list
+    }
+
+    let quickAddHeight = 0;
+    const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
+    if (isFormActive) {
+      const lastEl = wrapper.lastElementChild;
+      if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
+        quickAddHeight = lastEl.scrollHeight || lastEl.offsetHeight;
       }
+    }
 
-      let quickAddHeight = 0;
-      const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
-      if (isFormActive) {
-        const lastEl = wrapper.lastElementChild;
-        if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
-          quickAddHeight = lastEl.scrollHeight || lastEl.offsetHeight;
-        }
-      }
+    let buffer = 16;
+    if (currentTheme === 'developer') {
+      buffer = isFormActive ? 42 : 24;
+    } else if (currentTheme === 'princess') {
+      buffer = isFormActive ? 40 : 36;
+    } else if (currentTheme === 'excel') {
+      buffer = isFormActive ? 36 : 24;
+    }
 
-      let buffer = 16;
-      if (currentTheme === 'developer') {
-        buffer = isFormActive ? 42 : 16;
-      } else if (currentTheme === 'princess') {
-        buffer = isFormActive ? 26 : 8;
-      } else if (currentTheme === 'excel') {
-        buffer = isFormActive ? 30 : 8;
-      }
+    const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
+    const targetHeight = Math.min(naturalHeight, isFormActive ? 680 : 640);
+    const targetWidth = Math.round(window.innerWidth);
 
-      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
-      const targetHeight = Math.min(naturalHeight, isFormActive ? 600 : 550);
-      const targetWidth = Math.round(window.innerWidth);
+    lastCalculatedHeightRef.current = targetHeight;
+    sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
+  }, [popoutCategoryId, miniModeAdderId, currentTheme]);
 
-      lastCalculatedHeightRef.current = targetHeight;
-      sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
-    };
+  // ✨ Auto-resize popout window when Quick Add Form toggles or Task Edit toggles
+  useEffect(() => {
+    if (!popoutCategoryId || popoutCategoryId === 'timer' || popoutCategoryId === 'onboarding') return;
+    if (lastCalculatedHeightRef.current === null) return;
 
     // Delay slightly to allow React to update the DOM classes
     const timeoutId = setTimeout(() => {
-      resizePopoutOnFormToggle();
+      triggerPopoutResize();
     }, 80);
 
     return () => clearTimeout(timeoutId);
-  }, [miniModeAdderId, popoutCategoryId]);
+  }, [miniModeAdderId, popoutCategoryId, editingTaskId, triggerPopoutResize]);
 
   // ✨ Click Outside to Close Quick Add Form
   useEffect(() => {
@@ -3213,6 +3224,7 @@ const CodeTiara = () => {
                                   <Draggable key={task.id} draggableId={String(task.id)} index={index}>
                                     {(provided, snapshot) => (
                                       <TaskItem
+                                        triggerPopoutResize={triggerPopoutResize}
                                         task={task}
                                         index={index}
                                         provided={provided}

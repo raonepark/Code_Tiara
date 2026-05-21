@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import {
     Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText
 } from 'lucide-react';
@@ -83,9 +83,20 @@ const TaskItem = memo(({
     notifications,
     editFormRef,
     editingMemo,
-    setEditingMemo
+    setEditingMemo,
+    triggerPopoutResize
 }) => {
     const [isMemoExpanded, setIsMemoExpanded] = useState(false);
+
+    useEffect(() => {
+        if (triggerPopoutResize) {
+            // Delay slightly to ensure DOM has updated and transitioned
+            const timer = setTimeout(() => {
+                triggerPopoutResize();
+            }, 60);
+            return () => clearTimeout(timer);
+        }
+    }, [isMemoExpanded, triggerPopoutResize]);
 
     const getRecurrenceHint = (dateStr, type) => {
         if (type !== 'monthly') return '';
@@ -406,7 +417,7 @@ const TaskItem = memo(({
                                                 ? 'text-[var(--c-dark)] opacity-70 bg-[var(--c-bg)] border border-[var(--c-light-rgb)] px-2 py-0.5 rounded-full w-fit max-w-[90%]'
                                                 : (currentTheme === 'excel'
                                                     ? 'text-[#217346] font-semibold bg-[#E1F5FE] border border-[#B3E5FC] px-1.5 py-0.5 w-fit max-w-[95%] rounded'
-                                                    : 'text-[#5C6370] font-mono opacity-80 border border-[#3E3E42] bg-[#2D2D30] px-1.5 py-0.5 w-fit max-w-[95%] rounded-sm')
+                                                    : 'text-[#ABB2BF] font-mono opacity-90 border border-[#3E3E42] bg-[#21252B] px-1.5 py-0.5 w-fit max-w-[95%] rounded-sm hover:text-[#61AFEF] hover:border-[#61AFEF] transition-colors')
                                             }`}
                                     >
                                         <FileText className="w-2.5 h-2.5 flex-shrink-0" />
@@ -417,7 +428,7 @@ const TaskItem = memo(({
                                     <div 
                                         className={`p-2.5 text-xs shadow-inner cursor-pointer select-text transition-all duration-200
                                             ${currentTheme === 'princess'
-                                                ? 'bg-gradient-to-br from-[var(--c-bg)] to-white border border-dashed border-[var(--c-light)] text-slate-700 font-medium rounded-2xl whitespace-pre-wrap font-sans leading-relaxed'
+                                                ? 'bg-gradient-to-br from-[var(--c-bg)] to-white border border-dashed border-[var(--c-light)] text-slate-700 font-medium rounded-2xl whitespace-pre-wrap leading-relaxed'
                                                 : (currentTheme === 'excel'
                                                     ? 'bg-[#FFF8E1] border border-[#FFE082] text-slate-700 font-sans whitespace-pre-wrap leading-normal shadow-sm relative before:content-[\'\'] before:absolute before:top-0 before:right-0 before:border-[6px] before:border-t-[#FFE082] before:border-r-[#FFE082] before:border-b-transparent before:border-l-transparent'
                                                     : 'bg-[#1E1E1E] border-l-2 border-l-[#007ACC] border border-[#3E3E42] text-[#ABB2BF] font-mono text-[11px] whitespace-pre-wrap leading-normal rounded-sm')
