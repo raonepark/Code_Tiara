@@ -182,13 +182,13 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
               )}
 
               {!isSignUp && (
-                <div className="flex justify-between items-center px-2 mt-2">
-                  <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none">
-                    <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
+                <div className="flex justify-between items-center px-2 mt-2 gap-2">
+                  <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
+                    <input type="checkbox" className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
                     Remember me
                   </label>
-                  <button type="button" className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors">
-                    Forget password ?
+                  <button type="button" className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap">
+                    Forget password?
                   </button>
                 </div>
               )}

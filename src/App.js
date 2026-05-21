@@ -736,18 +736,19 @@ const CodeTiara = () => {
     }
   }, []);
 
-  // --- 📖 최초 실행 시 온보딩 설명서 자동 팝업 ---
+  // --- 📖 로그인/게스트 접속 후 최초 1회만 온보딩 설명서 자동 팝업 ---
   useEffect(() => {
-    if (!popoutCategoryId) {
-      const onboardingCompleted = localStorage.getItem('lumora_onboarding_completed') === 'true';
-      if (!onboardingCompleted) {
-        const timer = setTimeout(() => {
-          sendIPC('open-popout', 'onboarding');
-        }, 1200);
-        return () => clearTimeout(timer);
-      }
+    // 팝아웃 창이거나, 유저 미로그인이거나, 초기 데이터 로드 미완료 시 실행 안 함
+    if (popoutCategoryId || !user || !isInitialLoadComplete) return;
+
+    const onboardingCompleted = localStorage.getItem('lumora_onboarding_completed') === 'true';
+    if (!onboardingCompleted) {
+      const timer = setTimeout(() => {
+        sendIPC('open-popout', 'onboarding');
+      }, 1200);
+      return () => clearTimeout(timer);
     }
-  }, [popoutCategoryId]);
+  }, [user, isInitialLoadComplete, popoutCategoryId]);
 
   // --- ⏱️ 타이머 항상 위에 고정 상태 변경 핸들러 ---
   useEffect(() => {
