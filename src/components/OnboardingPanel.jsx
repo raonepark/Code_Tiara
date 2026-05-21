@@ -64,14 +64,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-3">
           <div className="grid grid-cols-3 gap-2 w-full px-4">
-            <div className="p-2 rounded border border-[#FFC0CB] bg-[#FFF0F5] text-[10px] font-bold text-[#FF6B81]">
-              👑 Princess
+            <div className="py-2 px-1 rounded border border-[#FFC0CB] bg-[#FFF0F5] text-[10px] font-bold text-[#FF6B81] flex items-center justify-center gap-1 whitespace-nowrap">
+              <span>👑</span><span>Princess</span>
             </div>
-            <div className="p-2 rounded border border-[#D1D5DB] bg-[#F3F2F1] text-[10px] font-bold text-[#217346]">
-              📊 Excel
+            <div className="py-2 px-1 rounded border border-[#D1D5DB] bg-[#F3F2F1] text-[10px] font-bold text-[#217346] flex items-center justify-center gap-1 whitespace-nowrap">
+              <span>📊</span><span>Excel</span>
             </div>
-            <div className="p-2 rounded border border-[#3E3E42] bg-[#282C34] text-[10px] font-bold text-[#61AFEF] font-mono">
-              💻 Developer
+            <div className="py-2 px-1 rounded border border-[#3E3E42] bg-[#282C34] text-[10px] font-bold text-[#61AFEF] font-mono flex items-center justify-center gap-1 whitespace-nowrap">
+              <span>💻</span><span>Developer</span>
             </div>
           </div>
           <p className="text-sm leading-relaxed px-3 opacity-90">

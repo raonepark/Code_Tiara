@@ -102,6 +102,31 @@ function createWindow() {
         }
     });
 
+    // ✨ IPC Handlers for Cross-Window Storage Synchronization
+    ipcMain.on('storage-changed', (event, data) => {
+        const senderWebContents = event.sender;
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents !== senderWebContents) {
+            mainWindow.webContents.send('storage-changed', data);
+        }
+        Object.values(popoutWindows).forEach((popWin) => {
+            if (popWin && !popWin.isDestroyed() && popWin.webContents !== senderWebContents) {
+                popWin.webContents.send('storage-changed', data);
+            }
+        });
+    });
+
+    ipcMain.on('storage-clear', (event) => {
+        const senderWebContents = event.sender;
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents !== senderWebContents) {
+            mainWindow.webContents.send('storage-clear');
+        }
+        Object.values(popoutWindows).forEach((popWin) => {
+            if (popWin && !popWin.isDestroyed() && popWin.webContents !== senderWebContents) {
+                popWin.webContents.send('storage-clear');
+            }
+        });
+    });
+
     // ✨ IPC Handler for Pop-out Windows
     ipcMain.on('open-popout', (event, arg) => {
         let categoryId;
@@ -242,8 +267,8 @@ if (!gotTheLock) {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
         // Someone tried to run a second instance, we should focus our window.
         if (mainWindow) {
+            mainWindow.show(); // Unconditionally show to ensure hidden state is bypassed
             if (mainWindow.isMinimized()) mainWindow.restore();
-            if (!mainWindow.isVisible()) mainWindow.show();
             mainWindow.focus();
         }
     });

@@ -191,20 +191,62 @@ const CodeTiara = () => {
   const rootClassName = `h-screen w-screen theme-${currentTheme} ${theme.root} flex overflow-hidden`;
   const cardClassName = `w-full h-full ${theme.card} overflow-hidden flex flex-col relative transition-all`;
 
-  const getFontScaleMultiplier = (fontFamily, themeId) => {
+  const getFontScaleMultiplier = (fontFamily, themeId, size) => {
+    let baseScale = 1.0;
     if (fontFamily === 'Gamja Flower' || (fontFamily === 'default' && themeId === 'princess')) {
-      return 1.2; // Gamja Flower is handwritten and a bit small
+      baseScale = 1.2; // Gamja Flower is handwritten and a bit small
+    } else {
+      switch (fontFamily) {
+        case 'Dongle':
+          baseScale = 1.45; // Dongle is exceptionally tiny
+          break;
+        case 'Gaegu':
+          baseScale = 1.15; // Gaegu is slightly small
+          break;
+        case 'Nanum Pen Script':
+          baseScale = 1.25; // Nanum Pen Script is handwritten and thin
+          break;
+        default:
+          baseScale = 1.0;
+      }
     }
-    switch (fontFamily) {
-      case 'Dongle':
-        return 1.45; // Dongle is exceptionally tiny
-      case 'Gaegu':
-        return 1.15; // Gaegu is slightly small
-      case 'Nanum Pen Script':
-        return 1.25; // Nanum Pen Script is handwritten and thin
-      default:
-        return 1.0;
+
+    if (baseScale === 1.0) return 1.0;
+
+    // Taper factor based on size/class to avoid oversized header fonts
+    let factor = 1.0;
+    if (typeof size === 'number') {
+      if (size <= 12) factor = 1.0;
+      else if (size <= 14) factor = 0.8;
+      else if (size <= 16) factor = 0.6;
+      else if (size <= 18) factor = 0.4;
+      else if (size <= 22) factor = 0.2;
+      else factor = 0.1;
+    } else if (typeof size === 'string') {
+      switch (size) {
+        case 'text-[10px]':
+        case 'text-[11px]':
+        case 'text-xs':
+          factor = 1.0;
+          break;
+        case 'text-sm':
+          factor = 0.8;
+          break;
+        case 'text-base':
+          factor = 0.6;
+          break;
+        case 'text-lg':
+          factor = 0.4;
+          break;
+        case 'text-xl':
+          factor = 0.2;
+          break;
+        default:
+          factor = 0.1;
+      }
     }
+
+    return 1 + (baseScale - 1) * factor;
   };
 
   // 폰트 크기에 따른 텍스트 클래스 매핑
@@ -235,12 +277,14 @@ const CodeTiara = () => {
   // --- ✏️ 수정 모드 State ---
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState('');
+  const [editingMemo, setEditingMemo] = useState('');
   const [editingDate, setEditingDate] = useState(''); // ✨ 수정 모드 날짜
   const [editingHour, setEditingHour] = useState('');
   const [editingMinute, setEditingMinute] = useState('');
   const [editingAmpm, setEditingAmpm] = useState('오전');
 
   const [newTaskText, setNewTaskText] = useState('');
+  const [newTaskMemo, setNewTaskMemo] = useState('');
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState(null); // ✨ Inline Delete Confirmation State // ✨ 삭제 확인 모달 State
   const [confirmingCategoryDeleteId, setConfirmingCategoryDeleteId] = useState(null); // ✨ Inline Category Delete State
@@ -1099,7 +1143,8 @@ const CodeTiara = () => {
       alerted: false,
       recurrence: taskRecurrence, // ✨ 반복
       recurrenceInterval: taskRecurrenceInterval,
-      recurrenceDays: taskRecurrenceDays
+      recurrenceDays: taskRecurrenceDays,
+      memo: newTaskMemo // ✨ 상세 메모 저장
     };
     
     setTasks(prevTasks => {
@@ -1120,6 +1165,7 @@ const CodeTiara = () => {
     });
 
     setNewTaskText('');
+    setNewTaskMemo(''); // ✨ 초기화
     setTaskDate(''); // ✨ 초기화
     setTaskHour('');
     setTaskMinute('');
@@ -1427,6 +1473,7 @@ const CodeTiara = () => {
   const startEditing = (task) => {
     setEditingTaskId(task.id);
     setEditingText(task.text);
+    setEditingMemo(task.memo || ''); // ✨ 메모 로드
     setEditingDate(task.dueDate || ''); // ✨ 날짜 로드
     setEditingRecurrence(task.recurrence || 'none');
     setEditingRecurrenceInterval(task.recurrenceInterval || 1);
@@ -1451,6 +1498,7 @@ const CodeTiara = () => {
   const cancelEditing = () => {
     setEditingTaskId(null);
     setEditingText('');
+    setEditingMemo(''); // ✨ 초기화
     setEditingDate(''); // ✨ 초기화
     setEditingHour('');
     setEditingMinute('');
@@ -1469,6 +1517,7 @@ const CodeTiara = () => {
     setTasks(tasks.map(t => t.id === id ? {
       ...t,
       text: editingText,
+      memo: editingMemo, // ✨ 메모 저장
       dueDate: editingDate, // ✨ 날짜 저장
       dueTime: finalDueTime,
       alerted: false, // 시간 수정 시 알림 리셋
@@ -1976,21 +2025,21 @@ const CodeTiara = () => {
           }
         ` : ''}
 
-        /* 특정 폰트(동글, 개구, 나눔손글씨 펜, 감자꽃)에 대한 전체 Tailwind font-size 스케일 보정 */
+        /* 특정 폰트(동글, 개구, 나눔손글씨 펜, 감자꽃)에 대한 전체 Tailwind font-size 스케일 보정 (개별 테이퍼링 적용) */
         ${( ['Dongle', 'Gaegu', 'Nanum Pen Script', 'Gamja Flower'].includes(fontFamily) || (fontFamily === 'default' && currentTheme === 'princess') ) ? (() => {
           const actualFont = fontFamily === 'default' && currentTheme === 'princess' ? 'Gamja Flower' : fontFamily;
-          const mult = actualFont === 'Dongle' ? 1.45 : actualFont === 'Nanum Pen Script' ? 1.25 : actualFont === 'Gamja Flower' ? 1.2 : 1.15;
+          const getScaleForClass = (cls) => getFontScaleMultiplier(actualFont, currentTheme, cls);
           return `
-            .text-xs:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.75rem * ${mult}) !important; }
-            .text-sm:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.875rem * ${mult}) !important; }
-            .text-base:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1rem * ${mult}) !important; }
-            .text-lg:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.125rem * ${mult}) !important; }
-            .text-xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.25rem * ${mult}) !important; }
-            .text-2xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.5rem * ${mult}) !important; }
-            .text-3xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.875rem * ${mult}) !important; }
-            .text-4xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(2.25rem * ${mult}) !important; }
-            .text-\\[10px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(10px * ${mult}) !important; }
-            .text-\\[11px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(11px * ${mult}) !important; }
+            .text-xs:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.75rem * ${getScaleForClass('text-xs')}); }
+            .text-sm:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.875rem * ${getScaleForClass('text-sm')}); }
+            .text-base:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1rem * ${getScaleForClass('text-base')}); }
+            .text-lg:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.125rem * ${getScaleForClass('text-lg')}); }
+            .text-xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.25rem * ${getScaleForClass('text-xl')}); }
+            .text-2xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.5rem * ${getScaleForClass('text-2xl')}); }
+            .text-3xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(1.875rem * ${getScaleForClass('text-3xl')}); }
+            .text-4xl:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(2.25rem * ${getScaleForClass('text-4xl')}); }
+            .text-\\[10px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(10px * ${getScaleForClass('text-[10px]')}); }
+            .text-\\[11px\\]:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(11px * ${getScaleForClass('text-[11px]')}); }
           `;
         })() : ''}
 
@@ -3007,8 +3056,8 @@ const CodeTiara = () => {
                           <h3 
                             className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}
                             style={typeof fontSize === 'number' ? (() => {
-                              const mult = getFontScaleMultiplier(fontFamily, currentTheme);
-                              const base = isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : fontSize;
+                              const base = isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : (currentTheme === 'princess' ? fontSize + 1 : fontSize);
+                              const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                               return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
                           >
@@ -3153,7 +3202,11 @@ const CodeTiara = () => {
                                 style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}
                               >
                                 {categoryTasks.length === 0 && !snapshot.isDraggingOver && miniModeAdderId !== category.id && (
-                                  <p className={`text-[10px] italic p-1.5 py-4 opacity-50 text-center ${currentTheme === 'princess' ? 'text-[#D8A0A6]' : 'text-slate-600'}`}>비어 있음</p>
+                                  <p className={`text-[10px] italic p-1.5 py-4 text-center ${
+                                    currentTheme === 'princess' 
+                                      ? 'text-[#D8A0A6] opacity-50' 
+                                      : (currentTheme === 'developer' ? 'text-[#ABB2BF] opacity-50' : 'text-slate-500 opacity-60')
+                                  }`}>비어 있음</p>
                                 )}
 
                                 {categoryTasks.map((task, index) => (
@@ -3203,7 +3256,9 @@ const CodeTiara = () => {
                                         notifications={notifications}
                                         editFormRef={editFormRef}
                                         duplicateTask={duplicateTask}
-                                      />
+                                         editingMemo={editingMemo}
+                                         setEditingMemo={setEditingMemo}
+                                       />
                                     )}
                                   </Draggable>
                                 ))}
@@ -3245,6 +3300,22 @@ const CodeTiara = () => {
                                       ? 'text-sm p-2 font-sans text-slate-800 border border-[#D1D1D1] bg-white focus:border-[#217346]'
                                       : 'text-sm p-1.5 pl-4 bg-[#3C3C3C] text-[#D4D4D4] placeholder-[#5C6370] font-mono border border-[#3E3E42] focus:border-[#007ACC]')}`}
                                 autoFocus
+                              />
+                            </div>
+
+                            {/* Memo Input Area */}
+                            <div className={`w-full ${currentTheme === 'excel' ? 'bg-[#F3F2F1] px-2 pb-2' : 'mt-2'}`}>
+                              <textarea
+                                value={newTaskMemo}
+                                onChange={(e) => setNewTaskMemo(e.target.value)}
+                                placeholder={currentTheme === 'excel' ? '상세 메모를 입력하세요 (선택 사항)...' : "상세 메모를 입력하세요 (선택 사항)..."}
+                                rows={2}
+                                className={`w-full block resize-none outline-none transition-all
+                                      ${currentTheme === 'princess'
+                                    ? `bg-white border border-[var(--c-light-rgb)] text-slate-600 placeholder-[var(--c-dark)]/50 focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-semibold ${isMiniMode ? 'text-[11px] p-1.5 px-2.5 rounded-[10px]' : 'text-[12px] p-2 px-3.5 rounded-[14px]'}`
+                                    : (currentTheme === 'excel'
+                                      ? 'text-xs p-1.5 font-sans text-slate-700 border border-[#D1D1D1] bg-white focus:border-[#217346]'
+                                      : 'text-xs p-1.5 pl-4 bg-[#3C3C3C] text-[#D4D4D4] placeholder-[#5C6370] font-mono border border-[#3E3E42] focus:border-[#007ACC]')}`}
                               />
                             </div>
 

@@ -1,24 +1,66 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
-    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown
+    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
 import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate } from '../constants';
 
-const getFontScaleMultiplier = (fontFamily, themeId) => {
+const getFontScaleMultiplier = (fontFamily, themeId, size) => {
+    let baseScale = 1.0;
     if (fontFamily === 'Gamja Flower' || (fontFamily === 'default' && themeId === 'princess')) {
-        return 1.2; // Gamja Flower is handwritten and a bit small
+        baseScale = 1.2; // Gamja Flower is handwritten and a bit small
+    } else {
+        switch (fontFamily) {
+            case 'Dongle':
+                baseScale = 1.45; // Dongle is exceptionally tiny
+                break;
+            case 'Gaegu':
+                baseScale = 1.15; // Gaegu is slightly small
+                break;
+            case 'Nanum Pen Script':
+                baseScale = 1.25; // Nanum Pen Script is handwritten and thin
+                break;
+            default:
+                baseScale = 1.0;
+        }
     }
-    switch (fontFamily) {
-        case 'Dongle':
-            return 1.45; // Dongle is exceptionally tiny
-        case 'Gaegu':
-            return 1.15; // Gaegu is slightly small
-        case 'Nanum Pen Script':
-            return 1.25; // Nanum Pen Script is handwritten and thin
-        default:
-            return 1.0;
+
+    if (baseScale === 1.0) return 1.0;
+
+    // Taper factor based on size/class to avoid oversized header fonts
+    let factor = 1.0;
+    if (typeof size === 'number') {
+        if (size <= 12) factor = 1.0;
+        else if (size <= 14) factor = 0.8;
+        else if (size <= 16) factor = 0.6;
+        else if (size <= 18) factor = 0.4;
+        else if (size <= 22) factor = 0.2;
+        else factor = 0.1;
+    } else if (typeof size === 'string') {
+        switch (size) {
+            case 'text-[10px]':
+            case 'text-[11px]':
+            case 'text-xs':
+                factor = 1.0;
+                break;
+            case 'text-sm':
+                factor = 0.8;
+                break;
+            case 'text-base':
+                factor = 0.6;
+                break;
+            case 'text-lg':
+                factor = 0.4;
+                break;
+            case 'text-xl':
+                factor = 0.2;
+                break;
+            default:
+                factor = 0.1;
+        }
     }
+
+    return 1 + (baseScale - 1) * factor;
 };
 
 const TaskItem = memo(({
@@ -39,8 +81,12 @@ const TaskItem = memo(({
     editingRecurrenceDays, setEditingRecurrenceDays,
     confirmingDeleteId, setConfirmingDeleteId, finalDeleteTask, duplicateTask,
     notifications,
-    editFormRef
+    editFormRef,
+    editingMemo,
+    setEditingMemo
 }) => {
+    const [isMemoExpanded, setIsMemoExpanded] = useState(false);
+
     const getRecurrenceHint = (dateStr, type) => {
         if (type !== 'monthly') return '';
         const d = parseLocalDate(dateStr || getLocalDateString());
@@ -165,9 +211,37 @@ const TaskItem = memo(({
                                 }}
                                 autoFocus
                                 className={`w-full bg-transparent focus:outline-none transition-all ${theme.task.editInputBg}`}
-                                style={typeof fontSize === 'number' ? { fontSize: `${Math.round(fontSize * getFontScaleMultiplier(fontFamily, currentTheme))}px` } : {}}
+                                style={typeof fontSize === 'number' ? { fontSize: `${Math.round(fontSize * getFontScaleMultiplier(fontFamily, currentTheme, fontSize))}px` } : {}}
                                 placeholder={currentTheme === 'excel' ? '할 일을 수정하세요...' : "Edit task..."}
                             />
+                        </div>
+
+                        {/* Memo Edit Area */}
+                        <div className={`mt-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2 border-t border-[#D1D1D1]' : ''}`}>
+                            <textarea
+                                value={editingMemo}
+                                onChange={(e) => setEditingMemo(e.target.value)}
+                                onKeyDown={(e) => {
+                                    // Ctrl+Enter or Cmd+Enter to save, regular Enter to type newline
+                                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                        e.preventDefault();
+                                        saveEditing(task.id);
+                                    }
+                                    if (e.key === 'Escape') cancelEditing();
+                                }}
+                                placeholder={currentTheme === 'excel' ? '상세 메모...' : "상세 메모..."}
+                                rows={2}
+                                className={`w-full bg-transparent focus:outline-none resize-none transition-all block
+                                    ${currentTheme === 'princess'
+                                        ? 'border border-[var(--c-light-rgb)] focus:border-[var(--c-dark)] text-slate-600 rounded-xl p-2 text-xs font-semibold bg-white'
+                                        : (currentTheme === 'excel'
+                                            ? 'border border-[#D1D1D1] bg-white text-xs p-1.5 text-slate-800 font-sans focus:border-[#217346]'
+                                            : 'border border-[#3E3E42] bg-[#1E1E1E] text-[#D4D4D4] font-mono text-[11px] p-2 focus:border-[#007ACC]')
+                                    }`}
+                            />
+                            <div className={`text-[9px] mt-0.5 text-right opacity-60 ${currentTheme === 'developer' ? 'font-mono text-[#5C6370]' : 'text-slate-400'}`}>
+                                {currentTheme === 'developer' ? 'Ctrl+Enter: Save | Enter: Newline' : 'Ctrl+Enter로 저장 / Enter로 줄바꿈'}
+                            </div>
                         </div>
 
                         {/* 2. Controls Row - Mobile First Vertical Stack */}
@@ -275,8 +349,8 @@ const TaskItem = memo(({
                                     : getTextSizeClass(fontSize)}
                             ${task.completed ? theme.task.textDone : theme.task.textDefault}`}
                             style={typeof fontSize === 'number' ? (() => {
-                                const mult = getFontScaleMultiplier(fontFamily, currentTheme);
                                 const base = isMiniMode ? Math.min(17, Math.max(11, fontSize - 2), fontSize) : fontSize;
+                                const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                                 return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
                         >
@@ -292,8 +366,8 @@ const TaskItem = memo(({
                                     ? 'text-[10px]'
                                     : getSubTextSizeClass(fontSize)}`}
                             style={typeof fontSize === 'number' ? (() => {
-                                const mult = getFontScaleMultiplier(fontFamily, currentTheme);
                                 const base = isMiniMode ? Math.min(14, Math.max(9, fontSize - 5), fontSize - 3) : Math.max(10, fontSize - 3);
+                                const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                                 return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
                         >
@@ -314,7 +388,63 @@ const TaskItem = memo(({
                                 )}
                             </span>
                         )}
-                    </>
+
+                        {/* 상세 메모 표시 */}
+                        {task.memo && task.memo.trim() !== '' && (
+                            <div 
+                                className="mt-1.5 w-full"
+                                onClick={(e) => {
+                                    e.stopPropagation(); // 투두 체크 방지
+                                    setIsMemoExpanded(!isMemoExpanded);
+                                }}
+                            >
+                                {/* Collapsed (Summary) Mode */}
+                                {!isMemoExpanded ? (
+                                    <div 
+                                        className={`flex items-center gap-1 text-[10px] select-none hover:opacity-100 transition-opacity cursor-pointer
+                                            ${currentTheme === 'princess'
+                                                ? 'text-[var(--c-dark)] opacity-70 bg-[var(--c-bg)] border border-[var(--c-light-rgb)] px-2 py-0.5 rounded-full w-fit max-w-[90%]'
+                                                : (currentTheme === 'excel'
+                                                    ? 'text-[#217346] font-semibold bg-[#E1F5FE] border border-[#B3E5FC] px-1.5 py-0.5 w-fit max-w-[95%] rounded'
+                                                    : 'text-[#5C6370] font-mono opacity-80 border border-[#3E3E42] bg-[#2D2D30] px-1.5 py-0.5 w-fit max-w-[95%] rounded-sm')
+                                            }`}
+                                    >
+                                        <FileText className="w-2.5 h-2.5 flex-shrink-0" />
+                                        <span className="truncate">{task.memo.split('\n')[0] || '메모 보기...'}</span>
+                                    </div>
+                                ) : (
+                                    /* Expanded (Detail) Mode */
+                                    <div 
+                                        className={`p-2.5 text-xs shadow-inner cursor-pointer select-text transition-all duration-200
+                                            ${currentTheme === 'princess'
+                                                ? 'bg-gradient-to-br from-[var(--c-bg)] to-white border border-dashed border-[var(--c-light)] text-slate-700 font-medium rounded-2xl whitespace-pre-wrap font-sans leading-relaxed'
+                                                : (currentTheme === 'excel'
+                                                    ? 'bg-[#FFF8E1] border border-[#FFE082] text-slate-700 font-sans whitespace-pre-wrap leading-normal shadow-sm relative before:content-[\'\'] before:absolute before:top-0 before:right-0 before:border-[6px] before:border-t-[#FFE082] before:border-r-[#FFE082] before:border-b-transparent before:border-l-transparent'
+                                                    : 'bg-[#1E1E1E] border-l-2 border-l-[#007ACC] border border-[#3E3E42] text-[#ABB2BF] font-mono text-[11px] whitespace-pre-wrap leading-normal rounded-sm')
+                                            }`}
+                                    >
+                                        <div className={`flex items-center justify-between border-b pb-1 mb-1 text-[9px] font-bold select-none
+                                            ${currentTheme === 'princess'
+                                                ? 'border-[var(--c-light-rgb)] text-[var(--c-dark)]'
+                                                : (currentTheme === 'excel'
+                                                    ? 'border-[#FFE082] text-[#B71C1C]'
+                                                    : 'border-[#3E3E42] text-[#608B4E]')
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-1">
+                                                <FileText className="w-3 h-3" />
+                                                {currentTheme === 'developer' ? '// Memo detail' : '상세 메모'}
+                                            </span>
+                                            <span className="opacity-60 text-[8px]">
+                                                {currentTheme === 'developer' ? 'Click to collapse' : '접으려면 클릭'}
+                                            </span>
+                                        </div>
+                                        <div className="whitespace-pre-wrap break-words">{task.memo}</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                     </>
                 )}
             </div>
 

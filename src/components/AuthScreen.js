@@ -127,10 +127,10 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
             {/* Titles */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
-                {isSignUp ? 'Create Account' : 'Welcome'}
+                {isSignUp ? '회원가입' : '로그인'}
               </h1>
-              <p className="text-sm text-gray-500 font-medium">
-                {isSignUp ? 'Sign up to start your journey' : 'Sign in to access your account'}
+              <p className="text-sm text-gray-500 font-medium font-sans">
+                {isSignUp ? '새로운 계정을 만들어 보세요' : '계정에 로그인해 주세요'}
               </p>
             </div>
 
@@ -148,7 +148,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="이메일 주소 입력"
                   disabled={loading}
                   className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                 />
@@ -160,7 +160,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
+                  placeholder="비밀번호"
                   disabled={loading}
                   className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                 />
@@ -173,7 +173,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm Password"
+                    placeholder="비밀번호 확인"
                     disabled={loading}
                     className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                   />
@@ -185,10 +185,10 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 <div className="flex justify-between items-center px-2 mt-2 gap-2">
                   <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
                     <input type="checkbox" className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
-                    Remember me
+                    로그인 상태 유지
                   </label>
                   <button type="button" className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap">
-                    Forget password?
+                    비밀번호 찾기
                   </button>
                 </div>
               )}
@@ -200,14 +200,14 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-sm hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0"
                 >
                   {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                  {isSignUp ? 'Sign Up' : 'Done'}
+                  {isSignUp ? '회원가입' : '로그인'}
                 </button>
               </div>
             </form>
 
             <div className="mt-8 flex items-center justify-between">
               <div className="h-[1px] bg-gray-200 flex-1"></div>
-              <span className="px-4 text-xs text-gray-400 font-medium uppercase tracking-wider">or sign in with</span>
+              <span className="px-4 text-xs text-gray-400 font-medium tracking-wider">또는 간편 로그인</span>
               <div className="h-[1px] bg-gray-200 flex-1"></div>
             </div>
 
@@ -229,7 +229,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 type="button"
                 onClick={handleGuestLogin}
                 className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm text-gray-700"
-                title="Guest Mode"
+                title="게스트 모드"
               >
                 <User className="w-5 h-5" />
               </button>
@@ -237,9 +237,9 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
             <div className="mt-8 text-center text-xs font-medium text-gray-500">
               {isSignUp ? (
-                <span>Already have an account? <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">Sign in</button></span>
+                <span>이미 계정이 있으신가요? <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">로그인</button></span>
               ) : (
-                <span>Don't have an account? <button onClick={() => setIsSignUp(true)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">Sign up</button></span>
+                <span>계정이 없으신가요? <button onClick={() => setIsSignUp(true)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">회원가입</button></span>
               )}
             </div>
           </>

@@ -24,14 +24,49 @@ const SettingsPanel = ({
     activePicker, setActivePicker, updateCategory, addCategory,
     confirmingCategoryDeleteId, setConfirmingCategoryDeleteId,
     finalDeleteCategory, categoryToDelete, setCategoryToDelete,
-    confirmDeleteCategory, exportData, triggerImport, fileInputRef,
-    importData, handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide,
+    confirmDeleteCategory, exportData, triggerImport, fileInputRef, importData,
+    handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide,
     user, onSignOut, onLoginClick
 }) => {
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const nameInputRef = useRef(null);
+    const [tempProjectTitle, setTempProjectTitle] = useState(projectTitle);
+    const [tempFocusDuration, setTempFocusDuration] = useState(focusDuration);
+    const [tempBreakDuration, setTempBreakDuration] = useState(breakDuration);
+
+    const [showToast, setShowToast] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setTempProjectTitle(projectTitle);
+            setTempFocusDuration(focusDuration);
+            setTempBreakDuration(breakDuration);
+        }
+    }, [projectTitle, focusDuration, breakDuration, isOpen]);
+
+    useEffect(() => {
+        if (showToast) {
+            const timer = setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showToast]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setShowToast(false);
+        }
+    }, [isOpen]);
+
+    const handleSave = () => {
+        setProjectTitle(tempProjectTitle);
+        setFocusDuration(tempFocusDuration);
+        setBreakDuration(tempBreakDuration);
+        setShowToast(true);
+    };
 
     useEffect(() => {
         if (isEditingName && nameInputRef.current) {
@@ -55,6 +90,29 @@ const SettingsPanel = ({
     return (
         <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 overflow-y-auto custom-scrollbar">
             <div className="max-w-md mx-auto w-full space-y-4">
+                {/* 🏷️ Header */}
+                <div className="flex justify-between items-center mb-2">
+                    <h2 className={`text-xl font-bold flex items-center gap-1.5 ${theme.titleText}`}>
+                        <Settings className={`w-5 h-5 ${theme.titleText.split(' ')[0]}`} />
+                        설정
+                    </h2>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onClose}
+                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.closeBtn}`}
+                        >
+                            {currentTheme === 'developer' ? '[ESC]' : <X className="w-3.5 h-3.5" />}
+                            {currentTheme === 'developer' ? '' : '닫기'}
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.saveBtn}`}
+                        >
+                            <Save className="w-3.5 h-3.5" /> 저장
+                        </button>
+                    </div>
+                </div>
+
                 {/* 📝 Board Name Card */}
                 <div className={theme.settings.wrapper}>
                     <div className={theme.settings.header}>
@@ -65,8 +123,8 @@ const SettingsPanel = ({
                             <input
                                 ref={nameInputRef}
                                 type="text"
-                                value={projectTitle}
-                                onChange={(e) => setProjectTitle(e.target.value)}
+                                value={tempProjectTitle}
+                                onChange={(e) => setTempProjectTitle(e.target.value)}
                                 onBlur={() => setIsEditingName(false)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') setIsEditingName(false);
@@ -81,18 +139,18 @@ const SettingsPanel = ({
                                 className={`flex-1 flex items-center justify-between cursor-pointer group px-3 py-2 transition-all ${currentTheme === 'developer'
                                     ? 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] hover:border-[#61AFEF]'
                                     : currentTheme === 'excel'
-                                        ? 'bg-white border border-[#D1D5DB] text-[#000] hover:border-[#217346]'
+                                        ? 'bg-white border border-[#D1D1D1] text-[#000] hover:border-[#217346]'
                                         : 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] text-slate-600 hover:border-[#FF6B81]'
                                     }`}
                             >
                                 <span className={`text-sm font-bold truncate ${
-                                    currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
+                                    currentTheme === 'princess' && tempProjectTitle === (defaultTitle || 'My Board')
                                         ? 'text-[#FF6B81]'
                                         : ''
                                 }`}>
-                                    {currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
+                                    {currentTheme === 'princess' && tempProjectTitle === (defaultTitle || 'My Board')
                                         ? <>나의 다이어리 <span className="text-xs">🎀</span></>
-                                        : projectTitle
+                                        : tempProjectTitle
                                     }
                                 </span>
                                 <Edit2 className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -102,29 +160,6 @@ const SettingsPanel = ({
                                 }`} />
                             </div>
                         )}
-                    </div>
-                </div>
-
-                {/* 🏷️ Header */}
-                <div className="flex justify-between items-center mb-2">
-                    <h2 className={`text-xl font-bold flex items-center gap-1.5 ${theme.titleText}`}>
-                        <Settings className={`w-5 h-5 ${theme.titleText.split(' ')[0]}`} />
-                        설정
-                    </h2>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={onClose}
-                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.closeBtn}`}
-                        >
-                            {currentTheme === 'developer' ? '[ESC]' : <X className="w-3.5 h-3.5" />}
-                            {currentTheme === 'developer' ? '' : '취소'}
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.saveBtn}`}
-                        >
-                            <Save className="w-3.5 h-3.5" /> 저장
-                        </button>
                     </div>
                 </div>
 
@@ -151,7 +186,7 @@ const SettingsPanel = ({
                                 <button
                                     key={key}
                                     onClick={() => setCurrentTheme(key)}
-                                    className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out border text-[10px] sm:text-xs ${currentTheme === key ? theme.themeSelectorActive : theme.themeSelectorInactive}`}
+                                    className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out border focus:outline-none text-[10px] sm:text-xs ${currentTheme === key ? theme.themeSelectorActive : theme.themeSelectorInactive}`}
                                 >
                                     <span className="text-xl mb-1">{THEME_CONFIG[key].themeIcon}</span>
                                     <span className="text-[10px] font-bold">{THEME_CONFIG[key].label}</span>
@@ -173,8 +208,8 @@ const SettingsPanel = ({
                             <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>집중 (분)</label>
                             <input
                                 type="number"
-                                value={focusDuration}
-                                onChange={(e) => setFocusDuration(Number(e.target.value))}
+                                value={tempFocusDuration}
+                                onChange={(e) => setTempFocusDuration(Number(e.target.value))}
                                 className={`w-full ${theme.settings.input} transition-all`}
                             />
                         </div>
@@ -182,8 +217,8 @@ const SettingsPanel = ({
                             <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>휴식 (분)</label>
                             <input
                                 type="number"
-                                value={breakDuration}
-                                onChange={(e) => setBreakDuration(Number(e.target.value))}
+                                value={tempBreakDuration}
+                                onChange={(e) => setTempBreakDuration(Number(e.target.value))}
                                 className={`w-full ${theme.settings.input} transition-all`}
                             />
                         </div>
@@ -216,10 +251,10 @@ const SettingsPanel = ({
                                     key={size}
                                     type="button"
                                     onClick={() => setFontSize(size)}
-                                    className={`flex-1 py-1 text-[10px] transition-all font-bold rounded-[8px] ${
+                                    className={`flex-1 py-1 text-[10px] transition-all font-bold rounded-[8px] border focus:outline-none ${
                                         fontSize === size
-                                            ? (currentTheme === 'princess' ? 'bg-[#FF6B81] text-white' : (currentTheme === 'excel' ? 'bg-[#217346] text-white' : 'bg-[#61AFEF] text-slate-900'))
-                                            : (currentTheme === 'princess' ? 'bg-white border border-[#FFD1DC] text-[#FFB6C1] hover:bg-[#FFF0F5]' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border border-[#D1D1D1] text-slate-600 hover:bg-[#E1E1E1]' : 'bg-[#2D2D30] text-slate-400 hover:text-white'))
+                                            ? (currentTheme === 'princess' ? 'bg-[#FF6B81] border-[#FF6B81] text-white' : (currentTheme === 'excel' ? 'bg-[#217346] border-[#217346] text-white' : 'bg-[#61AFEF] border-[#61AFEF] text-slate-900'))
+                                            : (currentTheme === 'princess' ? 'bg-white border-[#FFD1DC] text-[#FFB6C1] hover:bg-[#FFF0F5]' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border-[#D1D1D1] text-slate-600 hover:bg-[#E1E1E1]' : 'bg-[#2D2D30] border-transparent text-slate-400 hover:text-white'))
                                     }`}
                                 >
                                     {size === 12 ? '작게' : size === 14 ? '기본' : size === 16 ? '보통' : size === 18 ? '크게' : '아주크게'}
@@ -494,6 +529,28 @@ const SettingsPanel = ({
                 </button>
             </div>
 
+            {/* 🏷️ Version Info */}
+            <div className={`text-center mt-5 text-[10px] opacity-40 select-none ${
+                currentTheme === 'developer' ? 'font-mono' : currentTheme === 'princess' ? 'font-gamja font-bold' : 'font-sans'
+            }`}>
+                {currentTheme === 'developer' ? '// version 1.6.0' : '버전 1.6.0'}
+            </div>
+
+            {/* ✨ 저장 완료 토스트 알림 */}
+            {showToast && (
+                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className={`px-4 py-2 text-xs font-bold shadow-lg flex items-center gap-2 border ${
+                        currentTheme === 'developer'
+                            ? 'bg-[#1E1E1E] border-[#3E3E42] text-[#98C379] font-mono rounded'
+                            : currentTheme === 'excel'
+                                ? 'bg-white border-[#217346] text-[#217346] rounded-none'
+                                : 'bg-[#FF6B81] border-[#FF5E76] text-white rounded-full shadow-[0_8px_20px_rgba(255,107,129,0.4)] font-gamja text-sm'
+                    }`}>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>저장되었습니다.</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
