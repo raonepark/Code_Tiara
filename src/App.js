@@ -1915,7 +1915,8 @@ const CodeTiara = () => {
     );
   }
 
-  if (!user) {
+  // ✨ 팝아웃 창이면 인증 체크 건너뜀 (사용 설명서, 카테고리 팝아웃 등)
+  if (!user && !popoutCategoryId) {
     return (
       <AuthScreen 
         currentTheme={currentTheme} 
