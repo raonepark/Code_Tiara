@@ -191,7 +191,10 @@ const CodeTiara = () => {
   const rootClassName = `h-screen w-screen theme-${currentTheme} ${theme.root} flex overflow-hidden`;
   const cardClassName = `w-full h-full ${theme.card} overflow-hidden flex flex-col relative transition-all`;
 
-  const getFontScaleMultiplier = (fontFamily) => {
+  const getFontScaleMultiplier = (fontFamily, themeId) => {
+    if (fontFamily === 'Gamja Flower' || (fontFamily === 'default' && themeId === 'princess')) {
+      return 1.2; // Gamja Flower is handwritten and a bit small
+    }
     switch (fontFamily) {
       case 'Dongle':
         return 1.45; // Dongle is exceptionally tiny
@@ -1973,9 +1976,10 @@ const CodeTiara = () => {
           }
         ` : ''}
 
-        /* 특정 폰트(동글, 개구, 나눔손글씨 펜)에 대한 전체 Tailwind font-size 스케일 보정 */
-        ${['Dongle', 'Gaegu', 'Nanum Pen Script'].includes(fontFamily) ? (() => {
-          const mult = fontFamily === 'Dongle' ? 1.45 : fontFamily === 'Nanum Pen Script' ? 1.25 : 1.15;
+        /* 특정 폰트(동글, 개구, 나눔손글씨 펜, 감자꽃)에 대한 전체 Tailwind font-size 스케일 보정 */
+        ${( ['Dongle', 'Gaegu', 'Nanum Pen Script', 'Gamja Flower'].includes(fontFamily) || (fontFamily === 'default' && currentTheme === 'princess') ) ? (() => {
+          const actualFont = fontFamily === 'default' && currentTheme === 'princess' ? 'Gamja Flower' : fontFamily;
+          const mult = actualFont === 'Dongle' ? 1.45 : actualFont === 'Nanum Pen Script' ? 1.25 : actualFont === 'Gamja Flower' ? 1.2 : 1.15;
           return `
             .text-xs:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.75rem * ${mult}) !important; }
             .text-sm:not(.font-preview-item):not(.font-preview-item *) { font-size: calc(0.875rem * ${mult}) !important; }
@@ -3003,7 +3007,7 @@ const CodeTiara = () => {
                           <h3 
                             className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}
                             style={typeof fontSize === 'number' ? (() => {
-                              const mult = getFontScaleMultiplier(fontFamily);
+                              const mult = getFontScaleMultiplier(fontFamily, currentTheme);
                               const base = isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : fontSize;
                               return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
