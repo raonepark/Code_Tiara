@@ -96,6 +96,7 @@ const CodeTiara = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const isGuestModeRef = useRef(false); // 게스트 모드 보호용 ref
 
 
 
@@ -337,8 +338,14 @@ const CodeTiara = () => {
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        isGuestModeRef.current = false;
         setUser(firebaseUser);
       } else {
+        // 🛡️ 게스트 모드 중이면 데이터 초기화 방지 (race condition 방어)
+        if (isGuestModeRef.current) {
+          setAuthLoading(false);
+          return;
+        }
         setUser(null);
         // Reset states on logout
         setTasks([]);
@@ -352,6 +359,10 @@ const CodeTiara = () => {
 
   const handleAuthSuccess = (mockUser) => {
     if (mockUser) {
+      // 게스트 모드 ref 설정
+      if (mockUser.uid === 'guest_user') {
+        isGuestModeRef.current = true;
+      }
       setUser(mockUser);
     }
     setIsAuthModalOpen(false);
@@ -473,6 +484,18 @@ const CodeTiara = () => {
         console.log("Initial load complete from Firestore");
       } catch (err) {
         console.error("Failed to load user data:", err);
+        // 🛡️ 게스트 모드에서 오류 발생 시 기본 데이터 보장 (빈 화면 방지)
+        if (user.uid === "guest_user") {
+          try {
+            const savedCats = localStorage.getItem('lumora_categories');
+            const savedTasks = localStorage.getItem('lumora_tasks');
+            setCategories(savedCats ? JSON.parse(savedCats) : defaultCategories);
+            setTasks(savedTasks ? JSON.parse(savedTasks) : defaultTasks);
+          } catch (e) {
+            setCategories(defaultCategories);
+            setTasks(defaultTasks);
+          }
+        }
       } finally {
         setIsInitialLoadComplete(true);
       }
