@@ -2725,10 +2725,10 @@ const CodeTiara = () => {
                           className="bg-transparent outline-none cursor-pointer border-none font-bold text-slate-600"
                           title={t('app.tooltip_date_filter')}
                         >
-                          <option value="all" className="bg-white text-slate-800">전체 날짜</option>
-                          <option value="daily" className="bg-white text-slate-800">일간</option>
-                          <option value="weekly" className="bg-white text-slate-800">주간</option>
-                          <option value="monthly" className="bg-white text-slate-800">월간</option>
+                          <option value="all" className="bg-white text-slate-800">{t('app.filter_all')}</option>
+                          <option value="daily" className="bg-white text-slate-800">{t('app.filter_daily')}</option>
+                          <option value="weekly" className="bg-white text-slate-800">{t('app.filter_weekly')}</option>
+                          <option value="monthly" className="bg-white text-slate-800">{t('app.filter_monthly')}</option>
                         </select>
                         {filterMode !== 'all' && (
                           <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-[#E1E1E1]">
@@ -2776,10 +2776,10 @@ const CodeTiara = () => {
                             className={`outline-none cursor-pointer ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
                             title={t('app.tooltip_view_mode')}
                           >
-                            <option value="all" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>전체 날짜</option>
-                            <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>일간</option>
-                            <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>주간</option>
-                            <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>월간</option>
+                            <option value="all" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.filter_all')}</option>
+                            <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.filter_daily')}</option>
+                            <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.filter_weekly')}</option>
+                            <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.filter_monthly')}</option>
                           </select>
                           
                           {filterMode !== 'all' && (
@@ -2793,7 +2793,7 @@ const CodeTiara = () => {
 
                         {/* Right: Task Count */}
                         <span className={`text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
-                          {completedTasks}/{totalTasks} 완료
+                          {completedTasks}/{totalTasks} {t('app.completed')}
                         </span>
                       </div>
 

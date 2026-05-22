@@ -161,7 +161,12 @@
     "new_category": "새 카테고리",
     "view_memo": "메모 보기...",
     "memo_detail": "상세 메모",
-    "click_to_collapse": "접으려면 클릭"
+    "click_to_collapse": "접으려면 클릭",
+    "filter_all": "전체 날짜",
+    "filter_daily": "일간",
+    "filter_weekly": "주간",
+    "filter_monthly": "월간",
+    "completed": "완료"
   },
   "auth": {
     "err_no_firebase": "Firebase가 구성되지 않았습니다. .env 파일을 작성해 주세요.",

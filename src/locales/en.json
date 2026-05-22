@@ -161,7 +161,12 @@
     "new_category": "New Category",
     "view_memo": "View memo...",
     "memo_detail": "Memo Detail",
-    "click_to_collapse": "Click to collapse"
+    "click_to_collapse": "Click to collapse",
+    "filter_all": "All Dates",
+    "filter_daily": "Daily",
+    "filter_weekly": "Weekly",
+    "filter_monthly": "Monthly",
+    "completed": "Completed"
   },
   "auth": {
     "err_no_firebase": "Firebase is not configured. Please check your .env file.",
