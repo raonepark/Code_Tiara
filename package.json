@@ -3,10 +3,13 @@
     "productName": "Code Tiara",
     "description": "A powerful dashboard for productivity",
     "author": "Lumora",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "private": true,
     "dependencies": {
-        "firebase": "^12.13.0"
+        "firebase": "^12.13.0",
+        "i18next": "^26.2.0",
+        "i18next-browser-languagedetector": "^8.2.1",
+        "react-i18next": "^17.0.8"
     },
     "main": "public/main.js",
     "homepage": "./",

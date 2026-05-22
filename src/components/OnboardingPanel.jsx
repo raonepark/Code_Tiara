@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, X, Sparkles, Layers, Clock, BookOpen } from 'lucide-react';
 
 const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(0);
 
   const slides = [
     {
-      title: '반가워요! 코드 티아라 👑',
-      subtitle: '나만의 감성으로 완성하는 할 일 관리',
+      title: t('onboarding.title1'),
+      subtitle: t('onboarding.subtitle1'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
           <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF6B81] to-[#FFE4E1] shadow-md animate-bounce duration-1000">
@@ -15,14 +17,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
             <Sparkles className="absolute -top-1 -right-1 w-6 h-6 text-[#FFD700] animate-pulse" />
           </div>
           <p className="text-sm leading-relaxed px-4 opacity-90">
-            <strong>코드 티아라</strong>는 바쁜 일상을 아름답게 조율할 수 있도록 돕는 감성 할 일 관리 앱입니다. 포스트잇 형태의 메모 보드로 한눈에 할 일을 정리해 보세요!
+            <strong>{t('onboarding.desc1_bold')}</strong>{t('onboarding.desc1')}
           </p>
         </div>
       )
     },
     {
-      title: '포스트잇 & 분리 모드 📌',
-      subtitle: '바탕화면에 나만의 할 일 보드 고정',
+      title: t('onboarding.title2'),
+      subtitle: t('onboarding.subtitle2'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-3">
           <div className="relative w-36 h-24 bg-gradient-to-br from-amber-100 to-yellow-200 border border-yellow-300 rounded shadow-md p-2 flex flex-col justify-between text-left transform rotate-1 hover:rotate-0 transition-transform">
@@ -38,14 +40,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
             </div>
           </div>
           <p className="text-sm leading-relaxed px-2 opacity-90">
-            각 카테고리 헤더의 <strong>'팝업으로 분리(Pop-out)'</strong> 아이콘을 눌러보세요. 독립된 작은 창으로 떼어내어 화면 원하는 곳에 배치하고, 항상 위에 띄워두고 쓸 수 있습니다.
+            {t('onboarding.desc2_1')}<strong>{t('onboarding.desc2_bold')}</strong>{t('onboarding.desc2_2')}
           </p>
         </div>
       )
     },
     {
-      title: '집중을 돕는 포커스 타이머 ⏱️',
-      subtitle: '뽀모도로 기법으로 생산성 극대화',
+      title: t('onboarding.title3'),
+      subtitle: t('onboarding.subtitle3'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
           <div className="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-dashed border-[#FF6B81] animate-spin-slow">
@@ -53,14 +55,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
             <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#FF6B81] rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
           </div>
           <p className="text-sm leading-relaxed px-3 opacity-90">
-            집중 시간과 휴식 시간을 번갈아 기록하는 <strong>포커스 타이머</strong>가 내장되어 있습니다. 타이머 역시 개별 팝업 창으로 떼어내어 보면서 작업할 수 있습니다.
+            {t('onboarding.desc3_1')}<strong>{t('onboarding.desc3_bold')}</strong>{t('onboarding.desc3_2')}
           </p>
         </div>
       )
     },
     {
-      title: '감성 테마와 커스터마이징 🎨',
-      subtitle: '취향 저격 폰트와 테마 설정',
+      title: t('onboarding.title4'),
+      subtitle: t('onboarding.subtitle4'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-3">
           <div className="grid grid-cols-3 gap-2 w-full px-4">
@@ -75,7 +77,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
             </div>
           </div>
           <p className="text-sm leading-relaxed px-3 opacity-90">
-            사랑스러운 <strong>공주 테마</strong>, 업무용 <strong>엑셀 테마</strong>, 세련된 <strong>개발자 테마</strong>까지 준비되어 있습니다. 전체 설정 창에서 폰트 종류와 크기, 카테고리별 컬러까지 자유롭게 디자인해보세요!
+            {t('onboarding.desc4_1')}<strong>{t('onboarding.desc4_bold1')}</strong>{t('onboarding.desc4_2')}<strong>{t('onboarding.desc4_bold2')}</strong>{t('onboarding.desc4_3')}<strong>{t('onboarding.desc4_bold3')}</strong>{t('onboarding.desc4_4')}
           </p>
         </div>
       )
@@ -169,13 +171,13 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       <div className={`px-3.5 h-10 flex items-center justify-between shrink-0 select-none ${headerBg}`}>
         <div className="flex items-center gap-1.5 text-xs font-bold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>{isDeveloper ? 'MANUAL.md' : '사용 설명서'}</span>
+          <span>{isDeveloper ? 'MANUAL.md' : t('onboarding.userGuide')}</span>
         </div>
         <button
           onClick={onClose}
           className={`p-1 rounded-full hover:bg-black/5 transition-colors cursor-pointer flex items-center justify-center`}
           style={{ WebkitAppRegion: 'no-drag' }}
-          title="닫기"
+          title={t('onboarding.close')}
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -223,7 +225,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
               className={`px-3 py-1.5 text-xs flex items-center gap-1 transition-all ${btnSecondary} ${currentPage === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-              <span>{isDeveloper ? 'PREV' : '이전'}</span>
+              <span>{isDeveloper ? 'PREV' : t('onboarding.prev')}</span>
             </button>
 
             {currentPage === slides.length - 1 ? (
@@ -231,14 +233,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
                 onClick={handleStart}
                 className={`px-4 py-1.5 text-xs flex items-center gap-1.5 transition-all ${btnPrimary}`}
               >
-                <span>{isDeveloper ? 'START' : '시작하기'}</span>
+                <span>{isDeveloper ? 'START' : t('onboarding.start')}</span>
               </button>
             ) : (
               <button
                 onClick={nextSlide}
                 className={`px-4 py-1.5 text-xs flex items-center gap-1 transition-all ${btnPrimary}`}
               >
-                <span>{isDeveloper ? 'NEXT' : '다음'}</span>
+                <span>{isDeveloper ? 'NEXT' : t('onboarding.next')}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             )}

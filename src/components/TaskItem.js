@@ -1,4 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText
 } from 'lucide-react';
@@ -86,6 +87,7 @@ const TaskItem = memo(({
     setEditingMemo,
     triggerPopoutResize
 }) => {
+    const { t } = useTranslation();
     const [isMemoExpanded, setIsMemoExpanded] = useState(false);
 
     useEffect(() => {
@@ -101,12 +103,12 @@ const TaskItem = memo(({
     const getRecurrenceHint = (dateStr, type) => {
         if (type !== 'monthly') return '';
         const d = parseLocalDate(dateStr || getLocalDateString());
-        if (type === 'monthly') return `(매월 ${d.getDate()}일)`;
+        if (type === 'monthly') return `(${t('app.monthly_format', { day: d.getDate() })})`;
         return '';
     };
 
     const renderDayPicker = (currentDays, setDays, referenceDateStr) => {
-        const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+        const daysArr = [t('app.sun'), t('app.mon'), t('app.tue'), t('app.wed'), t('app.thu'), t('app.fri'), t('app.sat')];
         const defaultDay = parseLocalDate(referenceDateStr || getLocalDateString()).getDay();
         const activeDays = (currentDays && currentDays.length > 0) ? currentDays : [defaultDay];
 
@@ -120,7 +122,7 @@ const TaskItem = memo(({
         };
 
         return (
-            <div className="flex gap-0.5 ml-2">
+            <div className="flex flex-wrap justify-center sm:justify-start gap-0.5">
                 {daysArr.map((dayLabel, idx) => {
                     const isActive = activeDays.includes(idx);
                     let btnClass = '';
@@ -150,20 +152,20 @@ const TaskItem = memo(({
     const getRecurrenceDisplayText = (taskObj) => {
         if (!taskObj.recurrence || taskObj.recurrence === 'none') return null;
         
-        if (taskObj.recurrence === 'daily') return '매일';
+        if (taskObj.recurrence === 'daily') return t('app.recurrence_daily');
         if (taskObj.recurrence === 'monthly') {
             const d = parseLocalDate(taskObj.dueDate || getLocalDateString());
-            return `매월 ${d.getDate()}일`;
+            return t('app.monthly_format', { day: d.getDate() });
         }
-        if (taskObj.recurrence === 'custom') return `${taskObj.recurrenceInterval || 1}일마다`;
+        if (taskObj.recurrence === 'custom') return t('app.custom_days', { interval: taskObj.recurrenceInterval || 1 });
         if (taskObj.recurrence === 'weekly') {
-            const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+            const daysArr = [t('app.sun'), t('app.mon'), t('app.tue'), t('app.wed'), t('app.thu'), t('app.fri'), t('app.sat')];
             if (taskObj.recurrenceDays && taskObj.recurrenceDays.length > 0) {
                 const dayStrings = taskObj.recurrenceDays.map(d => daysArr[d]).join(', ');
-                return `매주 ${dayStrings}요일`;
+                return t('app.weekly_format', { days: dayStrings });
             } else {
                 const d = parseLocalDate(taskObj.dueDate || getLocalDateString());
-                return `매주 ${daysArr[d.getDay()]}요일`;
+                return t('app.weekly_format', { days: daysArr[d.getDay()] });
             }
         }
         return '';
@@ -206,10 +208,8 @@ const TaskItem = memo(({
 
             <div className="flex-1 flex flex-col min-w-0 text-left">
                 {editingTaskId === task.id ? (
-                    /* ✨ SIMPLE EDIT TASK INTERFACE */
                     <div ref={editFormRef} className={`w-full relative transition-all duration-300 z-10 ${theme.task.editContainer}`} onClick={e => e.stopPropagation()}>
 
-                        {/* 1. Top Input Area */}
                         <div className={`${theme.task.editInputBgWrapper}`}>
                             {currentTheme === 'developer' && <div className="text-[#569CD6] text-xs mb-1">mode: EDIT_TASK</div>}
                             <input
@@ -223,24 +223,22 @@ const TaskItem = memo(({
                                 autoFocus
                                 className={`w-full bg-transparent focus:outline-none transition-all ${theme.task.editInputBg}`}
                                 style={typeof fontSize === 'number' ? { fontSize: `${Math.round(fontSize * getFontScaleMultiplier(fontFamily, currentTheme, fontSize))}px` } : {}}
-                                placeholder={currentTheme === 'excel' ? '할 일을 수정하세요...' : "Edit task..."}
+                                placeholder={t('app.edit_placeholder')}
                             />
                         </div>
 
-                        {/* Memo Edit Area */}
                         <div className={`mt-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2 border-t border-[#D1D1D1]' : ''}`}>
                             <textarea
                                 value={editingMemo}
                                 onChange={(e) => setEditingMemo(e.target.value)}
                                 onKeyDown={(e) => {
-                                    // Ctrl+Enter or Cmd+Enter to save, regular Enter to type newline
                                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                                         e.preventDefault();
                                         saveEditing(task.id);
                                     }
                                     if (e.key === 'Escape') cancelEditing();
                                 }}
-                                placeholder={currentTheme === 'excel' ? '상세 메모...' : "상세 메모..."}
+                                placeholder={t('app.memo_placeholder')}
                                 rows={2}
                                 className={`w-full bg-transparent focus:outline-none resize-none transition-all block
                                     ${currentTheme === 'princess'
@@ -251,24 +249,24 @@ const TaskItem = memo(({
                                     }`}
                             />
                             <div className={`text-[9px] mt-0.5 text-right opacity-60 ${currentTheme === 'developer' ? 'font-mono text-[#5C6370]' : 'text-slate-400'}`}>
-                                {currentTheme === 'developer' ? 'Ctrl+Enter: Save | Enter: Newline' : 'Ctrl+Enter로 저장 / Enter로 줄바꿈'}
+                                {t('app.save_hint')}
                             </div>
                         </div>
 
-                        {/* 2. Controls Row - Mobile First Vertical Stack */}
                         <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${theme.task.editActionRow}`}>
 
-                            {/* Left: Date/Time */}
                             <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 w-full sm:w-auto ${theme.task.editDateWrapper}`}>
-                                <CustomDatePicker
-                                    value={editingDate}
-                                    onChange={(e) => setEditingDate(e.target.value)}
-                                    placeholder="Date"
-                                    inputClassName={`bg-transparent text-center focus:outline-none cursor-pointer ${theme.task.editDateInput}`}
-                                    currentTheme={currentTheme}
-                                />
+                                <div className="w-full sm:w-auto flex justify-center sm:justify-start">
+                                    <CustomDatePicker
+                                        value={editingDate}
+                                        onChange={(e) => setEditingDate(e.target.value)}
+                                        placeholder={t('app.date')}
+                                        inputClassName={`bg-transparent text-center focus:outline-none cursor-pointer ${theme.task.editDateInput}`}
+                                        currentTheme={currentTheme}
+                                    />
+                                </div>
 
-                                <div className="flex flex-wrap items-center gap-1">
+                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto">
                                   <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
                                     <Repeat className="w-3 h-3" />
                                   </div>
@@ -276,13 +274,13 @@ const TaskItem = memo(({
                                     value={editingRecurrence}
                                     onChange={(e) => setEditingRecurrence(e.target.value)}
                                     className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
-                                    title="반복 설정"
+                                    title={t('app.recurrence')}
                                   >
-                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>안함</option>
-                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매일</option>
-                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매주</option>
-                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매월</option>
-                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>N일</option>
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_none')}</option>
+                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_daily')}</option>
+                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_weekly')}</option>
+                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_monthly')}</option>
+                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_custom')}</option>
                                   </select>
                                   {editingRecurrence === 'weekly' && renderDayPicker(editingRecurrenceDays, setEditingRecurrenceDays, editingDate)}
                                   {editingRecurrence === 'monthly' && (
@@ -309,7 +307,7 @@ const TaskItem = memo(({
 
                                 {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
 
-                                <div className="flex items-center gap-0.5">
+                                <div className="flex items-center justify-center sm:justify-start gap-0.5 w-full sm:w-auto">
                                     <input
                                         type="text"
                                         value={editingHour}
@@ -329,7 +327,7 @@ const TaskItem = memo(({
                                         onClick={() => setEditingAmpm(p => p === '오전' ? '오후' : '오전')}
                                         className={`ml-1 flex items-center justify-center transition-all bg-transparent ${theme.task.editAmpmBtn}`}
                                     >
-                                        {editingAmpm === '오전' ? 'AM' : 'PM'}
+                                        {editingAmpm === '오전' ? t('app.am') : t('app.pm')}
                                     </button>
                                 </div>
                             </div>
@@ -466,7 +464,7 @@ const TaskItem = memo(({
                     <button
                         onClick={(e) => { e.stopPropagation(); duplicateTask(task); }}
                         className={theme.category?.actionButton ? theme.category.actionButton.button : theme.task.actionBtn}
-                        title="복제"
+                        title={t('app.tooltip_duplicate')}
                     >
                         <Copy className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
                     </button>
@@ -475,7 +473,7 @@ const TaskItem = memo(({
                     <button
                         onClick={(e) => { e.stopPropagation(); startEditing(task); }}
                         className={theme.category?.actionButton ? theme.category.actionButton.button : theme.task.actionBtn}
-                        title="수정"
+                        title={t('app.tooltip_edit')}
                     >
                         <Edit2 className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
                     </button>
@@ -488,7 +486,7 @@ const TaskItem = memo(({
                                 onClick={(e) => { e.stopPropagation(); finalDeleteTask(task.id); }}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 className={theme.task.deleteConfirmBtn}
-                                title="삭제 확인"
+                                title={t('app.tooltip_confirm_delete')}
                             >
                                 <Check className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
                             </button>
@@ -497,7 +495,7 @@ const TaskItem = memo(({
                                 onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(null); }}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 className={theme.task.deleteCancelBtn}
-                                title="취소"
+                                title={t('app.tooltip_cancel')}
                             >
                                 <X className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
                             </button>
@@ -508,7 +506,7 @@ const TaskItem = memo(({
                             onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(task.id); }}
                             onMouseDown={(e) => e.stopPropagation()}
                             className={theme.category?.actionButton ? theme.category.actionButton.button : theme.task.deleteBtn}
-                            title="삭제"
+                            title={t('app.tooltip_delete')}
                         >
                             <Trash2 className={theme.category?.actionButton ? theme.category.actionButton.icon : "w-3 h-3"} />
                         </button>

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calculator, Calendar as CalendarIcon } from 'lucide-react';
 import { THEME_CONFIG } from '../constants/themeConfig';
+import { useTranslation } from 'react-i18next';
 
 const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", className = "", inputClassName = "", currentTheme = "developer", customTrigger }) => {
+    const { t, i18n } = useTranslation();
     const themeConfig = THEME_CONFIG[currentTheme] || THEME_CONFIG['developer'];
     const styles = themeConfig.datePicker;
     const defaultInputClass = styles.input;
@@ -65,9 +67,15 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
             let top = rect.bottom + 4;
             let left = rect.left;
 
-            // Smart Flip: Open Upwards if tight (Threshold reduced)
-            if (spaceBelow < popupHeight && rect.top > popupHeight) {
-                top = rect.top - popupHeight - 4;
+            // Smart Flip: Open Upwards if tight
+            if (spaceBelow < popupHeight) {
+                if (rect.top > spaceBelow) {
+                    // More space above: flip up, clamp to top of window
+                    top = Math.max(10, rect.top - popupHeight - 4);
+                } else {
+                    // More space below: keep down, clamp to bottom of window
+                    top = Math.max(10, window.innerHeight - popupHeight - 10);
+                }
             }
 
             // Horizontal Guard
@@ -78,6 +86,16 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
             // Apply directly to DOM to avoid React render lag
             popupRef.current.style.top = `${top}px`;
             popupRef.current.style.left = `${left}px`;
+
+            // ✨ Scale if window is too small (e.g., Popout mode)
+            if (window.innerHeight < popupHeight + 20) {
+                const scale = Math.max(0.65, (window.innerHeight - 20) / popupHeight);
+                const originY = (top < rect.top) ? 'bottom' : 'top';
+                popupRef.current.style.transform = `scale(${scale})`;
+                popupRef.current.style.transformOrigin = `center ${originY}`;
+            } else {
+                popupRef.current.style.transform = `none`;
+            }
         }
     };
 
@@ -184,11 +202,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
         return days;
     };
 
-    // Month names
-    const monthNames = [
-        "1월", "2월", "3월", "4월", "5월", "6월",
-        "7월", "8월", "9월", "10월", "11월", "12월"
-    ];
+    // Month names handled by Intl.DateTimeFormat directly
 
     const popupContent = (
         <div
@@ -207,7 +221,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
                     <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
                 <div className="text-sm font-bold">
-                    {currentDate.getFullYear()}년 {monthNames[currentDate.getMonth()]}
+                    {new Intl.DateTimeFormat(i18n.language?.startsWith('en') ? 'en-US' : 'ko-KR', { year: 'numeric', month: 'long' }).format(currentDate)}
                 </div>
                 <button onClick={(e) => { e.preventDefault(); handleNextMonth(); }} className={`p-1 rounded transition-colors ${styles.arrow}`}>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -216,8 +230,8 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
 
             {/* Weekdays */}
             <div className="grid grid-cols-7 mb-2 text-center">
-                {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-                    <div key={d} className={`text-[10px] font-bold ${currentTheme === 'princess' ? 'text-[#F472B6]' : 'text-slate-500'}`}>{d}</div>
+                {(i18n.language?.startsWith('en') ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['일', '월', '화', '수', '목', '금', '토']).map((d, idx) => (
+                    <div key={idx} className={`text-[10px] font-bold ${currentTheme === 'princess' ? 'text-[#F472B6]' : 'text-slate-500'}`}>{d}</div>
                 ))}
             </div>
 
@@ -236,7 +250,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
                     }}
                     className="text-[10px] text-slate-400 hover:text-red-400"
                 >
-                    지우기
+                    {t('app.clear')}
                 </button>
                 <button
                     onClick={(e) => {
@@ -250,7 +264,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
                     }}
                     className={`text-[10px] ${styles.footerBtn}`}
                 >
-                    오늘
+                    {t('app.today')}
                 </button>
             </div>
         </div>

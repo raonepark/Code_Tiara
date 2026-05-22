@@ -1,19 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
 
 const FONTS_LIST = [
-    { id: 'default', name: '테마 기본 폰트' },
-    { id: 'Pretendard', name: 'Pretendard (깔끔한 고딕)' },
-    { id: 'Gamja Flower', name: '감자꽃 (귀여운 손글씨)' },
-    { id: 'Gaegu', name: '개구 (몽글몽글체)' },
-    { id: 'Single Day', name: '싱글데이 (명랑한 글씨)' },
-    { id: 'Jua', name: '주아 (둥근 고딕)' },
-    { id: 'Dongle', name: '동글 (길쭉둥글)' },
-    { id: 'Nanum Gothic', name: '나눔고딕 (부드러운 고딕)' },
-    { id: 'Nanum Myeongjo', name: '나눔명조 (우아한 바탕)' },
-    { id: 'Nanum Pen Script', name: '나눔손글씨 펜 (흘림체)' }
+    { id: 'default', labelKey: 'settings.font_default' },
+    { id: 'Pretendard', labelKey: 'settings.font_pretendard' },
+    { id: 'Gamja Flower', labelKey: 'settings.font_gamja' },
+    { id: 'Gaegu', labelKey: 'settings.font_gaegu' },
+    { id: 'Single Day', labelKey: 'settings.font_single_day' },
+    { id: 'Jua', labelKey: 'settings.font_jua' },
+    { id: 'Dongle', labelKey: 'settings.font_dongle' },
+    { id: 'Nanum Gothic', labelKey: 'settings.font_nanum_gothic' },
+    { id: 'Nanum Myeongjo', labelKey: 'settings.font_nanum_myeongjo' },
+    { id: 'Nanum Pen Script', labelKey: 'settings.font_nanum_pen' }
 ];
 
 const SettingsPanel = ({
@@ -28,45 +29,11 @@ const SettingsPanel = ({
     handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide,
     user, onSignOut, onLoginClick
 }) => {
+    const { t, i18n } = useTranslation();
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const nameInputRef = useRef(null);
-    const [tempProjectTitle, setTempProjectTitle] = useState(projectTitle);
-    const [tempFocusDuration, setTempFocusDuration] = useState(focusDuration);
-    const [tempBreakDuration, setTempBreakDuration] = useState(breakDuration);
-
-    const [showToast, setShowToast] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setTempProjectTitle(projectTitle);
-            setTempFocusDuration(focusDuration);
-            setTempBreakDuration(breakDuration);
-        }
-    }, [projectTitle, focusDuration, breakDuration, isOpen]);
-
-    useEffect(() => {
-        if (showToast) {
-            const timer = setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [showToast]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setShowToast(false);
-        }
-    }, [isOpen]);
-
-    const handleSave = () => {
-        setProjectTitle(tempProjectTitle);
-        setFocusDuration(tempFocusDuration);
-        setBreakDuration(tempBreakDuration);
-        setShowToast(true);
-    };
 
     useEffect(() => {
         if (isEditingName && nameInputRef.current) {
@@ -94,7 +61,7 @@ const SettingsPanel = ({
                 <div className="flex justify-between items-center mb-2">
                     <h2 className={`text-xl font-bold flex items-center gap-1.5 ${theme.titleText}`}>
                         <Settings className={`w-5 h-5 ${theme.titleText.split(' ')[0]}`} />
-                        설정
+                        {t('settings.title')}
                     </h2>
                     <div className="flex gap-2">
                         <button
@@ -102,29 +69,26 @@ const SettingsPanel = ({
                             className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.closeBtn}`}
                         >
                             {currentTheme === 'developer' ? '[ESC]' : <X className="w-3.5 h-3.5" />}
-                            {currentTheme === 'developer' ? '' : '닫기'}
+                            {currentTheme === 'developer' ? '' : t('settings.close')}
                         </button>
-                        <button
-                            onClick={handleSave}
-                            className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.saveBtn}`}
-                        >
-                            <Save className="w-3.5 h-3.5" /> 저장
-                        </button>
+
                     </div>
                 </div>
+
+
 
                 {/* 📝 Board Name Card */}
                 <div className={theme.settings.wrapper}>
                     <div className={theme.settings.header}>
-                        보드 이름
+                        {t('settings.boardName')}
                     </div>
                     <div className="flex items-center gap-2">
                         {isEditingName ? (
                             <input
                                 ref={nameInputRef}
                                 type="text"
-                                value={tempProjectTitle}
-                                onChange={(e) => setTempProjectTitle(e.target.value)}
+                                value={projectTitle}
+                                onChange={(e) => setProjectTitle(e.target.value)}
                                 onBlur={() => setIsEditingName(false)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') setIsEditingName(false);
@@ -144,13 +108,13 @@ const SettingsPanel = ({
                                     }`}
                             >
                                 <span className={`text-sm font-bold truncate ${
-                                    currentTheme === 'princess' && tempProjectTitle === (defaultTitle || 'My Board')
+                                    currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
                                         ? 'text-[#FF6B81]'
                                         : ''
                                 }`}>
-                                    {currentTheme === 'princess' && tempProjectTitle === (defaultTitle || 'My Board')
-                                        ? <>나의 다이어리 <span className="text-xs">🎀</span></>
-                                        : tempProjectTitle
+                                    {currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
+                                        ? <>{t('app.my_diary')} <span className="text-xs">🎀</span></>
+                                        : projectTitle
                                     }
                                 </span>
                                 <Edit2 className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -170,7 +134,7 @@ const SettingsPanel = ({
                         className={`flex items-center justify-between cursor-pointer ${theme.settings.header.replace('mb-3', 'mb-0')}`} // Remove bottom margin if collapsed
                     >
                         <div className="flex items-center gap-2">
-                            <span>테마 설정</span>
+                            <span>{t('settings.themeSettings')}</span>
                             {!isThemeSettingsExpanded && (
                                 <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${theme.themeBadge}`}>
                                     {theme.themeIcon} {theme.label}
@@ -199,26 +163,26 @@ const SettingsPanel = ({
                 {/* ⏰ Timer & Font Card - Unified */}
                 <div className={theme.settings.wrapper}>
                     <div className={theme.settings.header}>
-                        타이머 및 글꼴
+                        {t('settings.timerAndFont')}
                     </div>
 
                     {/* Timer Flex */}
                     <div className="flex gap-3 mb-4">
                         <div className="flex-1">
-                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>집중 (분)</label>
+                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>{t('settings.focusMin')}</label>
                             <input
                                 type="number"
-                                value={tempFocusDuration}
-                                onChange={(e) => setTempFocusDuration(Number(e.target.value))}
+                                value={focusDuration}
+                                onChange={(e) => setFocusDuration(Number(e.target.value))}
                                 className={`w-full ${theme.settings.input} transition-all`}
                             />
                         </div>
                         <div className="flex-1">
-                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>휴식 (분)</label>
+                            <label className={`text-xs block mb-1 font-bold ml-1 ${theme.settings.sectionTitle}`}>{t('settings.breakMin')}</label>
                             <input
                                 type="number"
-                                value={tempBreakDuration}
-                                onChange={(e) => setTempBreakDuration(Number(e.target.value))}
+                                value={breakDuration}
+                                onChange={(e) => setBreakDuration(Number(e.target.value))}
                                 className={`w-full ${theme.settings.input} transition-all`}
                             />
                         </div>
@@ -227,7 +191,7 @@ const SettingsPanel = ({
                     {/* Font Size */}
                     <div className={`pt-3 border-t ${theme.divider} mb-4`}>
                         <div className="flex justify-between items-center mb-2 ml-1">
-                            <span className={`text-xs font-bold ${theme.settings.sectionTitle}`}>텍스트 크기</span>
+                            <span className={`text-xs font-bold ${theme.settings.sectionTitle}`}>{t('settings.textSize')}</span>
                             <span className={`text-xs font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-[#61AFEF]')}`}>{fontSize}px</span>
                         </div>
                         <div className="flex items-center gap-3">
@@ -257,7 +221,7 @@ const SettingsPanel = ({
                                             : (currentTheme === 'princess' ? 'bg-white border-[#FFD1DC] text-[#FFB6C1] hover:bg-[#FFF0F5]' : (currentTheme === 'excel' ? 'bg-[#F3F2F1] border-[#D1D1D1] text-slate-600 hover:bg-[#E1E1E1]' : 'bg-[#2D2D30] border-transparent text-slate-400 hover:text-white'))
                                     }`}
                                 >
-                                    {size === 12 ? '작게' : size === 14 ? '기본' : size === 16 ? '보통' : size === 18 ? '크게' : '아주크게'}
+                                    {size === 12 ? t('settings.sizeSmall') : size === 14 ? t('settings.sizeDefault') : size === 16 ? t('settings.sizeMedium') : size === 18 ? t('settings.sizeLarge') : t('settings.sizeXLarge')}
                                 </button>
                             ))}
                         </div>
@@ -266,7 +230,7 @@ const SettingsPanel = ({
                     {/* Font Family */}
                     <div className={`pt-3 border-t ${theme.divider}`}>
                         <div className={`text-xs mb-2 font-bold ml-1 ${theme.settings.sectionTitle}`}>
-                            글꼴 선택
+                            {t('settings.fontSelection')}
                         </div>
                         <div className="relative font-select-dropdown">
                             <button
@@ -275,7 +239,7 @@ const SettingsPanel = ({
                                 className={`w-full ${theme.settings.input} text-sm transition-all focus:outline-none flex justify-between items-center py-2 px-3 border border-pink-200/50 shadow-sm`}
                                 style={fontFamily !== 'default' ? { fontFamily: `'${fontFamily}', sans-serif` } : {}}
                             >
-                                <span>{FONTS_LIST.find(f => f.id === fontFamily)?.name || '테마 기본 폰트'}</span>
+                                <span>{FONTS_LIST.find(f => f.id === fontFamily)?.labelKey ? t(FONTS_LIST.find(f => f.id === fontFamily).labelKey) : t('settings.font_default')}</span>
                                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isFontDropdownOpen ? 'rotate-180' : ''} ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-slate-400')}`} />
                             </button>
                             
@@ -313,9 +277,9 @@ const SettingsPanel = ({
                                                 } ${hoverClass}`}
                                                 style={{ fontFamily: f.id === 'default' ? "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif" : `'${f.id}', sans-serif` }}
                                             >
-                                                <span className="font-semibold">{f.name}</span>
+                                                <span className="font-semibold">{t(f.labelKey)}</span>
                                                 <span className="text-[10px] opacity-60">
-                                                    {f.id === 'default' ? '나의 소중한 할 일들' : '가나다라마바사 abc 123'}
+                                                    {f.id === 'default' ? t('settings.font_preview_default') : t('settings.font_preview_text')}
                                                 </span>
                                             </button>
                                         );
@@ -329,18 +293,18 @@ const SettingsPanel = ({
                 {/* 💾 Data & Category Card - Unified */}
                 <div className={theme.settings.wrapper}>
                     <div className={theme.settings.header}>
-                        데이터 백업/복구
+                        {t('settings.dataBackupRestore')}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <button onClick={exportData}
                             className={`flex flex-col items-center justify-center p-3 transition-all group ${theme.settings.button.default} hover:-translate-y-0.5`}
                         >
-                            <Download className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">백업</span>
+                            <Download className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">{t('settings.backup')}</span>
                         </button>
                         <button onClick={triggerImport}
                             className={`flex flex-col items-center justify-center p-3 transition-all group ${theme.settings.button.default} hover:-translate-y-0.5`}
                         >
-                            <Upload className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">복구</span>
+                            <Upload className="w-5 h-5 mb-1" /> <span className="text-xs font-bold">{t('settings.restore')}</span>
                         </button>
                         <input type="file" ref={fileInputRef} onChange={importData} accept=".json" className="hidden" />
                     </div>
@@ -348,7 +312,7 @@ const SettingsPanel = ({
 
                 {/* 🎨 Unified Category Management (All Themes use 'Editable Row') */}
                 <div className={`p-3 border-t ${theme.divider}`}>
-                    <div className={`text-sm mb-2 font-bold ${theme.settings.sectionTitle}`}>카테고리 관리</div>
+                    <div className={`text-sm mb-2 font-bold ${theme.settings.sectionTitle}`}>{t('settings.categoryManagement')}</div>
                     <DragDropContext onDragEnd={onDragEndCategories}>
                         <Droppable droppableId="categories-list">
                             {(provided) => (
@@ -491,8 +455,28 @@ const SettingsPanel = ({
                         </Droppable>
                     </DragDropContext>
                     <button onClick={addCategory} className={`w-full mt-3 py-2 text-xs font-bold flex items-center justify-center gap-1 transition-all ${theme.buttons.outlineBtn}`}>
-                        <Plus className="w-3.5 h-3.5" /> <span className="text-xs font-bold">추가</span>
+                        <Plus className="w-3.5 h-3.5" /> <span className="text-xs font-bold">{t('settings.add')}</span>
                     </button>
+                </div>
+            </div>
+
+            {/* 🌐 Language Settings */}
+            <div className={`mt-6 pt-6 border-t ${theme.divider} max-w-md mx-auto`}>
+                <div className={theme.settings.wrapper}>
+                    <div className={theme.settings.header}>
+                        {t('settings.language')}
+                    </div>
+                    <div className="relative font-select-dropdown">
+                        <select
+                            value={i18n.language?.startsWith('en') ? 'en' : 'ko'}
+                            onChange={(e) => i18n.changeLanguage(e.target.value)}
+                            className={`w-full ${theme.settings.input} text-sm transition-all focus:outline-none py-2 px-3 appearance-none cursor-pointer`}
+                        >
+                            <option value="ko">{t('settings.langKo')} (Korean)</option>
+                            <option value="en">{t('settings.langEn')} (English)</option>
+                        </select>
+                        <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none ${currentTheme === 'princess' ? 'text-[#FF6B81]' : (currentTheme === 'excel' ? 'text-[#217346]' : 'text-slate-400')}`} />
+                    </div>
                 </div>
             </div>
 
@@ -503,21 +487,21 @@ const SettingsPanel = ({
                     className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                 >
                     <BookOpen className="w-3.5 h-3.5" />
-                    사용 설명서
+                    {t('settings.userGuide')}
                 </button>
                 {user && user.uid === "guest_user" ? (
                     <button
                         onClick={onLoginClick}
                         className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                     >
-                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔑</span> 로그인
+                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔑</span> {t('settings.login')}
                     </button>
                 ) : (
                     <button
                         onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
                         className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                     >
-                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> 로그아웃
+                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> {t('settings.logout')}
                     </button>
                 )}
                 <button
@@ -525,7 +509,7 @@ const SettingsPanel = ({
                     className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn} w-full sm:w-auto`}
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    {isResetConfirming ? '정말요?' : '초기화'}
+                    {isResetConfirming ? t('settings.areYouSure') : t('settings.reset')}
                 </button>
             </div>
 
@@ -533,24 +517,10 @@ const SettingsPanel = ({
             <div className={`text-center mt-5 text-[10px] opacity-40 select-none ${
                 currentTheme === 'developer' ? 'font-mono' : currentTheme === 'princess' ? 'font-gamja font-bold' : 'font-sans'
             }`}>
-                {currentTheme === 'developer' ? '// version 1.6.0' : '버전 1.6.0'}
+                {currentTheme === 'developer' ? '// version 1.6.1' : `${t('settings.version')} 1.6.1`}
             </div>
 
-            {/* ✨ 저장 완료 토스트 알림 */}
-            {showToast && (
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className={`px-4 py-2 text-xs font-bold shadow-lg flex items-center gap-2 border ${
-                        currentTheme === 'developer'
-                            ? 'bg-[#1E1E1E] border-[#3E3E42] text-[#98C379] font-mono rounded'
-                            : currentTheme === 'excel'
-                                ? 'bg-white border-[#217346] text-[#217346] rounded-none'
-                                : 'bg-[#FF6B81] border-[#FF5E76] text-white rounded-full shadow-[0_8px_20px_rgba(255,107,129,0.4)] font-gamja text-sm'
-                    }`}>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>저장되었습니다.</span>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 };

@@ -12,6 +12,7 @@ import TaskItem from './components/TaskItem';
 import SettingsPanel from './components/SettingsPanel';
 import OnboardingPanel from './components/OnboardingPanel';
 import AuthScreen from './components/AuthScreen';
+import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, getLocalDateString, parseLocalDate } from './constants';
 import { THEME_CONFIG } from './constants/themeConfig';
@@ -92,6 +93,7 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
 };
 
 const CodeTiara = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
@@ -103,15 +105,15 @@ const CodeTiara = () => {
 
   // --- 초기 데이터 정의 (공용 템플릿용 - 한글화) ---
   const defaultCategories = [
-    { id: 'cat_1', label: '중요', colorTheme: 'red', icon: 'star' },
-    { id: 'cat_2', label: '업무', colorTheme: 'cyan', icon: 'briefcase' },
-    { id: 'cat_3', label: '개인', colorTheme: 'emerald', icon: 'coffee' },
+    { id: 'cat_1', label: t('app.cat_important'), colorTheme: 'red', icon: 'star' },
+    { id: 'cat_2', label: t('app.cat_work'), colorTheme: 'cyan', icon: 'briefcase' },
+    { id: 'cat_3', label: t('app.cat_personal'), colorTheme: 'emerald', icon: 'coffee' },
   ];
 
   const defaultTasks = [
-    { id: 1, text: '문서 업데이트', categoryId: 'cat_2', completed: false, dueTime: '', alerted: false },
-    { id: 2, text: '저녁 장보기', categoryId: 'cat_3', completed: false, dueTime: '18:00', alerted: false },
-    { id: 3, text: '주간 목표 계획', categoryId: 'cat_1', completed: false, dueTime: '', alerted: false },
+    { id: 1, text: t('app.task_doc'), categoryId: 'cat_2', completed: false, dueTime: '', alerted: false },
+    { id: 2, text: t('app.task_grocery'), categoryId: 'cat_3', completed: false, dueTime: '18:00', alerted: false },
+    { id: 3, text: t('app.task_plan'), categoryId: 'cat_1', completed: false, dueTime: '', alerted: false },
   ];
 
   const defaultTitle = 'My Board';
@@ -965,7 +967,7 @@ const CodeTiara = () => {
     if (!time24) return '';
     const [h, m] = time24.split(':');
     let hour = parseInt(h, 10);
-    const ampm = hour >= 12 ? '오후' : '오전';
+    const ampm = hour >= 12 ? t('app.pm') : t('app.am');
     hour = hour % 12;
     hour = hour ? hour : 12;
     return `${ampm} ${String(hour).padStart(2, '0')}:${m}`;
@@ -1045,8 +1047,8 @@ const CodeTiara = () => {
             localStorage.setItem('lumora_timer_notified_timestamp', String(target));
             
             const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
-            const title = mode === 'focus' ? '집중 시간 끝!' : '휴식 시간 끝!';
-            const msg = mode === 'focus' ? '수고했어! 이제 좀 쉬자.' : '자, 다시 집중해볼까?';
+            const title = mode === 'focus' ? t('app.timer_focus_end_title') : t('app.timer_break_end_title');
+            const msg = mode === 'focus' ? t('app.timer_focus_end_msg') : t('app.timer_break_end_msg');
             setNotifications(prev => [{
               id: Date.now(),
               title,
@@ -1446,7 +1448,7 @@ const CodeTiara = () => {
     const newTask = {
       ...task,
       id: Date.now() + Math.random(),
-      text: `${task.text} (복사본)`,
+      text: `${task.text} ${t('app.copy_suffix')}`,
       alerted: false
     };
 
@@ -1605,7 +1607,7 @@ const CodeTiara = () => {
     const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
     const newCat = {
       id: `cat_${Date.now()}`,
-      label: '새 카테고리',
+      label: t('app.new_category'),
       colorTheme: randomColor,
       icon: 'star' // default icon
     };
@@ -1713,7 +1715,7 @@ const CodeTiara = () => {
   // ✨ Click Outside for Menu
   useEffect(() => {
     const handleClickOutsideMenu = (e) => {
-      if (isMenuOpen && menuRef.current && !menuRef.current.contains(e.target) && !e.target.closest('button[title="메뉴"]')) {
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(e.target) && !e.target.closest(`button[title="${t('app.tooltip_menu')}"]`)) {
         setIsMenuOpen(false);
       }
     };
@@ -1724,7 +1726,7 @@ const CodeTiara = () => {
   // ✨ Click Outside for Notifications
   useEffect(() => {
     const handleClickOutsideNotif = (e) => {
-      if (isNotifOpen && notifRef.current && !notifRef.current.contains(e.target) && !e.target.closest('button[title="알림"]')) {
+      if (isNotifOpen && notifRef.current && !notifRef.current.contains(e.target) && !e.target.closest(`button[title="${t('app.tooltip_notifications')}"]`)) {
         setIsNotifOpen(false);
       }
     };
@@ -2131,7 +2133,7 @@ const CodeTiara = () => {
                 }`}
               >
                 {currentTheme === 'princess' ? (
-                  <>🎀 포커스 타이머</>
+                  <>🎀 {t('app.focus_timer_title')}</>
                 ) : currentTheme === 'excel' ? (
                   <>📊 FOCUS TIMER (Sheet1)</>
                 ) : (
@@ -2149,7 +2151,7 @@ const CodeTiara = () => {
                         ? 'rounded-none text-slate-600 hover:bg-[#D1D5DB]'
                         : 'rounded text-slate-400 hover:text-[#61AFEF] hover:bg-[#282C34]'
                     }`}
-                  title={isTimerPinned ? "고정 해제" : "항상 위에 고정"}
+                  title={isTimerPinned ? t('app.tooltip_unpin') : t('app.tooltip_pin')}
                 >
                   {isTimerPinned ? (
                     <Pin className={`w-3.5 h-3.5 ${currentTheme === 'princess' ? 'text-[#FF6B81]' : currentTheme === 'excel' ? 'text-[#107C41]' : 'text-[#61AFEF]'}`} />
@@ -2171,7 +2173,7 @@ const CodeTiara = () => {
                         ? 'rounded-none text-slate-600 hover:bg-[#D1D5DB]'
                         : 'rounded text-slate-400 hover:text-[#E06C75] hover:bg-[#282C34]'
                     }`}
-                  title="메인 화면으로 복귀"
+                  title={t('app.tooltip_return_main')}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -2194,7 +2196,7 @@ const CodeTiara = () => {
                     ? (timerMode === 'focus' ? 'bg-[#FF6B81] text-white rounded-full px-2 shadow-sm font-gamja' : 'bg-[#FFEBEF] text-[#FF6B81] border border-[#FFCCD5] rounded-full px-2 shadow-sm font-gamja')
                     : (timerMode === 'focus' ? 'bg-[#E6F2EA] text-[#107C41] border border-[#107C41]' : 'bg-[#F3F2F1] text-[#333333] border border-[#D1D5DB]')
                 }`}>
-                {timerMode === 'focus' ? '🔥 집중' : '☕ 휴식'}
+                {timerMode === 'focus' ? t('app.timer_focus') : t('app.timer_break')}
               </div>
 
               {/* Time */}
@@ -2223,7 +2225,7 @@ const CodeTiara = () => {
                         ? 'text-[#FFB6C1] hover:text-[#FF6B81] hover:bg-[#FFF0F3] border border-[#FFE4E1] rounded-full' 
                         : 'text-slate-600 hover:text-black hover:bg-[#F3F2F1] border border-[#D1D5DB] rounded-none'
                     }`} 
-                  title="모드 전환"
+                  title={t('app.tooltip_switch_mode')}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
@@ -2259,21 +2261,21 @@ const CodeTiara = () => {
             <button
               onClick={() => sendIPC('close-window')}
               className={`w-2.5 h-2.5 rounded-full bg-[#FF5F56] hover:bg-[#FF5F56]/80 transition-colors cursor-pointer flex items-center justify-center group`}
-              title="닫기"
+              title={t('app.tooltip_close')}
             >
               <X className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
             </button>
             <button
               onClick={() => sendIPC('minimize-window')}
               className={`w-2.5 h-2.5 rounded-full bg-[#FFBD2E] hover:bg-[#FFBD2E]/80 transition-colors cursor-pointer flex items-center justify-center group`}
-              title="최소화"
+              title={t('app.tooltip_minimize')}
             >
               <Minus className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
             </button>
             <button
               onClick={() => sendIPC('maximize-window')}
               className={`w-2.5 h-2.5 rounded-full bg-[#27C93F] hover:bg-[#27C93F]/80 transition-colors cursor-pointer flex items-center justify-center group`}
-              title="화면 맞춤"
+              title={t('app.tooltip_fit_screen')}
             >
               <Plus className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
             </button>
@@ -2285,7 +2287,7 @@ const CodeTiara = () => {
               <span 
                 className={`truncate max-w-[150px] sm:max-w-[200px] ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}
               >
-                {currentTheme === 'princess' && projectTitle === defaultTitle ? <>나의 다이어리 <span className="text-xs">🎀</span></> : projectTitle}
+                {currentTheme === 'princess' && projectTitle === defaultTitle ? <>{t('app.my_diary')} <span className="text-xs">🎀</span></> : projectTitle}
               </span>
             </div>
           </div>
@@ -2306,7 +2308,7 @@ const CodeTiara = () => {
                 <button
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
                   className={`p-1 rounded hover:bg-slate-700/10 transition-colors relative ${isNotifOpen || unreadCount > 0 ? theme.accent.text : ''}`}
-                  title="알림"
+                  title={t('app.tooltip_notifications')}
                 >
                   <Bell className="w-3 h-3" />
                   {unreadCount > 0 && (
@@ -2320,7 +2322,7 @@ const CodeTiara = () => {
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className={`p-1 rounded hover:bg-slate-700/10 transition-colors ${isMenuOpen ? theme.accent.text : ''}`}
-                  title="메뉴"
+                  title={t('app.tooltip_menu')}
                 >
                   <Settings className="w-3 h-3" />
                 </button>
@@ -2336,29 +2338,29 @@ const CodeTiara = () => {
                       {/* Menu Items */}
                       <div className="flex flex-col py-1 relative z-10 bg-white">
                         <button
-                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); }}
+                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? '전체 모드' : '미니 모드'}
+                          <span>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
-                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); }}
+                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>⏱️</span> 타이머
+                          <span>⏱️</span> {t('app.timer')}
                         </button>
                         <button
-                          onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); }}
+                          onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>🧹</span> 완료 항목 정리
+                          <span>🧹</span> {t('app.cleanup_completed')}
                         </button>
                         <div className="h-px bg-[#FFC0CB]/30 mx-2 my-0.5"></div>
                         <button
                           onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>🔧</span> 전체 설정
+                          <span>🔧</span> {t('app.settings')}
                         </button>
                       </div>
                     </div>
@@ -2375,7 +2377,7 @@ const CodeTiara = () => {
                 <button
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
                   className={`p-1 rounded hover:bg-slate-700/10 transition-colors relative ${isNotifOpen || unreadCount > 0 ? (currentTheme === 'excel' ? 'bg-white/20 font-bold' : theme.accent.text) : ''}`}
-                  title="알림"
+                  title={t('app.tooltip_notifications')}
                 >
                   <Bell className="w-4 h-4" />
                   {unreadCount > 0 && (
@@ -2389,7 +2391,7 @@ const CodeTiara = () => {
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className={`p-1 rounded hover:bg-slate-700/10 transition-colors ${isMenuOpen ? (currentTheme === 'excel' ? 'bg-white/20 font-bold' : theme.accent.text) : ''}`}
-                  title="메뉴"
+                  title={t('app.tooltip_menu')}
                 >
                   <Settings className="w-4 h-4" />
                 </button>
@@ -2410,29 +2412,29 @@ const CodeTiara = () => {
 
                       <div className={`flex flex-col py-1 relative z-10 ${currentTheme === 'princess' ? 'bg-white' : ''}`}>
                         <button
-                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); }}
+                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? '전체 모드' : '미니 모드'}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
-                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); }}
+                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>⏱️</span> 타이머
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>⏱️</span> {t('app.timer')}
                         </button>
                         <button
-                          onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); }}
+                          onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🧹</span> 완료 항목 정리
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🧹</span> {t('app.cleanup_completed')}
                         </button>
                         <div className={`h-px mx-2 my-0.5 ${currentTheme === 'princess' ? 'bg-pink-100' : (currentTheme === 'excel' ? 'bg-[#E1E1E1]' : 'bg-current opacity-10')}`}></div>
                         <button
                           onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔧</span> 전체 설정
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔧</span> {t('app.settings')}
                         </button>
                       </div>
                     </div>
@@ -2452,17 +2454,17 @@ const CodeTiara = () => {
 
                 <div className={`px-3 py-2 flex justify-between items-center ${theme.notification.header}`}>
                   <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs font-sans' : (currentTheme === 'developer' ? 'text-[10px] font-mono tracking-wider' : 'text-xs font-gamja')}`}>
-                    {currentTheme === 'developer' ? '// ACTIVE_ALERTS.log' : (currentTheme === 'princess' ? '🎀 새 소식' : '알림 내역')} ({unreadCount})
+                    {currentTheme === 'developer' ? '// ACTIVE_ALERTS.log' : (currentTheme === 'princess' ? t('app.notif_title_princess') : t('app.notif_title_default'))} ({unreadCount})
                   </span>
                   {unreadCount > 0 && (
                     <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-0.5 rounded transition-colors ${theme.notification.clearBtn}`}>
-                      {currentTheme === 'developer' ? 'clear()' : (currentTheme === 'princess' ? '모두 지우기' : '모두 삭제')}
+                      {currentTheme === 'developer' ? 'clear()' : (currentTheme === 'princess' ? t('app.clear_all_princess') : t('app.clear_all_default'))}
                     </button>
                   )}
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar">
                   {unreadCount === 0 ? (
-                    <p className={`p-4 text-center text-sm opacity-60 ${currentTheme === 'princess' ? 'text-[#F472B6] font-gamja font-bold' : 'text-inherit'}`}>알림이 없습니다 {currentTheme === 'princess' ? '🎀' : ''}</p>
+                    <p className={`p-4 text-center text-sm opacity-60 ${currentTheme === 'princess' ? 'text-[#F472B6] font-gamja font-bold' : 'text-inherit'}`}>{t('app.no_notifications')} {currentTheme === 'princess' ? '🎀' : ''}</p>
                   ) : (
                     notifications.map(n => {
                       if (currentTheme === 'developer') {
@@ -2481,7 +2483,7 @@ const CodeTiara = () => {
                         );
                       }
                       if (currentTheme === 'princess') {
-                        const isBreakNotif = n.title.includes('휴식');
+                        const isBreakNotif = n.title.includes('휴식') || n.title.includes('Break');
                         return (
                           <div key={n.id} className="p-3 border-b border-[#FFC0CB]/30 border-dashed hover:bg-[#FFF5F8]/50 flex gap-2.5 items-start group transition-colors">
                             <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ring-4 shadow-sm animate-pulse
@@ -2590,7 +2592,7 @@ const CodeTiara = () => {
                           POPOUT
                         </span>
                         <span className={`text-xs whitespace-nowrap truncate ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-400'}`}>
-                          ⏱️ 타이머 분리됨
+                          {t('app.timer_detached')}
                         </span>
                       </div>
                       <button 
@@ -2602,7 +2604,7 @@ const CodeTiara = () => {
                         }}
                         className={`text-xs px-2.5 py-1 whitespace-nowrap shrink-0 transition-colors font-bold ${currentTheme === 'princess' ? 'bg-[#FF6B81]/15 text-[#FF6B81] hover:bg-[#FF6B81]/25 rounded-full' : (currentTheme === 'excel' ? 'bg-[#107C41]/15 text-[#107C41] hover:bg-[#107C41]/25 rounded-none border border-[#107C41]/30' : 'bg-[#61AFEF]/15 text-[#61AFEF] hover:bg-[#61AFEF]/25 rounded')}`}
                       >
-                        다시 부르기
+                        {t('app.recall')}
                       </button>
                     </div>
                   ) : (
@@ -2631,13 +2633,13 @@ const CodeTiara = () => {
 
                           {/* Controls (Toolbar Style) */}
                           <div className="flex items-center bg-[#F3F2F1] rounded border border-[#D1D1D1] h-[28px]">
-                            <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="Switch Mode">
+                            <button onClick={switchTimerMode} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title={t('app.tooltip_switch_mode')}>
                               <RotateCcw className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={toggleTimer} className={`p-1.5 hover:bg-[#E1E1E1] transition-colors border-r border-[#E1E1E1] ${isTimerRunning ? 'text-[#217346]' : 'text-slate-700'}`}>
                               {isTimerRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                             </button>
-                            <button onClick={handleTimerPopout} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title="팝업으로 분리">
+                            <button onClick={handleTimerPopout} className="p-1.5 hover:bg-[#E1E1E1] text-slate-600 transition-colors border-r border-[#E1E1E1]" title={t('app.tooltip_popout')}>
                               <PanelTopOpen className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => setIsTimerOpen(false)} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
@@ -2658,7 +2660,7 @@ const CodeTiara = () => {
                             }`}>
                             {currentTheme === 'developer'
                               ? (timerMode === 'focus' ? '> FOCUS' : '> REST')
-                              : (timerMode === 'focus' ? '🔥 집중' : '☕ 휴식')
+                              : (timerMode === 'focus' ? t('app.timer_focus') : t('app.timer_break'))
                             }
                           </div>
 
@@ -2667,13 +2669,13 @@ const CodeTiara = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title="모드 전환">
+                            <button onClick={switchTimerMode} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title={t('app.tooltip_switch_mode')}>
                               <RotateCcw className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={toggleTimer} className={`p-2 rounded-full transition-transform hover:scale-110 ${currentTheme === 'princess' ? `${timerMode === 'focus' ? 'bg-[#FF6B81]/10 text-[#FF6B81] hover:bg-[#FF6B81]/20' : 'bg-[#FFB6C1]/10 text-[#FF6B81] hover:bg-[#FFB6C1]/20'}` : (currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : 'bg-slate-700 text-slate-200')}`}>
                               {isTimerRunning ? <Pause className="w-4 h-4 ml-px" /> : <Play className="w-4 h-4 ml-0.5" />}
                             </button>
-                            <button onClick={handleTimerPopout} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title="팝업으로 분리">
+                            <button onClick={handleTimerPopout} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-[#FF6B81] hover:bg-[#FF6B81]/10' : '')}`} title={t('app.tooltip_popout')}>
                               <PanelTopOpen className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => setIsTimerOpen(false)} className={`p-1 rounded-full text-slate-500 hover:bg-black/5 transition-colors ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : (currentTheme === 'princess' ? 'text-slate-400' : '')}`}>
@@ -2711,7 +2713,7 @@ const CodeTiara = () => {
                             setFilterDate(getLocalDateString());
                           }}
                           className="bg-transparent outline-none cursor-pointer border-none font-bold text-slate-600"
-                          title="기간 필터"
+                          title={t('app.tooltip_date_filter')}
                         >
                           <option value="all" className="bg-white text-slate-800">전체 날짜</option>
                           <option value="daily" className="bg-white text-slate-800">일간</option>
@@ -2762,7 +2764,7 @@ const CodeTiara = () => {
                               setFilterDate(getLocalDateString());
                             }}
                             className={`outline-none cursor-pointer ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
-                            title="보기 모드"
+                            title={t('app.tooltip_view_mode')}
                           >
                             <option value="all" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>전체 날짜</option>
                             <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>일간</option>
@@ -2886,7 +2888,7 @@ const CodeTiara = () => {
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value)}
                             className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[#FF6B81] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D5DB] h-8 px-1' : 'text-slate-400')}`}
-                            title="반복 설정"
+                            title={t('app.tooltip_recurrence')}
                           >
                             <option value="none">🔁 반복 안함</option>
                             <option value="daily">🔁 매일</option>
@@ -2983,7 +2985,7 @@ const CodeTiara = () => {
                           <div key={category.id} className="flex items-center justify-between p-3 mb-4 bg-[#1E1E1E] border border-dashed border-[#3E3E42] opacity-80">
                             <div className="flex items-center gap-2 font-mono">
                               {getIcon(category.icon, `w-4 h-4 text-[#5C6370]`)}
-                              <span className="text-[#5C6370] text-sm">{`// ${category.label} is running in external window...`}</span>
+                              <span className="text-[#5C6370] text-sm">{`// [${category.label}] is running in detached mode...`}</span>
                             </div>
                             <button
                                 onClick={restoreCategory}
@@ -3019,7 +3021,7 @@ const CodeTiara = () => {
                         >
                           <div className="flex items-center gap-3">
                             {getIcon(category.icon, `w-5 h-5 text-slate-400`)}
-                            <span className={`text-slate-500 font-bold text-lg`}>{category.label} <span className="text-sm opacity-60 ml-1">💭 (외출 중!)</span></span>
+                            <span className={`text-slate-500 font-bold text-lg`}>{category.label} <span className="text-sm opacity-60 ml-1">💭 {t('app.popout_out')}</span></span>
                           </div>
                           <button
                               onClick={restoreCategory}
@@ -3033,7 +3035,7 @@ const CodeTiara = () => {
                               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); }}
                               className={`text-xs px-3 py-1.5 rounded-[12px] font-bold transition-all shadow-sm`}
                           >
-                            다시 부르기
+                            {t('app.recall')}
                           </button>
                         </div>
                       );
@@ -3094,7 +3096,7 @@ const CodeTiara = () => {
                                   : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
                               onMouseEnter={(e) => { if (currentTheme === 'princess') { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'transparent'; } }}
                               onMouseLeave={(e) => { if (currentTheme === 'princess' && miniModeAdderId !== category.id) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.borderColor = (CATEGORY_HUES[category.colorTheme] || '#FBCFE8'); } }}
-                              title="Add Task"
+                              title={t('app.tooltip_add_task')}
                             >
                               <Plus className={`${currentTheme === 'princess' ? 'w-3.5 h-3.5 stroke-[3px]' : 'w-3.5 h-3.5'}`} />
                             </button>
@@ -3126,7 +3128,7 @@ const CodeTiara = () => {
                                  ${currentTheme === 'princess'
                                      ? 'w-6 h-6 rounded-[8px] border hover:shadow-md'
                                      : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
-                                 title={pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id)) ? "고정 해제" : "항상 위에 고정"}
+                                 title={pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id)) ? t('app.tooltip_unpin') : t('app.tooltip_pin')}
                                >
                                  {pinnedCategories.includes(Number(category.id)) || pinnedCategories.includes(String(category.id)) ? (
                                    <Pin className="w-3.5 h-3.5" />
@@ -3176,7 +3178,7 @@ const CodeTiara = () => {
                                ${currentTheme === 'princess'
                                    ? 'w-6 h-6 rounded-[8px] border hover:shadow-md group'
                                    : (currentTheme === 'excel' ? 'w-5 h-5 bg-[#F3F2F1] text-[#217346] hover:bg-[#217346] hover:text-white border border-[#D1D1D1] rounded-none' : 'w-5 h-5 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white rounded-md')}`}
-                               title={popoutCategoryId ? "메인 화면으로 복귀" : "팝업으로 분리 (Pop-out)"}
+                               title={popoutCategoryId ? t('app.tooltip_return_main') : t('app.tooltip_popout')}
                              >
                                {popoutCategoryId ? <X className="w-3.5 h-3.5" /> : <PanelTopOpen className="w-3.5 h-3.5" />}
                              </button>
@@ -3304,7 +3306,7 @@ const CodeTiara = () => {
                                 type="text"
                                 value={newTaskText}
                                 onChange={(e) => setNewTaskText(e.target.value)}
-                                placeholder={currentTheme === 'excel' ? '새 할 일을 입력하세요...' : "할 일을 입력하세요..."}
+                                placeholder={t('app.edit_placeholder')}
                                 className={`w-full block outline-none transition-all
                                       ${currentTheme === 'princess'
                                     ? `bg-white border border-[var(--c-light)] text-slate-700 placeholder-[var(--c-dark)] focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-bold ${isMiniMode ? 'text-[12px] p-1.5 px-2.5 rounded-[12px]' : 'text-[13px] p-2 px-3.5 rounded-[16px]'}`
@@ -3320,7 +3322,7 @@ const CodeTiara = () => {
                               <textarea
                                 value={newTaskMemo}
                                 onChange={(e) => setNewTaskMemo(e.target.value)}
-                                placeholder={currentTheme === 'excel' ? '상세 메모를 입력하세요 (선택 사항)...' : "상세 메모를 입력하세요 (선택 사항)..."}
+                                placeholder={currentTheme === 'excel' ? t('app.detail_memo_excel') : t('app.detail_memo')}
                                 rows={2}
                                 className={`w-full block resize-none outline-none transition-all
                                       ${currentTheme === 'princess'
@@ -3339,7 +3341,7 @@ const CodeTiara = () => {
                                 <CustomDatePicker
                                   value={taskDate}
                                   onChange={(e) => setTaskDate(e.target.value)}
-                                  placeholder="Date"
+                                  placeholder={t('app.date')}
                                   inputClassName={`outline-none bg-transparent cursor-pointer
                                           ${currentTheme === 'princess' ? `text-[var(--c-dark)] font-bold text-left ${isMiniMode ? 'text-[11px] w-20' : 'text-xs w-24'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 w-24 text-xs p-1 text-center' : 'bg-[#1E1E1E] text-[#CE9178] w-24 border-none text-xs text-center')}`}
                                   currentTheme={currentTheme}
@@ -3354,13 +3356,13 @@ const CodeTiara = () => {
                                     value={taskRecurrence}
                                     onChange={(e) => setTaskRecurrence(e.target.value)}
                                     className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
-                                    title="반복 설정"
+                                    title={t('app.recurrence')}
                                   >
-                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>안함</option>
-                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매일</option>
-                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매주</option>
-                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>매월</option>
-                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>N일</option>
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_none')}</option>
+                                    <option value="daily" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_daily')}</option>
+                                    <option value="weekly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_weekly')}</option>
+                                    <option value="monthly" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_monthly')}</option>
+                                    <option value="custom" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.recurrence_custom')}</option>
                                   </select>
                                   {taskRecurrence === 'weekly' && renderDayPicker(taskRecurrenceDays, setTaskRecurrenceDays, taskDate)}
                                   {taskRecurrence === 'monthly' && (
@@ -3403,7 +3405,7 @@ const CodeTiara = () => {
                                       ${currentTheme === 'princess'
                                       ? `bg-white text-[var(--c-dark)] border border-[var(--c-light)] shadow-sm hover:bg-[var(--c-bg)] hover:text-[var(--c-dark)] ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full sm:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
-                                  title="취소"
+                                  title={t('app.cancel')}
                                 >
                                   {currentTheme === 'excel' ? 'Cancel' : (currentTheme === 'developer' ? '[ESC]' : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
                                 </button>
@@ -3414,7 +3416,7 @@ const CodeTiara = () => {
                                       ${currentTheme === 'princess'
                                       ? `bg-[var(--c-dark)] text-white shadow-[0_4px_10px_var(--c-bg)] hover:shadow-[0_6px_15px_var(--c-bg)] hover:-translate-y-0.5 opacity-90 hover:opacity-100 ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full sm:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
-                                  title="추가"
+                                  title={t('app.tooltip_add')}
                                 >
                                   {currentTheme === 'excel' ? 'Add' : (currentTheme === 'developer' ? '[ENTER]' : <Check className="w-4 h-4 stroke-[2.5px]" />)}
                                 </button>
@@ -3471,14 +3473,14 @@ const CodeTiara = () => {
                       </div>
                       <h3 className={`font-bold text-lg 
                         ${currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E06C75]')}`}>
-                        {currentTheme === 'excel' ? 'Confirm Deletion' : (currentTheme === 'developer' ? 'ERR_CONFIRM_DELETE' : '할 일 삭제')}
+                        {currentTheme === 'excel' ? 'Confirm Deletion' : (currentTheme === 'developer' ? 'ERR_CONFIRM_DELETE' : t('app.confirm_delete_task_title'))}
                       </h3>
                     </div>
 
                     {/* Content */}
-                    <p className={`text-sm mb-8 break-all whitespace-normal leading-relaxed 
+                    <p className={`text-sm mb-8 break-words whitespace-normal leading-relaxed 
                       ${currentTheme === 'princess' ? 'text-slate-500' : (currentTheme === 'excel' ? 'text-slate-800 px-2' : 'text-[#ABB2BF]')}`}>
-                      정말로 <span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{tasks.find(t => t.id === taskToDelete)?.text}'</span>을(를) <br />삭제하시겠습니까?
+                      {t('app.confirm_delete_task_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{tasks.find(t => t.id === taskToDelete)?.text}'</span>{t('app.confirm_delete_task_msg_2')}
                     </p>
 
                     {/* Actions */}
@@ -3492,7 +3494,7 @@ const CodeTiara = () => {
                               ? 'px-6 py-1 bg-white border border-[#D1D1D1] text-xs hover:bg-[#E1E1E1] shadow-sm text-slate-700'
                               : 'px-4 py-2 text-[#ABB2BF] hover:bg-[#2C313A] text-xs rounded border border-transparent hover:border-[#3E4451]')}`}
                       >
-                        {currentTheme === 'excel' ? '취소' : (currentTheme === 'developer' ? '[CANCEL]' : '취소')}
+                        {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[CANCEL]' : t('app.cancel'))}
                       </button>
                       <button
                         onClick={() => confirmDeleteTask()}
@@ -3503,7 +3505,7 @@ const CodeTiara = () => {
                               ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
                               : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded')}`}
                       >
-                        {currentTheme === 'excel' ? '삭제' : (currentTheme === 'developer' ? '[CONFIRM]' : '삭제')}
+                        {currentTheme === 'excel' ? t('app.delete') : (currentTheme === 'developer' ? '[CONFIRM]' : t('app.delete'))}
                       </button>
                     </div>
                   </div>
@@ -3534,14 +3536,14 @@ const CodeTiara = () => {
                       </div>
                       <h3 className={`font-bold text-lg 
                         ${currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E06C75]')}`}>
-                        {currentTheme === 'excel' ? 'Confirm Deletion' : (currentTheme === 'developer' ? 'ERR_CONFIRM_DELETE' : '카테고리 삭제')}
+                        {currentTheme === 'excel' ? 'Confirm Deletion' : (currentTheme === 'developer' ? 'ERR_CONFIRM_DELETE' : t('app.confirm_delete_cat_title'))}
                       </h3>
                     </div>
 
                     {/* Content */}
-                    <p className={`text-sm mb-8 break-all whitespace-normal leading-relaxed 
+                    <p className={`text-sm mb-8 break-words whitespace-normal leading-relaxed 
                       ${currentTheme === 'princess' ? 'text-slate-500' : (currentTheme === 'excel' ? 'text-slate-800 px-2' : 'text-[#ABB2BF]')}`}>
-                      정말로 <span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{categories.find(c => c.id === categoryToDelete)?.label}'</span> 카테고리를 <br />삭제하시겠습니까? (할 일도 삭제됩니다)
+                      {t('app.confirm_delete_cat_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{categories.find(c => c.id === categoryToDelete)?.label}'</span>{t('app.confirm_delete_cat_msg_2')}
                     </p>
 
                     {/* Actions */}
@@ -3555,7 +3557,7 @@ const CodeTiara = () => {
                               ? 'px-6 py-1 bg-white border border-[#D1D1D1] text-xs hover:bg-[#E1E1E1] shadow-sm text-slate-700'
                               : 'px-4 py-2 text-[#ABB2BF] hover:bg-[#2C313A] text-xs rounded border border-transparent hover:border-[#3E4451]')}`}
                       >
-                        {currentTheme === 'excel' ? '취소' : (currentTheme === 'developer' ? '[CANCEL]' : '취소')}
+                        {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[CANCEL]' : t('app.cancel'))}
                       </button>
                       <button
                         onClick={() => confirmDeleteCategory()}
@@ -3595,14 +3597,14 @@ const CodeTiara = () => {
                       </div>
                       <h3 className={`font-bold text-lg 
                         ${currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]')}`}>
-                        {currentTheme === 'excel' ? 'Confirm Cleanup' : (currentTheme === 'developer' ? 'SYS_CLEANUP_REQ' : '완료 항목 정리')}
+                        {currentTheme === 'excel' ? t('app.confirm_cleanup_title_default') : (currentTheme === 'developer' ? 'SYS_CLEANUP_REQ' : t('app.confirm_cleanup_title_default'))}
                       </h3>
                     </div>
 
                     {/* Content */}
-                    <p className={`text-sm mb-8 break-all whitespace-normal leading-relaxed 
+                    <p className={`text-sm mb-8 break-words whitespace-pre-line leading-relaxed 
                       ${currentTheme === 'princess' ? 'text-slate-500' : (currentTheme === 'excel' ? 'text-slate-800 px-6 mt-4' : 'text-[#ABB2BF]')}`}>
-                      정말로 완료된 모든 항목을 <br />삭제하시겠습니까?
+                      {t('app.confirm_cleanup_msg')}
                     </p>
 
                     {/* Actions */}
@@ -3616,7 +3618,7 @@ const CodeTiara = () => {
                               ? 'px-6 py-1 bg-white border border-[#D1D1D1] text-xs hover:bg-[#E1E1E1] shadow-sm text-slate-700'
                               : 'px-4 py-2 text-[#ABB2BF] hover:bg-[#2C313A] text-xs rounded border border-transparent hover:border-[#3E4451]')}`}
                       >
-                        {currentTheme === 'excel' ? '취소' : (currentTheme === 'developer' ? '[CANCEL]' : '취소')}
+                        {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[CANCEL]' : t('app.cancel'))}
                       </button>
                       <button
                         onClick={() => clearCompletedTasks()}
@@ -3627,7 +3629,7 @@ const CodeTiara = () => {
                               ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
                               : 'px-4 py-2 bg-[#E5C07B]/10 text-[#E5C07B] border border-[#E5C07B]/50 hover:bg-[#E5C07B]/20 text-xs rounded')}`}
                       >
-                        {currentTheme === 'excel' ? '정리' : (currentTheme === 'developer' ? '[EXECUTE]' : '삭제')}
+                        {currentTheme === 'excel' ? t('app.cleanup') : (currentTheme === 'developer' ? '[EXECUTE]' : t('app.delete'))}
                       </button>
                     </div>
                   </div>
@@ -3646,7 +3648,7 @@ const CodeTiara = () => {
                 type="button"
                 onClick={() => setIsAuthModalOpen(false)}
                 className={`absolute top-3 right-3 p-1 hover:bg-slate-700/10 transition-colors z-[10000] border-0 bg-transparent cursor-pointer ${currentTheme === 'excel' ? 'text-black' : (currentTheme === 'developer' ? 'text-[#ABB2BF]' : 'text-[#FF6B81]')}`}
-                title="닫기"
+                title={t('app.tooltip_close')}
               >
                 <X className="w-5 h-5" />
               </button>

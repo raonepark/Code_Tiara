@@ -26,6 +26,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
+            backgroundThrottling: false // Prevent Chromium from throttling background timers when minimized/hidden
         },
         autoHideMenuBar: true,
         frame: false, // ✨ Frameless Window
@@ -164,6 +165,7 @@ function createWindow() {
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false,
+                backgroundThrottling: false // Prevent Chromium from throttling background timers
             },
             autoHideMenuBar: true,
             frame: false, // Frameless for sticky note look

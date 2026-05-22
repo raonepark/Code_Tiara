@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   auth, 
   signInWithPopup, 
@@ -26,6 +27,7 @@ import {
 console.log('AuthScreen lucide imports:', { Crown, AlertCircle, Mail, Lock, RefreshCw, User });
 
 export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange, isModal = false }) {
+  const { t } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,17 +40,17 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     if (!isConfigured) {
-      setError("Firebase가 구성되지 않았습니다. .env 파일을 작성해 주세요.");
+      setError(t('auth.err_no_firebase'));
       return;
     }
 
     if (!email || !password) {
-      setError("이메일과 비밀번호를 모두 입력해 주세요.");
+      setError(t('auth.err_missing_fields'));
       return;
     }
 
     if (isSignUp && password !== confirmPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setError(t('auth.err_pwd_mismatch'));
       return;
     }
 
@@ -64,17 +66,17 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
       onAuthSuccess();
     } catch (err) {
       console.error(err);
-      let errMsg = "인증 중 오류가 발생했습니다.";
+      let errMsg = t('auth.err_general');
       if (err.code === "auth/email-already-in-use") {
-        errMsg = "이미 사용 중인 이메일 주소입니다.";
+        errMsg = t('auth.err_email_in_use');
       } else if (err.code === "auth/invalid-email") {
-        errMsg = "올바르지 않은 이메일 형식입니다.";
+        errMsg = t('auth.err_invalid_email');
       } else if (err.code === "auth/weak-password") {
-        errMsg = "비밀번호는 최소 6자리 이상이어야 합니다.";
+        errMsg = t('auth.err_weak_pwd');
       } else if (err.code === "auth/missing-password" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        errMsg = "이메일 또는 비밀번호가 올바르지 않습니다.";
+        errMsg = t('auth.err_wrong_credentials');
       } else if (err.code === "auth/user-not-found") {
-        errMsg = "존재하지 않는 사용자 계정입니다.";
+        errMsg = t('auth.err_user_not_found');
       }
       setError(errMsg);
     } finally {
@@ -84,7 +86,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
   const handleGoogleAuth = async () => {
     if (!isConfigured) {
-      setError("Firebase가 구성되지 않았습니다. .env 파일을 작성해 주세요.");
+      setError(t('auth.err_no_firebase'));
       return;
     }
 
@@ -96,7 +98,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     } catch (err) {
       console.error(err);
       if (err.code !== "auth/popup-closed-by-user") {
-        setError("구글 로그인 중 오류가 발생했습니다.");
+        setError(t('auth.err_google'));
       }
     } finally {
       setLoading(false);
@@ -127,10 +129,10 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
             {/* Titles */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
-                {isSignUp ? '회원가입' : '로그인'}
+                {isSignUp ? t('auth.signup') : t('auth.login')}
               </h1>
               <p className="text-sm text-gray-500 font-medium font-sans">
-                {isSignUp ? '새로운 계정을 만들어 보세요' : '계정에 로그인해 주세요'}
+                {isSignUp ? t('auth.subtitle_signup') : t('auth.subtitle_login')}
               </p>
             </div>
 
@@ -148,7 +150,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="이메일 주소 입력"
+                  placeholder={t('auth.email_placeholder')}
                   disabled={loading}
                   className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                 />
@@ -160,7 +162,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="비밀번호"
+                  placeholder={t('auth.pwd_placeholder')}
                   disabled={loading}
                   className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                 />
@@ -173,7 +175,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="비밀번호 확인"
+                    placeholder={t('auth.pwd_confirm_placeholder')}
                     disabled={loading}
                     className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                   />
@@ -185,10 +187,10 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 <div className="flex justify-between items-center px-2 mt-2 gap-2">
                   <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
                     <input type="checkbox" className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
-                    로그인 상태 유지
+                    {t('auth.keep_logged_in')}
                   </label>
                   <button type="button" className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap">
-                    비밀번호 찾기
+                    {t('auth.forgot_pwd')}
                   </button>
                 </div>
               )}
@@ -200,14 +202,14 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-sm hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0"
                 >
                   {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                  {isSignUp ? '회원가입' : '로그인'}
+                  {isSignUp ? t('auth.signup') : t('auth.login')}
                 </button>
               </div>
             </form>
 
             <div className="mt-8 flex items-center justify-between">
               <div className="h-[1px] bg-gray-200 flex-1"></div>
-              <span className="px-4 text-xs text-gray-400 font-medium tracking-wider">또는 간편 로그인</span>
+              <span className="px-4 text-xs text-gray-400 font-medium tracking-wider">{t('auth.or_easy_login')}</span>
               <div className="h-[1px] bg-gray-200 flex-1"></div>
             </div>
 
@@ -229,7 +231,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 type="button"
                 onClick={handleGuestLogin}
                 className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm text-gray-700"
-                title="게스트 모드"
+                title={t('auth.guest_mode')}
               >
                 <User className="w-5 h-5" />
               </button>
@@ -237,9 +239,9 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
             <div className="mt-8 text-center text-xs font-medium text-gray-500">
               {isSignUp ? (
-                <span>이미 계정이 있으신가요? <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">로그인</button></span>
+                <span>{t('auth.already_have_account')} <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.login')}</button></span>
               ) : (
-                <span>계정이 없으신가요? <button onClick={() => setIsSignUp(true)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">회원가입</button></span>
+                <span>{t('auth.no_account')} <button onClick={() => setIsSignUp(true)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.signup')}</button></span>
               )}
             </div>
           </>

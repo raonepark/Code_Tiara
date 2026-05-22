@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './web-vitals';
+import './i18n';
 
 // Sync localStorage across Electron windows
 try {
