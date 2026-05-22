@@ -419,7 +419,7 @@ const TaskItem = memo(({
                                             }`}
                                     >
                                         <FileText className="w-2.5 h-2.5 flex-shrink-0" />
-                                        <span className="truncate">{task.memo.split('\n')[0] || '메모 보기...'}</span>
+                                        <span className="truncate">{task.memo.split('\n')[0] || t('app.view_memo')}</span>
                                     </div>
                                 ) : (
                                     /* Expanded (Detail) Mode */
@@ -442,10 +442,10 @@ const TaskItem = memo(({
                                         >
                                             <span className="flex items-center gap-1">
                                                 <FileText className="w-3 h-3" />
-                                                {currentTheme === 'developer' ? '// Memo detail' : '상세 메모'}
+                                                {currentTheme === 'developer' ? '// Memo detail' : t('app.memo_detail')}
                                             </span>
                                             <span className="opacity-60 text-[8px]">
-                                                {currentTheme === 'developer' ? 'Click to collapse' : '접으려면 클릭'}
+                                                {currentTheme === 'developer' ? 'Click to collapse' : t('app.click_to_collapse')}
                                             </span>
                                         </div>
                                         <div className="whitespace-pre-wrap break-words">{task.memo}</div>

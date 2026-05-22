@@ -158,7 +158,10 @@
     "tooltip_confirm_delete": "Confirm Delete",
     "tooltip_cancel": "Cancel",
     "tooltip_delete": "Delete",
-    "new_category": "New Category"
+    "new_category": "New Category",
+    "view_memo": "View memo...",
+    "memo_detail": "Memo Detail",
+    "click_to_collapse": "Click to collapse"
   },
   "auth": {
     "err_no_firebase": "Firebase is not configured. Please check your .env file.",

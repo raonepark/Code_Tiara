@@ -93,15 +93,25 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
 };
 
 const CodeTiara = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isGuestModeRef = useRef(false); // 게스트 모드 보호용 ref
 
-
-
+  // ✨ Sync language across windows
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'i18nextLng' && e.newValue) {
+        if (i18n.language !== e.newValue) {
+          i18n.changeLanguage(e.newValue);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [i18n]);
 
   // --- 초기 데이터 정의 (공용 템플릿용 - 한글화) ---
   const defaultCategories = [
