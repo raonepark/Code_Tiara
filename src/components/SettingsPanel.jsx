@@ -526,7 +526,7 @@ const SettingsPanel = ({
             <div className={`text-center mt-5 text-[10px] opacity-40 select-none ${
                 currentTheme === 'developer' ? 'font-mono' : currentTheme === 'princess' ? 'font-gamja font-bold' : 'font-sans'
             }`}>
-                {currentTheme === 'developer' ? '// version 1.6.2' : `${t('settings.version')} 1.6.2`}
+                {currentTheme === 'developer' ? '// version 1.7.0' : `${t('settings.version')} 1.7.0`}
             </div>
 
 
