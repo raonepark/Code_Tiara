@@ -4,6 +4,8 @@ console.log('Electron require value:', electron);
 console.log('Versions:', process.versions);
 const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session } = electron;
 const path = require('path');
+const http = require('http');
+const fs = require('fs');
 
 // Basic dev detection
 const isDev = !app.isPackaged;
@@ -17,6 +19,90 @@ const popoutWindows = {};
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
+
+let localServerPort = null;
+let localServer = null;
+
+function startLocalServer() {
+    return new Promise((resolve, reject) => {
+        localServer = http.createServer((req, res) => {
+            const parsedUrl = new URL(req.url, `http://localhost`);
+            let filePath = parsedUrl.pathname;
+            
+            if (filePath === '/') {
+                filePath = '/index.html';
+            }
+            
+            const absolutePath = path.join(__dirname, '..', 'build', filePath);
+            
+            fs.access(absolutePath, fs.constants.F_OK, (err) => {
+                if (err) {
+                    const indexPath = path.join(__dirname, '..', 'build', 'index.html');
+                    fs.readFile(indexPath, (readErr, content) => {
+                        if (readErr) {
+                            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+                            res.end('Not Found');
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                            res.end(content, 'utf-8');
+                        }
+                    });
+                    return;
+                }
+                
+                fs.readFile(absolutePath, (readErr, content) => {
+                    if (readErr) {
+                        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                        res.end(`Internal Server Error: ${readErr.code}`);
+                        return;
+                    }
+                    
+                    const ext = path.extname(absolutePath).toLowerCase();
+                    let contentType = 'text/html';
+                    const mimeTypes = {
+                        '.html': 'text/html',
+                        '.js': 'text/javascript',
+                        '.css': 'text/css',
+                        '.json': 'application/json',
+                        '.png': 'image/png',
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.gif': 'image/gif',
+                        '.svg': 'image/svg+xml',
+                        '.wav': 'audio/wav',
+                        '.mp4': 'video/mp4',
+                        '.woff': 'font/woff',
+                        '.woff2': 'font/woff2',
+                        '.ttf': 'font/ttf',
+                        '.eot': 'application/vnd.ms-fontobject',
+                        '.otf': 'font/otf',
+                        '.wasm': 'application/wasm',
+                        '.ico': 'image/x-icon'
+                    };
+                    
+                    if (mimeTypes[ext]) {
+                        contentType = mimeTypes[ext];
+                    }
+                    
+                    res.writeHead(200, { 'Content-Type': contentType });
+                    res.end(content);
+                });
+            });
+        });
+        
+        localServer.listen(0, '127.0.0.1', () => {
+            const address = localServer.address();
+            localServerPort = address.port;
+            console.log(`Production local server listening on http://127.0.0.1:${localServerPort}`);
+            resolve(localServerPort);
+        });
+        
+        localServer.on('error', (err) => {
+            console.error('Local server error:', err);
+            reject(err);
+        });
+    });
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -44,7 +130,7 @@ function createWindow() {
 
     const startUrl = isDev
         ? 'http://localhost:3000'
-        : `file://${path.join(__dirname, '../build/index.html')}`;
+        : `http://localhost:${localServerPort}`;
 
     console.log('Loading URL:', startUrl);
     mainWindow.loadURL(startUrl);
@@ -211,7 +297,7 @@ function createWindow() {
 
         const popoutUrl = isDev
             ? `http://localhost:3000/?popout=${categoryId}`
-            : `file://${path.join(__dirname, '../build/index.html')}?popout=${categoryId}`;
+            : `http://localhost:${localServerPort}/?popout=${categoryId}`;
 
         popoutWin.loadURL(popoutUrl);
 
@@ -312,16 +398,28 @@ if (!gotTheLock) {
         }
     });
 
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
         if (session && session.defaultSession) {
             session.defaultSession.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         }
+        
+        if (!isDev) {
+            try {
+                await startLocalServer();
+            } catch (err) {
+                console.error('Failed to start local production server:', err);
+            }
+        }
+        
         createWindow();
         createTray();
     });
 }
 
 app.on('window-all-closed', () => {
+    if (localServer) {
+        localServer.close();
+    }
     if (process.platform !== 'darwin') {
         app.quit();
     }
