@@ -164,7 +164,7 @@ export const THEME_CONFIG = {
             button: { default: 'bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] text-white hover:shadow-[0_4px_15px_rgba(255,182,193,0.5)] hover:-translate-y-0.5 rounded-[20px] shadow-sm font-bold border-0 transition-all px-4 py-2' },
             listRow: {
                 wrapper: 'flex items-center gap-2 p-2.5 mb-2 rounded-[16px] bg-white border border-[#FFE4E1] shadow-sm hover:shadow-md transition-shadow',
-                iconTrigger: 'bg-[#FFF0F5] rounded-full border border-[#FFD1DC] text-lg shadow-sm hover:scale-110 pt-1 text-[#FF6B81]',
+                iconTrigger: 'bg-[#FFF0F5] rounded-full border border-[#FFD1DC] text-lg shadow-sm hover:scale-110 flex items-center justify-center text-[#FF6B81]',
                 input: 'bg-transparent border-none focus:ring-0 text-[#FF6B81] font-bold placeholder-[#FFC0CB]',
                 colorTrigger: 'rounded-full border-[3px] border-white shadow-md',
                 deleteBtn: 'text-[#FFB6C1] bg-transparent hover:bg-[#FFF0F5] rounded-full hover:text-[#FF6B81] p-1.5'

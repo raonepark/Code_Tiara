@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Save, ChevronDown, Download, Upload, Menu, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
+import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
+
+const { ipcRenderer } = window.require ? window.require('electron') : {};
 
 const FONTS_LIST = [
     { id: 'default', labelKey: 'settings.font_default' },
@@ -34,6 +36,22 @@ const SettingsPanel = ({
     const [isEditingName, setIsEditingName] = useState(false);
     const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const nameInputRef = useRef(null);
+    const [isAutoLaunch, setIsAutoLaunch] = useState(false);
+
+    useEffect(() => {
+        if (ipcRenderer && isOpen) {
+            ipcRenderer.invoke('get-auto-launch')
+                .then((status) => setIsAutoLaunch(status))
+                .catch((err) => console.error("Failed to load auto launch setting:", err));
+        }
+    }, [isOpen]);
+
+    const handleAutoLaunchChange = (checked) => {
+        if (ipcRenderer) {
+            ipcRenderer.send('set-auto-launch', checked);
+            setIsAutoLaunch(checked);
+        }
+    };
 
     useEffect(() => {
         if (isEditingName && nameInputRef.current) {
@@ -288,6 +306,37 @@ const SettingsPanel = ({
                             )}
                         </div>
                     </div>
+                    {/* Auto Launch Setting */}
+                    {ipcRenderer && (
+                        <div className={`pt-3 border-t ${theme.divider} mt-4`}>
+                            <div className="flex justify-between items-center ml-1">
+                                <span className={`text-xs font-bold ${theme.settings.sectionTitle} !mb-0 flex items-center`}>
+                                    {t('settings.autoLaunch')}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleAutoLaunchChange(!isAutoLaunch)}
+                                    className={`relative inline-flex items-center flex-shrink-0 cursor-pointer transition-all duration-200 ease-in-out focus:outline-none ${
+                                        currentTheme === 'princess'
+                                            ? `h-5 w-9 rounded-full border border-transparent ${isAutoLaunch ? 'bg-[#FF6B81] shadow-[0_2px_6px_rgba(255,107,129,0.3)]' : 'bg-pink-100/80 border-pink-200/50'}`
+                                            : currentTheme === 'excel'
+                                            ? `h-5 w-9 rounded-none border ${isAutoLaunch ? 'bg-[#107C41] border-[#107C41]' : 'bg-white border-[#A19F9D] hover:border-[#605E5C]'}`
+                                            : `h-5.5 w-10 rounded-sm border ${isAutoLaunch ? 'bg-[#E5C07B] border-[#E5C07B]' : 'bg-[#1E1E1E] border-[#3E3E42] hover:border-[#5C6370]'}`
+                                    }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block transform transition duration-200 ease-in-out ${
+                                            currentTheme === 'princess'
+                                                ? `h-4 w-4 rounded-full bg-white shadow-[0_1px_3px_rgba(255,107,129,0.2)] ${isAutoLaunch ? 'translate-x-[16px]' : 'translate-x-0.5'}`
+                                                : currentTheme === 'excel'
+                                                ? `h-3.5 w-3.5 rounded-none ${isAutoLaunch ? 'bg-white translate-x-[18px]' : 'bg-[#605E5C] translate-x-0.5'}`
+                                                : `h-3.5 w-3.5 rounded-sm ${isAutoLaunch ? 'bg-[#282C34] translate-x-[22px]' : 'bg-[#ABB2BF] translate-x-0.5'}`
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* 💾 Data & Category Card - Unified */}
@@ -335,8 +384,8 @@ const SettingsPanel = ({
                                                             {index + 1}
                                                         </div>
                                                     ) : currentTheme === 'princess' ? (
-                                                        <div {...provided.dragHandleProps} className="mr-2 cursor-grab active:cursor-grabbing text-[#FFB6C1] hover:bg-[#FFF0F5] p-1 rounded-full transition-colors">
-                                                            <Menu className="w-4 h-4" />
+                                                        <div {...provided.dragHandleProps} className="mr-2 cursor-grab active:cursor-grabbing text-[#FFB6C1] hover:bg-[#FFF0F5] p-1.5 rounded-full transition-colors flex items-center justify-center hover:text-[#FF6B81]">
+                                                            <GripVertical className="w-4 h-4" />
                                                         </div>
                                                     ) : (
                                                         <div {...provided.dragHandleProps} className={`mr-2 cursor-grab active:cursor-grabbing p-1 transition-colors ${currentTheme === 'developer' ? 'text-[#5C6370] hover:text-white' : 'text-slate-400 hover:text-slate-600'}`}>
@@ -367,7 +416,13 @@ const SettingsPanel = ({
                                                                         <button
                                                                             key={icon}
                                                                             onClick={() => { updateCategory(cat.id, 'icon', icon); setActivePicker(null); }}
-                                                                            className={`w-8 h-8 flex items-center justify-center rounded-md text-xs transition-colors hover:bg-black/5 ${cat.icon === icon ? 'bg-black/5 ring-1 ring-[#61AFEF]' : ''} ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:text-white' : (currentTheme === 'excel' ? 'text-slate-700 hover:text-black' : '')}`}
+                                                                            className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${
+                                                                                currentTheme === 'princess'
+                                                                                    ? `rounded-full hover:bg-[#FFF0F5] ${cat.icon === icon ? 'bg-[#FFF0F5] ring-2 ring-[#FF6B81]' : ''}`
+                                                                                    : currentTheme === 'excel'
+                                                                                    ? `rounded-none hover:bg-[#E6F2EA] ${cat.icon === icon ? 'bg-[#E6F2EA] ring-1 ring-[#107C41]' : ''}`
+                                                                                    : `rounded-md hover:bg-[#2C313A] text-[#ABB2BF] hover:text-white ${cat.icon === icon ? 'bg-[#2C313A] ring-1 ring-[#E5C07B]' : ''}`
+                                                                            }`}
                                                                         >
                                                                             {currentTheme === 'developer' || currentTheme === 'excel' ? (
                                                                                 getIcon(icon, 'w-4 h-4') // Use standard icons in picker too
@@ -409,11 +464,17 @@ const SettingsPanel = ({
                                                                         <button
                                                                             key={color}
                                                                             onClick={() => { updateCategory(cat.id, 'colorTheme', color); setActivePicker(null); }}
-                                                                            className={`w-6 h-6 rounded-full border border-slate-100/20 hover:scale-110 transition-transform ${color === 'red' ? 'bg-[#FFC0CB]' :
+                                                                            className={`w-6 h-6 border transition-all duration-200 hover:scale-110 ${
+                                                                                currentTheme === 'princess'
+                                                                                    ? 'rounded-full border-white/50 shadow-sm'
+                                                                                    : currentTheme === 'excel'
+                                                                                    ? 'rounded-none border-slate-200'
+                                                                                    : 'rounded-none border-slate-700'
+                                                                            } ${color === 'red' ? 'bg-[#FFC0CB]' :
                                                                                 (color === 'cyan' ? 'bg-[#AEE4FF]' :
                                                                                     (color === 'emerald' ? 'bg-[#98FB98]' :
                                                                                         (color === 'purple' ? 'bg-[#DDA0DD]' : 'bg-[#FFB347]')))
-                                                                                }`}
+                                                                            }`}
                                                                         />
                                                                     ))}
                                                                 </div>
@@ -426,13 +487,25 @@ const SettingsPanel = ({
                                                         <div className="flex items-center gap-1 animate-in zoom-in-50 duration-200 ml-1">
                                                             <button
                                                                 onClick={() => finalDeleteCategory(cat.id)}
-                                                                className={`w-6 h-6 flex items-center justify-center rounded-full shadow-sm transition-all ${currentTheme === 'developer' ? 'bg-[#E06C75] text-[#1E1E1E] rounded-none hover:bg-[#FF6B81]' : 'bg-[#FF6B81] text-white hover:bg-[#FF4757]'}`}
+                                                                className={`w-6 h-6 flex items-center justify-center shadow-sm transition-all ${
+                                                                    currentTheme === 'princess' 
+                                                                        ? 'rounded-full bg-[#FF6B81] text-white hover:bg-[#FF4757]' 
+                                                                        : currentTheme === 'excel' 
+                                                                        ? 'rounded-none bg-[#107C41] text-white hover:bg-[#0E6032]' 
+                                                                        : 'rounded-none bg-[#E06C75] text-[#1E1E1E] hover:bg-[#FF6B81]'
+                                                                }`}
                                                             >
                                                                 <Check className="w-3.5 h-3.5" />
                                                             </button>
                                                             <button
                                                                 onClick={() => setConfirmingCategoryDeleteId(null)}
-                                                                className={`w-6 h-6 flex items-center justify-center rounded-full shadow-sm transition-all ${currentTheme === 'developer' ? 'bg-[#2D2D2D] text-[#ABB2BF] border border-[#3E4451] rounded-none hover:bg-[#3E3E42]' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
+                                                                className={`w-6 h-6 flex items-center justify-center shadow-sm transition-all ${
+                                                                    currentTheme === 'princess' 
+                                                                        ? 'rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200' 
+                                                                        : currentTheme === 'excel' 
+                                                                        ? 'rounded-none bg-[#F3F2F1] text-slate-700 border border-[#D1D5DB] hover:bg-[#E1E1E1]' 
+                                                                        : 'rounded-none bg-[#2D2D2D] text-[#ABB2BF] border border-[#3E4451] hover:bg-[#3E3E42]'
+                                                                }`}
                                                             >
                                                                 <X className="w-3.5 h-3.5" />
                                                             </button>
@@ -440,7 +513,7 @@ const SettingsPanel = ({
                                                     ) : (
                                                         <button
                                                             onClick={() => setConfirmingCategoryDeleteId(cat.id)}
-                                                            className={`w-6 h-6 flex items-center justify-center transition-all shadow-sm ${theme.settings.listRow.deleteBtn} ${currentTheme === 'developer' ? 'w-auto px-2 text-[10px] font-bold hover:text-[#E06C75]' : 'rounded-full'}`}
+                                                            className={`w-6 h-6 flex items-center justify-center transition-all shadow-sm ${theme.settings.listRow.deleteBtn} ${currentTheme === 'developer' ? 'w-auto px-2 text-[10px] font-bold hover:text-[#E06C75]' : (currentTheme === 'excel' ? 'rounded-none' : 'rounded-full')}`}
                                                         >
                                                             {currentTheme === 'developer' ? '[DEL]' : <Trash2 className="w-3.5 h-3.5" />}
                                                         </button>

@@ -258,6 +258,19 @@ function createWindow() {
             popoutWindows[categoryId].show();
         }
     });
+
+    // ✨ Toggle launch at Windows startup
+    ipcMain.on('set-auto-launch', (event, enabled) => {
+        app.setLoginItemSettings({
+            openAtLogin: enabled,
+            path: app.getPath('exe')
+        });
+    });
+
+    ipcMain.handle('get-auto-launch', () => {
+        const settings = app.getLoginItemSettings();
+        return settings.openAtLogin;
+    });
 }
 
 function createTray() {

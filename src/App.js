@@ -28,7 +28,6 @@ import {
   deleteDoc,
   collection,
   query,
-  where,
   sendEmailVerification
 } from './firebase/firebaseConfig';
 
@@ -473,12 +472,25 @@ const CodeTiara = () => {
   const [isMiniMode, setIsMiniMode] = useState(window.innerWidth < 450);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ✨ Menu Toggle State
 
+  const handleLogOut = async () => {
+    isGuestModeRef.current = false;
+    localStorage.removeItem('lumora_guest_mode');
+    await signOut(auth);
+    setUser(null);
+  };
+
   // --- Firebase Authentication State Observer ---
   useEffect(() => {
     if (!auth) {
       setAuthLoading(false);
       return;
     }
+    // Check if guest mode was active (especially for popout windows)
+    if (localStorage.getItem('lumora_guest_mode') === 'true') {
+      isGuestModeRef.current = true;
+      setUser({ uid: "guest_user", email: "guest@codetiara.com" });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         if (localStorage.getItem('signing_up') === 'true') {
@@ -486,10 +498,11 @@ const CodeTiara = () => {
           return;
         }
         isGuestModeRef.current = false;
+        localStorage.removeItem('lumora_guest_mode');
         setUser(firebaseUser);
       } else {
         // 🛡️ 게스트 모드 중이면 데이터 초기화 방지 (race condition 방어)
-        if (isGuestModeRef.current) {
+        if (isGuestModeRef.current || localStorage.getItem('lumora_guest_mode') === 'true') {
           setAuthLoading(false);
           return;
         }
@@ -509,6 +522,10 @@ const CodeTiara = () => {
       // 게스트 모드 ref 설정
       if (mockUser.uid === 'guest_user') {
         isGuestModeRef.current = true;
+        localStorage.setItem('lumora_guest_mode', 'true');
+      } else {
+        isGuestModeRef.current = false;
+        localStorage.removeItem('lumora_guest_mode');
       }
       setUser(mockUser);
     }
@@ -582,7 +599,7 @@ const CodeTiara = () => {
         let loadedCategories = [];
         let categoriesFromFirestore = [];
         if (user.uid !== "guest_user") {
-          const catQuery = query(collection(db, 'categories'), where('userId', '==', user.uid));
+          const catQuery = query(collection(db, 'users', user.uid, 'categories'));
           const catSnapshot = await getDocs(catQuery);
           catSnapshot.forEach((doc) => {
             categoriesFromFirestore.push({ ...doc.data(), id: doc.id });
@@ -599,7 +616,7 @@ const CodeTiara = () => {
         let loadedTasks = [];
         let tasksFromFirestore = [];
         if (user.uid !== "guest_user") {
-          const taskQuery = query(collection(db, 'tasks'), where('userId', '==', user.uid));
+          const taskQuery = query(collection(db, 'users', user.uid, 'tasks'));
           const taskSnapshot = await getDocs(taskQuery);
           taskSnapshot.forEach((doc) => {
             tasksFromFirestore.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
@@ -641,11 +658,11 @@ const CodeTiara = () => {
                 if (importConfirm) {
                   // Copy and upload categories to Firestore
                   for (const cat of localCats) {
-                    await setDoc(doc(db, 'categories', cat.id), { ...cat, userId: user.uid });
+                    await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), { ...cat, userId: user.uid });
                   }
                   // Copy and upload tasks to Firestore
                   for (const task of localTasks) {
-                    await setDoc(doc(db, 'tasks', String(task.id)), { ...task, userId: user.uid });
+                    await setDoc(doc(db, 'users', user.uid, 'tasks', String(task.id)), { ...task, userId: user.uid });
                   }
                   
                   loadedCategories = localCats;
@@ -667,7 +684,7 @@ const CodeTiara = () => {
           loadedCategories = defaultCategories;
           if (user.uid !== "guest_user") {
             for (const cat of loadedCategories) {
-              await setDoc(doc(db, 'categories', cat.id), { ...cat, userId: user.uid });
+              await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), { ...cat, userId: user.uid });
             }
           }
         }
@@ -677,7 +694,7 @@ const CodeTiara = () => {
           loadedTasks = defaultTasks;
           if (user.uid !== "guest_user") {
             for (const task of loadedTasks) {
-              await setDoc(doc(db, 'tasks', String(task.id)), { ...task, userId: user.uid });
+              await setDoc(doc(db, 'users', user.uid, 'tasks', String(task.id)), { ...task, userId: user.uid });
             }
           }
         }
@@ -725,15 +742,15 @@ const CodeTiara = () => {
     });
 
     added.forEach(async (t) => {
-      await setDoc(doc(db, 'tasks', String(t.id)), { ...t, userId: user.uid });
+      await setDoc(doc(db, 'users', user.uid, 'tasks', String(t.id)), { ...t, userId: user.uid });
     });
 
     updated.forEach(async (t) => {
-      await setDoc(doc(db, 'tasks', String(t.id)), { ...t, userId: user.uid });
+      await setDoc(doc(db, 'users', user.uid, 'tasks', String(t.id)), { ...t, userId: user.uid });
     });
 
     deleted.forEach(async (t) => {
-      await deleteDoc(doc(db, 'tasks', String(t.id)));
+      await deleteDoc(doc(db, 'users', user.uid, 'tasks', String(t.id)));
     });
 
     prevTasksRef.current = tasks;
@@ -756,15 +773,15 @@ const CodeTiara = () => {
     });
 
     added.forEach(async (c) => {
-      await setDoc(doc(db, 'categories', String(c.id)), { ...c, userId: user.uid });
+      await setDoc(doc(db, 'users', user.uid, 'categories', String(c.id)), { ...c, userId: user.uid });
     });
 
     updated.forEach(async (c) => {
-      await setDoc(doc(db, 'categories', String(c.id)), { ...c, userId: user.uid });
+      await setDoc(doc(db, 'users', user.uid, 'categories', String(c.id)), { ...c, userId: user.uid });
     });
 
     deleted.forEach(async (c) => {
-      await deleteDoc(doc(db, 'categories', String(c.id)));
+      await deleteDoc(doc(db, 'users', user.uid, 'categories', String(c.id)));
     });
 
     prevCategoriesRef.current = categories;
@@ -968,7 +985,7 @@ const CodeTiara = () => {
     // 팝아웃 창이거나, 유저 미로그인이거나, 초기 데이터 로드 미완료 시 실행 안 함
     if (popoutCategoryId || !user || !isInitialLoadComplete) return;
 
-    const onboardingCompleted = localStorage.getItem('lumora_onboarding_completed') === 'true';
+    const onboardingCompleted = localStorage.getItem(`lumora_onboarding_completed_${user.uid}`) === 'true';
     if (!onboardingCompleted) {
       const timer = setTimeout(() => {
         sendIPC('open-popout', 'onboarding');
@@ -2060,7 +2077,7 @@ const CodeTiara = () => {
 
       // 1. Delete user data in Firestore (tasks)
       console.log("Deleting tasks for user:", uid);
-      const tasksQuery = query(collection(db, 'tasks'), where('userId', '==', uid));
+      const tasksQuery = query(collection(db, 'users', uid, 'tasks'));
       const tasksSnapshot = await getDocs(tasksQuery);
       const deletePromises = [];
       tasksSnapshot.forEach((doc) => {
@@ -2069,7 +2086,7 @@ const CodeTiara = () => {
 
       // 2. Delete user data in Firestore (categories)
       console.log("Deleting categories for user:", uid);
-      const categoriesQuery = query(collection(db, 'categories'), where('userId', '==', uid));
+      const categoriesQuery = query(collection(db, 'users', uid, 'categories'));
       const categoriesSnapshot = await getDocs(categoriesQuery);
       categoriesSnapshot.forEach((doc) => {
         deletePromises.push(deleteDoc(doc.ref));
@@ -2292,8 +2309,8 @@ const CodeTiara = () => {
                 onClick={e => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className={`flex items-center gap-3 mb-4 
-                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white' : ''}`}>
+                <div className={`flex flex-col items-start gap-3.5 mb-4 
+                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white !flex-row !items-center' : ''}`}>
                   {(() => {
                     const iconType = customDialog.iconType || 'warning';
                     let bgClass = '';
@@ -2341,10 +2358,10 @@ const CodeTiara = () => {
                       </div>
                     );
                   })()}
-                  <h3 className={`font-bold text-lg 
+                  <h3 className={`font-bold 
                     ${isAuthTheme
-                      ? 'text-black font-sans font-extrabold'
-                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]'))}`}>
+                      ? 'text-black font-sans font-extrabold text-xl tracking-tight'
+                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide text-lg' : (currentTheme === 'excel' ? 'text-white text-lg' : 'text-[#E5C07B] text-lg'))}`}>
                     {customDialog.title}
                   </h3>
                 </div>
@@ -2629,6 +2646,7 @@ const CodeTiara = () => {
           <OnboardingPanel
             currentTheme={currentTheme}
             theme={theme}
+            user={user}
             onClose={() => sendIPC('close-popout-by-id', 'onboarding')}
           />
         ) : (
@@ -2949,7 +2967,7 @@ const CodeTiara = () => {
             getIcon={getIcon}
             openOnboardingGuide={() => sendIPC('open-popout', 'onboarding')}
             user={user}
-            onSignOut={() => signOut(auth)}
+            onSignOut={handleLogOut}
             onLoginClick={() => {
               setIsAuthModalOpen(true);
               setIsSettingsOpen(false);
@@ -2983,28 +3001,28 @@ const CodeTiara = () => {
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={handleResendVerification}
-                    className={`px-2.5 py-1 font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer
+                    className={`px-2.5 py-1 font-bold transition-all active:scale-95 cursor-pointer
                       ${currentTheme === 'princess' 
-                        ? 'bg-[#FF6B81] text-white rounded-full shadow-[0_4px_10px_rgba(255,107,129,0.2)]' 
+                        ? 'bg-[#FF6B81] hover:bg-[#ff526d] text-white rounded-full shadow-[0_4px_10px_rgba(255,107,129,0.2)]' 
                         : currentTheme === 'excel'
-                          ? 'bg-[#107C41] text-white rounded-none'
+                          ? 'bg-[#107C41] hover:bg-[#0e6c38] text-white rounded-none'
                           : currentTheme === 'developer'
-                            ? 'bg-[#E5C07B] text-[#1e1e24] rounded-sm'
-                            : 'bg-black text-white rounded'
+                            ? 'bg-[#E5C07B] hover:bg-[#e0b35c] text-[#1e1e24] rounded-sm'
+                            : 'bg-black hover:bg-gray-800 text-white rounded'
                       }`}
                   >
                     {t('auth.resend_verification') || '인증 메일 재발송'}
                   </button>
                   <button 
                     onClick={handleCheckVerification}
-                    className={`px-2.5 py-1 font-bold border transition-all hover:scale-[1.02] active:scale-95 cursor-pointer
+                    className={`px-2.5 py-1 font-bold border transition-all active:scale-95 cursor-pointer
                       ${currentTheme === 'princess' 
-                        ? 'border-[#FF6B81] text-[#FF6B81] bg-white rounded-full' 
+                        ? 'border-[#FF6B81] text-[#FF6B81] bg-white hover:bg-[#FF6B81]/10 rounded-full' 
                         : currentTheme === 'excel'
-                          ? 'border-[#107C41] text-[#107C41] bg-white rounded-none'
+                          ? 'border-[#107C41] text-[#107C41] bg-white hover:bg-[#107C41]/10 rounded-none'
                           : currentTheme === 'developer'
-                            ? 'border-[#E5C07B] text-[#E5C07B] bg-transparent rounded-sm'
-                            : 'border-gray-300 text-gray-700 bg-white rounded'
+                            ? 'border-[#E5C07B] text-[#E5C07B] bg-transparent hover:bg-[#E5C07B]/10 rounded-sm'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded'
                       }`}
                   >
                     {t('auth.check_verification') || '인증 완료 확인'}
@@ -4123,8 +4141,8 @@ const CodeTiara = () => {
                 onClick={e => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className={`flex items-center gap-3 mb-4 
-                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white' : ''}`}>
+                <div className={`flex flex-col items-start gap-3.5 mb-4 
+                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white !flex-row !items-center' : ''}`}>
                   {(() => {
                     const iconType = customDialog.iconType || 'warning';
                     let bgClass = '';
@@ -4172,10 +4190,10 @@ const CodeTiara = () => {
                       </div>
                     );
                   })()}
-                  <h3 className={`font-bold text-lg 
+                  <h3 className={`font-bold 
                     ${isAuthTheme
-                      ? 'text-black font-sans font-extrabold'
-                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]'))}`}>
+                      ? 'text-black font-sans font-extrabold text-xl tracking-tight'
+                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide text-lg' : (currentTheme === 'excel' ? 'text-white text-lg' : 'text-[#E5C07B] text-lg'))}`}>
                     {customDialog.title}
                   </h3>
                 </div>

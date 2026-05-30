@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, X, Sparkles, Layers, Clock, BookOpen } from 'lucide-react';
 
-const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
+const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -12,7 +12,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       subtitle: t('onboarding.subtitle1'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
-          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF6B81] to-[#FFE4E1] shadow-md animate-bounce duration-1000">
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF6B81] to-[#FFE4E1] shadow-md animate-float-slow will-change-transform">
             <span className="text-4xl">👑</span>
             <Sparkles className="absolute -top-1 -right-1 w-6 h-6 text-[#FFD700] animate-pulse" />
           </div>
@@ -27,7 +27,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       subtitle: t('onboarding.subtitle2'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-3">
-          <div className="relative w-36 h-24 bg-gradient-to-br from-amber-100 to-yellow-200 border border-yellow-300 rounded shadow-md p-2 flex flex-col justify-between text-left transform rotate-1 hover:rotate-0 transition-transform">
+          <div className="relative w-36 h-24 bg-gradient-to-br from-amber-100 to-yellow-200 border border-yellow-300 rounded shadow-md p-2 flex flex-col justify-between text-left transform rotate-1 hover:rotate-0 transition-transform will-change-transform">
             <div className="w-2 h-2 bg-red-400 rounded-full mx-auto -mt-1.5 shadow-sm"></div>
             <div className="space-y-1 mt-1">
               <div className="h-1.5 w-16 bg-amber-400 rounded-full"></div>
@@ -50,7 +50,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       subtitle: t('onboarding.subtitle3'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
-          <div className="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-dashed border-[#FF6B81] animate-spin-slow">
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-dashed border-[#FF6B81] animate-spin-slow will-change-transform">
             <Clock className="w-10 h-10 text-[#FF6B81] animate-pulse" />
             <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#FF6B81] rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
           </div>
@@ -65,14 +65,14 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       subtitle: t('onboarding.subtitle4'),
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-3">
-          <div className="grid grid-cols-3 gap-2 w-full px-4">
-            <div className="py-2 px-1 rounded border border-[#FFC0CB] bg-[#FFF0F5] text-[10px] font-bold text-[#FF6B81] flex items-center justify-center gap-1 whitespace-nowrap">
+          <div className="flex flex-nowrap justify-center gap-1.5 w-full px-2">
+            <div className="py-1.5 px-2.5 rounded border border-[#FFC0CB] bg-[#FFF0F5] text-[10px] font-bold text-[#FF6B81] flex items-center justify-center gap-1 whitespace-nowrap">
               <span>👑</span><span>Princess</span>
             </div>
-            <div className="py-2 px-1 rounded border border-[#D1D5DB] bg-[#F3F2F1] text-[10px] font-bold text-[#217346] flex items-center justify-center gap-1 whitespace-nowrap">
+            <div className="py-1.5 px-2.5 rounded border border-[#D1D5DB] bg-[#F3F2F1] text-[10px] font-bold text-[#217346] flex items-center justify-center gap-1 whitespace-nowrap">
               <span>📊</span><span>Excel</span>
             </div>
-            <div className="py-2 px-1 rounded border border-[#3E3E42] bg-[#282C34] text-[10px] font-bold text-[#61AFEF] font-mono flex items-center justify-center gap-1 whitespace-nowrap">
+            <div className="py-1.5 px-2.5 rounded border border-[#3E3E42] bg-[#282C34] text-[10px] font-bold text-[#61AFEF] flex items-center justify-center gap-1 whitespace-nowrap">
               <span>💻</span><span>Developer</span>
             </div>
           </div>
@@ -81,10 +81,26 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
           </p>
         </div>
       )
+    },
+    {
+      title: t('onboarding.title5'),
+      subtitle: t('onboarding.subtitle5'),
+      content: (
+        <div className="flex flex-col items-center justify-center text-center space-y-4">
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#3E8BFF] to-[#DCEBFF] shadow-md animate-pulse will-change-transform">
+            <span className="text-4xl">☁️</span>
+          </div>
+          <p className="text-sm leading-relaxed px-3 opacity-90">
+            {t('onboarding.desc5_1')}<strong>{t('onboarding.desc5_bold')}</strong>{t('onboarding.desc5_2')}
+          </p>
+        </div>
+      )
     }
   ];
 
   const handleStart = () => {
+    const userId = user?.uid || 'guest_user';
+    localStorage.setItem(`lumora_onboarding_completed_${userId}`, 'true');
     localStorage.setItem('lumora_onboarding_completed', 'true');
     // Notify windows of storage change manually in case storage event doesn't fire locally immediately
     window.dispatchEvent(new Event('storage'));
@@ -186,7 +202,7 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
       {/* Slide Content Area */}
       <div 
         className="flex-1 p-5 flex flex-col justify-between overflow-y-auto custom-scrollbar" 
-        style={{ WebkitAppRegion: 'no-drag' }}
+        style={{ WebkitAppRegion: 'no-drag', transform: 'translateZ(0)' }}
       >
         <div className="space-y-4 my-auto">
           {/* Header */}
@@ -256,6 +272,13 @@ const OnboardingPanel = ({ currentTheme, theme, onClose }) => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        .animate-float-slow {
+          animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -6px, 0); }
         }
       `}</style>
     </div>
