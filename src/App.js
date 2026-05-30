@@ -407,6 +407,7 @@ const CodeTiara = () => {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [wasMiniModeBeforeSettings, setWasMiniModeBeforeSettings] = useState(false);
 
   // UI 상태 관리
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -1968,8 +1969,18 @@ const CodeTiara = () => {
     if (taskToDelete || categoryToDelete || confirmingDeleteId || confirmingCategoryDeleteId || editingTaskId) {
       document.addEventListener('mousedown', handleGlobalClick);
     }
-    return () => document.removeEventListener('mousedown', handleGlobalClick);
   }, [taskToDelete, categoryToDelete, confirmingDeleteId, confirmingCategoryDeleteId, editingTaskId]);
+
+  // ✨ Sync isMiniMode state with window size in real-time
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMiniMode(window.innerWidth < 450);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initialize immediately
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
 
 
 
@@ -2049,7 +2060,7 @@ const CodeTiara = () => {
               setFocusDuration(data.settings.focus || 25);
               setBreakDuration(data.settings.break || 5);
             }
-            setIsSettingsOpen(false);
+            closeSettings();
             await customAlert(t('settings.restore') || '데이터 복원', '복구 완료!');
           }
         } else {
@@ -2071,13 +2082,42 @@ const CodeTiara = () => {
       setFocusDuration(25);
       setBreakDuration(5);
       localStorage.clear();
-      setIsSettingsOpen(false);
+      closeSettings();
       setIsResetConfirming(false);
     } else {
       setIsResetConfirming(true);
       setTimeout(() => setIsResetConfirming(false), 3000);
     }
   };
+
+  const closeSettings = () => {
+    setIsSettingsOpen(false);
+    if (wasMiniModeBeforeSettings) {
+      setIsMiniMode(true);
+      setWasMiniModeBeforeSettings(false);
+    }
+  };
+
+  const handleMenuTimerClick = () => {
+    if (poppedOutCategories.includes('timer')) {
+      if (isTimerPlaceholderDismissed) {
+        setIsTimerPlaceholderDismissed(false);
+        sendIPC('open-popout', 'timer');
+      } else {
+        const updated = poppedOutCategories.filter(id => id !== 'timer');
+        setPoppedOutCategories(updated);
+        localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+        sendIPC('close-popout-by-id', 'timer');
+        setIsTimerOpen(false);
+      }
+    } else {
+      setIsTimerOpen(!isTimerOpen);
+    }
+    setIsMenuOpen(false);
+    setIsSettingsOpen(false);
+  };
+
+
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -2122,7 +2162,7 @@ const CodeTiara = () => {
       }
 
       // 5. Success cleanup
-      setIsSettingsOpen(false);
+      closeSettings();
       await customAlert(t('settings.deleteAccount') || '회원탈퇴', t('settings.deleteAccountSuccess'));
     } catch (err) {
       console.error("Failed to delete account:", err);
@@ -2758,7 +2798,7 @@ const CodeTiara = () => {
                           <span>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
-                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={handleMenuTimerClick}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
                           <span>⏱️</span> {t('app.timer')}
@@ -2771,7 +2811,14 @@ const CodeTiara = () => {
                         </button>
                         <div className="h-px bg-[#FFC0CB]/30 mx-2 my-0.5"></div>
                         <button
-                          onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }}
+                          onClick={() => {
+                            setWasMiniModeBeforeSettings(isMiniMode);
+                            if (isMiniMode) {
+                              setIsMiniMode(false);
+                            }
+                            setIsSettingsOpen(true);
+                            setIsMenuOpen(false);
+                          }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
                           <span>🔧</span> {t('app.settings')}
@@ -2832,7 +2879,7 @@ const CodeTiara = () => {
                           <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
-                          onClick={() => { setIsTimerOpen(!isTimerOpen); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={handleMenuTimerClick}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
                           <span className={theme.iconType === 'table' ? "opacity-100" : ""}>⏱️</span> {t('app.timer')}
@@ -2845,7 +2892,14 @@ const CodeTiara = () => {
                         </button>
                         <div className={`h-px mx-2 my-0.5 ${currentTheme === 'princess' ? 'bg-pink-100' : (currentTheme === 'excel' ? 'bg-[#E1E1E1]' : 'bg-current opacity-10')}`}></div>
                         <button
-                          onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }}
+                          onClick={() => {
+                            setWasMiniModeBeforeSettings(isMiniMode);
+                            if (isMiniMode) {
+                              setIsMiniMode(false);
+                            }
+                            setIsSettingsOpen(true);
+                            setIsMenuOpen(false);
+                          }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
                           <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔧</span> {t('app.settings')}
@@ -2943,10 +2997,10 @@ const CodeTiara = () => {
 
 
         {/* --- SETTINGS MODE (Compact) with Custom Scrollbar --- */}
-        {isSettingsOpen ? (
+        {isSettingsOpen && !isMiniMode ? (
           <SettingsPanel
-            isOpen={isSettingsOpen}
-            onClose={() => setIsSettingsOpen(false)}
+            isOpen={isSettingsOpen && !isMiniMode}
+            onClose={closeSettings}
             currentTheme={currentTheme}
             setCurrentTheme={setCurrentTheme}
             theme={theme}
@@ -2985,7 +3039,7 @@ const CodeTiara = () => {
             onSignOut={handleLogOut}
             onLoginClick={() => {
               setIsAuthModalOpen(true);
-              setIsSettingsOpen(false);
+              closeSettings();
             }}
             onDeleteAccount={handleDeleteAccount}
           />
@@ -3054,7 +3108,7 @@ const CodeTiara = () => {
             )}
 
             {/* ✨ Fixed Status Header (Integrated Timer) - Shows in Mini Mode ONLY if Timer is Active */}
-            {!popoutCategoryId && (!isMiniMode || isTimerOpen) && (
+            {!popoutCategoryId && (!isMiniMode || (isTimerOpen && !(poppedOutCategories.includes('timer') && isTimerPlaceholderDismissed))) && (
               <div className={`shrink-0 transition-all min-h-[58px] flex flex-col justify-center ${currentTheme === 'princess' ? 'bg-white px-6 py-2 border-b border-[#FFC0CB]/30' : 'px-4 pt-4 pb-2 border-b border-slate-800/50'}`}>
 
                 {isTimerOpen && !(poppedOutCategories.includes('timer') && isTimerPlaceholderDismissed) ? (
