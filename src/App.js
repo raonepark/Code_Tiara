@@ -432,11 +432,6 @@ const CodeTiara = () => {
   });
   const [isTimerPlaceholderDismissed, setIsTimerPlaceholderDismissed] = useState(false);
 
-  useEffect(() => {
-    if (!poppedOutCategories.includes('timer')) {
-      setIsTimerPlaceholderDismissed(false);
-    }
-  }, [poppedOutCategories]);
   const [timerTargetTime, setTimerTargetTime] = useState(() => {
     return Number(localStorage.getItem('lumora_timer_target_time')) || 0;
   });
@@ -466,6 +461,13 @@ const CodeTiara = () => {
       return JSON.parse(localStorage.getItem('lumora_popped_out')) || [];
     } catch { return []; }
   });
+
+  useEffect(() => {
+    if (!poppedOutCategories.includes('timer')) {
+      setIsTimerPlaceholderDismissed(false);
+    }
+  }, [poppedOutCategories]);
+
   const [pinnedCategories, setPinnedCategories] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lumora_pinned_categories')) || [];
