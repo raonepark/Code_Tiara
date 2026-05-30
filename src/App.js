@@ -431,6 +431,10 @@ const CodeTiara = () => {
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        if (localStorage.getItem('signing_up') === 'true') {
+          setAuthLoading(false);
+          return;
+        }
         isGuestModeRef.current = false;
         setUser(firebaseUser);
       } else {
