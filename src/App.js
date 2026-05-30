@@ -1026,6 +1026,11 @@ const CodeTiara = () => {
     
     if (!popoutCategoryId) return;
     
+    // Wait until initial load is complete for categories/tasks popouts
+    if (popoutCategoryId !== 'timer' && popoutCategoryId !== 'onboarding' && !isInitialLoadComplete) {
+      return;
+    }
+    
     const updateSize = () => {
       // If we already set the initial size, do NOT run again!
       if (lastCalculatedHeightRef.current !== null) return;
@@ -1109,7 +1114,7 @@ const CodeTiara = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [popoutCategoryId]);
+  }, [popoutCategoryId, isInitialLoadComplete, categories, tasks, currentTheme]);
 
   // 설정 변경 시 타이머 리셋 반영
   useEffect(() => {

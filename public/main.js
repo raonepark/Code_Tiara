@@ -299,6 +299,16 @@ function createWindow() {
             ? `http://localhost:3000/?popout=${categoryId}`
             : `http://localhost:${localServerPort}/?popout=${categoryId}`;
 
+        console.log(`[Main Process] Loading URL for popout category ${categoryId}: ${popoutUrl}`);
+        
+        popoutWin.webContents.on('console-message', (event, level, message, line, sourceId) => {
+            console.log(`[Popout Console] [Level ${level}] ${message} (${sourceId}:${line})`);
+        });
+
+        popoutWin.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+            console.error(`[Popout Load Error] Failed to load URL: ${validatedURL}. Error: ${errorDescription} (${errorCode})`);
+        });
+
         popoutWin.loadURL(popoutUrl);
 
         // Debug log
@@ -324,6 +334,7 @@ function createWindow() {
 
     // ✨ Toggle always-on-top for popout windows
     ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
+        console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].setAlwaysOnTop(isPinned);
         }
@@ -331,6 +342,7 @@ function createWindow() {
 
     // ✨ Auto-resize popout window based on content
     ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
+        console.log(`[Main Process] resize-popout-window received for categoryId: ${categoryId}, width: ${width}, height: ${height}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
             const w = Math.round(width) || 350;
             const h = Math.round(height) || 450;
@@ -340,6 +352,7 @@ function createWindow() {
 
     // ✨ Show popout window after it has been resized
     ipcMain.on('show-popout-window', (event, { categoryId }) => {
+        console.log(`[Main Process] show-popout-window received for categoryId: ${categoryId}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].show();
         }
