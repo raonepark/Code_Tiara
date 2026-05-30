@@ -15,6 +15,7 @@ app.setAppUserModelId("Code Tiara");
 
 // Global reference for popout windows to prevent garbage collection
 const popoutWindows = {};
+const popoutPinnedStates = {};
 
 let mainWindow = null;
 let tray = null;
@@ -190,6 +191,51 @@ function createWindow() {
                 height: normalBounds.height
             });
         }
+        
+        // Restore always-on-top when unmaximized
+        Object.keys(popoutWindows).forEach((id) => {
+            const win = popoutWindows[id];
+            if (win && !win.isDestroyed()) {
+                const isPinned = popoutPinnedStates[id];
+                if (isPinned) {
+                    win.setAlwaysOnTop(true);
+                }
+            }
+        });
+    });
+
+    mainWindow.on('focus', () => {
+        if (mainWindow.isMaximized()) {
+            Object.keys(popoutWindows).forEach((id) => {
+                const win = popoutWindows[id];
+                if (win && !win.isDestroyed()) {
+                    win.setAlwaysOnTop(false);
+                }
+            });
+        }
+    });
+
+    mainWindow.on('blur', () => {
+        Object.keys(popoutWindows).forEach((id) => {
+            const win = popoutWindows[id];
+            if (win && !win.isDestroyed()) {
+                const isPinned = popoutPinnedStates[id];
+                if (isPinned) {
+                    win.setAlwaysOnTop(true);
+                }
+            }
+        });
+    });
+
+    mainWindow.on('maximize', () => {
+        if (mainWindow.isFocused()) {
+            Object.keys(popoutWindows).forEach((id) => {
+                const win = popoutWindows[id];
+                if (win && !win.isDestroyed()) {
+                    win.setAlwaysOnTop(false);
+                }
+            });
+        }
     });
 
     // ✨ IPC Handlers for Custom Title Bar
@@ -249,6 +295,8 @@ function createWindow() {
             categoryId = arg;
         }
 
+        popoutPinnedStates[categoryId] = isPinned;
+
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].focus();
             return;
@@ -266,6 +314,8 @@ function createWindow() {
             }
         }
 
+        const shouldBeOnTop = isPinned && !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused());
+
         const popoutWin = new BrowserWindow({
             width: 320,
             height: 400,
@@ -281,7 +331,7 @@ function createWindow() {
             frame: false, // Frameless for sticky note look
             transparent: true,
             backgroundColor: '#00000000',
-            alwaysOnTop: isPinned, // Dynamic always on top
+            alwaysOnTop: shouldBeOnTop, // Dynamic always on top
             icon: path.join(__dirname, '../assets/icons/icon.ico'),
             show: false // ✨ Hide initially to prevent size flashing
         });
@@ -290,6 +340,7 @@ function createWindow() {
 
         popoutWin.on('closed', () => {
             delete popoutWindows[categoryId];
+            delete popoutPinnedStates[categoryId];
             if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('popout-closed', categoryId);
             }
@@ -335,8 +386,10 @@ function createWindow() {
     // ✨ Toggle always-on-top for popout windows
     ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
         console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
+        popoutPinnedStates[categoryId] = isPinned;
         if (popoutWindows[categoryId]) {
-            popoutWindows[categoryId].setAlwaysOnTop(isPinned);
+            const shouldBeOnTop = isPinned && !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused());
+            popoutWindows[categoryId].setAlwaysOnTop(shouldBeOnTop);
         }
     });
 
