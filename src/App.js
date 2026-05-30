@@ -526,17 +526,87 @@ const CodeTiara = () => {
 
         // 2. Load Categories
         let loadedCategories = [];
+        let categoriesFromFirestore = [];
         if (user.uid !== "guest_user") {
           const catQuery = query(collection(db, 'categories'), where('userId', '==', user.uid));
           const catSnapshot = await getDocs(catQuery);
           catSnapshot.forEach((doc) => {
-            loadedCategories.push({ ...doc.data(), id: doc.id });
+            categoriesFromFirestore.push({ ...doc.data(), id: doc.id });
           });
+          loadedCategories = [...categoriesFromFirestore];
         } else {
           try {
             const saved = localStorage.getItem('lumora_categories');
             loadedCategories = saved ? JSON.parse(saved) : defaultCategories;
           } catch(e) { loadedCategories = defaultCategories; }
+        }
+
+        // 3. Load Tasks
+        let loadedTasks = [];
+        let tasksFromFirestore = [];
+        if (user.uid !== "guest_user") {
+          const taskQuery = query(collection(db, 'tasks'), where('userId', '==', user.uid));
+          const taskSnapshot = await getDocs(taskQuery);
+          taskSnapshot.forEach((doc) => {
+            tasksFromFirestore.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
+          });
+          loadedTasks = [...tasksFromFirestore];
+        } else {
+          try {
+            const saved = localStorage.getItem('lumora_tasks');
+            loadedTasks = saved ? JSON.parse(saved) : defaultTasks;
+          } catch(e) { loadedTasks = defaultTasks; }
+        }
+
+        // Check if we should prompt for importing guest data
+        if (user.uid !== "guest_user") {
+          const isFirestoreEmpty = categoriesFromFirestore.length === 0 && tasksFromFirestore.length === 0;
+          const localCatsStr = localStorage.getItem('lumora_categories');
+          const localTasksStr = localStorage.getItem('lumora_tasks');
+          
+          if (isFirestoreEmpty && (localCatsStr || localTasksStr)) {
+            const hasPromptedKey = `lumora_guest_prompted_${user.uid}`;
+            if (!localStorage.getItem(hasPromptedKey)) {
+              localStorage.setItem(hasPromptedKey, 'true');
+              
+              let localCats = [];
+              let localTasks = [];
+              try { localCats = localCatsStr ? JSON.parse(localCatsStr) : []; } catch(e) {}
+              try { localTasks = localTasksStr ? JSON.parse(localTasksStr) : []; } catch(e) {}
+              
+              const hasGuestData = localCats.length > 0 || localTasks.length > 0;
+              
+              if (hasGuestData) {
+                const importConfirm = await customConfirm(
+                  t('auth.import_guest_data_title') || '게스트 데이터 가져오기',
+                  t('auth.import_guest_data_desc') || '게스트 모드에서 작성한 할 일과 카테고리가 감지되었습니다. 이 데이터를 새로 로그인한 계정으로 가져오시겠습니까?',
+                  true,
+                  'mail'
+                );
+                
+                if (importConfirm) {
+                  // Copy and upload categories to Firestore
+                  for (const cat of localCats) {
+                    await setDoc(doc(db, 'categories', cat.id), { ...cat, userId: user.uid });
+                  }
+                  // Copy and upload tasks to Firestore
+                  for (const task of localTasks) {
+                    await setDoc(doc(db, 'tasks', String(task.id)), { ...task, userId: user.uid });
+                  }
+                  
+                  loadedCategories = localCats;
+                  loadedTasks = localTasks;
+                  
+                  await customAlert(
+                    t('auth.import_guest_data_title') || '게스트 데이터 가져오기',
+                    t('auth.import_success') || '데이터 가져오기 성공!',
+                    true,
+                    'success'
+                  );
+                }
+              }
+            }
+          }
         }
 
         if (loadedCategories.length === 0) {
@@ -548,21 +618,6 @@ const CodeTiara = () => {
           }
         }
         setCategories(loadedCategories);
-
-        // 3. Load Tasks
-        let loadedTasks = [];
-        if (user.uid !== "guest_user") {
-          const taskQuery = query(collection(db, 'tasks'), where('userId', '==', user.uid));
-          const taskSnapshot = await getDocs(taskQuery);
-          taskSnapshot.forEach((doc) => {
-            loadedTasks.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
-          });
-        } else {
-          try {
-            const saved = localStorage.getItem('lumora_tasks');
-            loadedTasks = saved ? JSON.parse(saved) : defaultTasks;
-          } catch(e) { loadedTasks = defaultTasks; }
-        }
 
         if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
           loadedTasks = defaultTasks;
