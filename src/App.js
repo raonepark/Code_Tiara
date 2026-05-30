@@ -3417,7 +3417,7 @@ const CodeTiara = () => {
               {/* Task Lists */}
               <DragDropContext onDragEnd={onDragEnd}>
                 <div className={popoutCategoryId ? "flex-1 flex flex-col" : "space-y-3 flex-1"}>
-                  {(popoutCategoryId ? categories.filter(c => c.id === popoutCategoryId) : categories).map(category => {
+                  {(popoutCategoryId ? categories.filter(c => String(c.id) === String(popoutCategoryId)) : categories).map(category => {
                     const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
                     const categoryTasks = tasks.filter(t => t.categoryId === category.id && isTaskMatchingDateFilter(t));
                     const colorStyles = getThemeStyles(category.colorTheme);
