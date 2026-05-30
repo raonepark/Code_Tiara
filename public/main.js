@@ -2,7 +2,7 @@ const electron = require('electron');
 console.log('Electron require type:', typeof electron);
 console.log('Electron require value:', electron);
 console.log('Versions:', process.versions);
-const { app, BrowserWindow, ipcMain, Tray, Menu, screen } = electron;
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session } = electron;
 const path = require('path');
 
 // Basic dev detection
@@ -48,6 +48,30 @@ function createWindow() {
 
     console.log('Loading URL:', startUrl);
     mainWindow.loadURL(startUrl);
+
+    if (isDev) {
+        mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
+
+    // Set custom icon and settings for all popups (like Google Auth window)
+    mainWindow.webContents.setWindowOpenHandler((details) => {
+        return {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+                icon: path.join(__dirname, '../assets/icons/icon.ico'),
+                autoHideMenuBar: true
+            }
+        };
+    });
+
+    // Notify the renderer process if any popup (like the Google login window) is closed
+    mainWindow.webContents.on('did-create-window', (childWindow, details) => {
+        childWindow.on('closed', () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('auth-popup-closed');
+            }
+        });
+    });
 
     // ✨ Prevent window from closing, hide it instead
     mainWindow.on('close', (event) => {
@@ -276,6 +300,9 @@ if (!gotTheLock) {
     });
 
     app.whenReady().then(() => {
+        if (session && session.defaultSession) {
+            session.defaultSession.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+        }
         createWindow();
         createTray();
     });

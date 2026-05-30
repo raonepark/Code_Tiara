@@ -5,7 +5,7 @@ import {
   Download, Upload, Timer, Pause, Play, ChevronUp, ChevronDown, Clock, Bell,
   Star, Coffee, Music, Home, Briefcase, Heart, Sun, Moon, Hourglass,
   PanelTopClose, PanelTopOpen, Edit2, Check, Grid2X2, Calendar, Minus, GripVertical, Menu, Gift,
-  ChevronLeft, ChevronRight, Repeat, Pin, PinOff
+  ChevronLeft, ChevronRight, Repeat, Pin, PinOff, Mail
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
@@ -99,6 +99,40 @@ const CodeTiara = () => {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isGuestModeRef = useRef(false); // 게스트 모드 보호용 ref
+  
+  const [customDialog, setCustomDialog] = useState(null); // { type: 'alert' | 'confirm', title, message, resolve }
+
+  const customAlert = useCallback((title, message, isAuth = false, iconType = 'warning') => {
+    return new Promise((resolve) => {
+      setCustomDialog({
+        type: 'alert',
+        title,
+        message,
+        isAuth,
+        iconType,
+        resolve: (val) => {
+          setCustomDialog(null);
+          resolve(val);
+        }
+      });
+    });
+  }, []);
+
+  const customConfirm = useCallback((title, message, isAuth = false, iconType = 'warning') => {
+    return new Promise((resolve) => {
+      setCustomDialog({
+        type: 'confirm',
+        title,
+        message,
+        isAuth,
+        iconType,
+        resolve: (val) => {
+          setCustomDialog(null);
+          resolve(val);
+        }
+      });
+    });
+  }, []);
 
   // ✨ Sync language across windows
   useEffect(() => {
@@ -429,7 +463,7 @@ const CodeTiara = () => {
 
   // --- Load User Data from Firestore ---
   useEffect(() => {
-    if (!user) return;
+    if (!user || localStorage.getItem('signing_up') === 'true') return;
 
     const loadUserData = async () => {
       setIsInitialLoadComplete(false);
@@ -508,9 +542,9 @@ const CodeTiara = () => {
         if (loadedCategories.length === 0) {
           loadedCategories = defaultCategories;
           if (user.uid !== "guest_user") {
-            loadedCategories.forEach(async (cat) => {
+            for (const cat of loadedCategories) {
               await setDoc(doc(db, 'categories', cat.id), { ...cat, userId: user.uid });
-            });
+            }
           }
         }
         setCategories(loadedCategories);
@@ -533,9 +567,9 @@ const CodeTiara = () => {
         if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
           loadedTasks = defaultTasks;
           if (user.uid !== "guest_user") {
-            loadedTasks.forEach(async (task) => {
+            for (const task of loadedTasks) {
               await setDoc(doc(db, 'tasks', String(task.id)), { ...task, userId: user.uid });
-            });
+            }
           }
         }
         setTasks(loadedTasks);
@@ -543,17 +577,19 @@ const CodeTiara = () => {
         console.log("Initial load complete from Firestore");
       } catch (err) {
         console.error("Failed to load user data:", err);
-        // 🛡️ 게스트 모드에서 오류 발생 시 기본 데이터 보장 (빈 화면 방지)
-        if (user.uid === "guest_user") {
-          try {
-            const savedCats = localStorage.getItem('lumora_categories');
-            const savedTasks = localStorage.getItem('lumora_tasks');
-            setCategories(savedCats ? JSON.parse(savedCats) : defaultCategories);
-            setTasks(savedTasks ? JSON.parse(savedTasks) : defaultTasks);
-          } catch (e) {
-            setCategories(defaultCategories);
-            setTasks(defaultTasks);
-          }
+        try {
+          const savedCats = localStorage.getItem('lumora_categories');
+          const savedTasks = localStorage.getItem('lumora_tasks');
+          setCategories(savedCats ? JSON.parse(savedCats) : defaultCategories);
+          setTasks(savedTasks ? JSON.parse(savedTasks) : defaultTasks);
+        } catch (e) {
+          setCategories(defaultCategories);
+          setTasks(defaultTasks);
+        }
+        if (user && user.uid !== "guest_user") {
+          setTimeout(async () => {
+            await customAlert("백엔드 로딩 실패", "백엔드(Firebase Firestore) 데이터 로딩에 실패했습니다. 오프라인(로컬) 데이터로 임시 구동합니다.\n\n[해결 방법]:\n1. Firebase 웹 콘솔에서 'Firestore Database'를 생성했는지 확인하세요.\n2. Firestore의 '규칙(Rules)' 탭에서 읽기/쓰기가 허용되어 있는지 확인하세요.");
+          }, 500);
         }
       } finally {
         setIsInitialLoadComplete(true);
@@ -1859,11 +1895,12 @@ const CodeTiara = () => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = JSON.parse(event.target.result);
         if (data.categories && data.tasks) {
-          if (window.confirm('현재 데이터를 덮어쓰고 불러오시겠습니까? (되돌릴 수 없습니다)')) {
+          const confirmed = await customConfirm(t('settings.restore') || '데이터 복원', '현재 데이터를 덮어쓰고 불러오시겠습니까? (되돌릴 수 없습니다)');
+          if (confirmed) {
             setProjectTitle(data.title || defaultTitle);
             setCategories(data.categories);
             setTasks(data.tasks);
@@ -1872,10 +1909,14 @@ const CodeTiara = () => {
               setBreakDuration(data.settings.break || 5);
             }
             setIsSettingsOpen(false);
-            alert('복구 완료!');
+            await customAlert(t('settings.restore') || '데이터 복원', '복구 완료!');
           }
-        } else { alert('잘못된 파일입니다.'); }
-      } catch (err) { alert('오류 발생'); }
+        } else {
+          await customAlert(t('settings.restore') || '데이터 복원', '잘못된 파일입니다.');
+        }
+      } catch (err) {
+        await customAlert(t('settings.restore') || '데이터 복원', '오류 발생');
+      }
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -1894,6 +1935,63 @@ const CodeTiara = () => {
     } else {
       setIsResetConfirming(true);
       setTimeout(() => setIsResetConfirming(false), 3000);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    const confirmMsg = t('settings.deleteAccountConfirm');
+    const confirmed = await customConfirm(t('settings.deleteAccount') || '회원탈퇴', confirmMsg);
+    if (!confirmed) return;
+
+    setAuthLoading(true);
+    try {
+      const uid = user.uid;
+
+      // 1. Delete user data in Firestore (tasks)
+      console.log("Deleting tasks for user:", uid);
+      const tasksQuery = query(collection(db, 'tasks'), where('userId', '==', uid));
+      const tasksSnapshot = await getDocs(tasksQuery);
+      const deletePromises = [];
+      tasksSnapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
+      });
+
+      // 2. Delete user data in Firestore (categories)
+      console.log("Deleting categories for user:", uid);
+      const categoriesQuery = query(collection(db, 'categories'), where('userId', '==', uid));
+      const categoriesSnapshot = await getDocs(categoriesQuery);
+      categoriesSnapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
+      });
+
+      // 3. Delete user document in Firestore (users)
+      console.log("Deleting user document for user:", uid);
+      deletePromises.push(deleteDoc(doc(db, 'users', uid)));
+
+      // Wait for all Firestore deletions to complete
+      await Promise.all(deletePromises);
+
+      // 4. Delete user account from Firebase Auth
+      console.log("Deleting Firebase Auth user account");
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.delete();
+      }
+
+      // 5. Success cleanup
+      setIsSettingsOpen(false);
+      await customAlert(t('settings.deleteAccount') || '회원탈퇴', t('settings.deleteAccountSuccess'));
+    } catch (err) {
+      console.error("Failed to delete account:", err);
+      if (err.code === 'auth/requires-recent-login') {
+        await customAlert(t('settings.deleteAccount') || '회원탈퇴', t('settings.err_requires_recent_login'));
+      } else {
+        await customAlert(t('settings.deleteAccount') || '회원탈퇴', t('settings.err_delete_account_failed') + ` (${err.message})`);
+      }
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -2015,13 +2113,177 @@ const CodeTiara = () => {
   }
 
   // ✨ 팝아웃 창이면 인증 체크 건너뜀 (사용 설명서, 카테고리 팝아웃 등)
-  if (!user && !popoutCategoryId) {
+  const isSigningUp = localStorage.getItem('signing_up') === 'true';
+  if ((!user || isSigningUp) && !popoutCategoryId) {
     return (
-      <AuthScreen 
-        currentTheme={currentTheme} 
-        onAuthSuccess={handleAuthSuccess} 
-        onThemeChange={setCurrentTheme}
-      />
+      <div 
+        className={`h-screen w-screen flex flex-col overflow-hidden ${theme.radius} ${theme.root}`}
+        style={{
+          border: `2px solid ${theme.windowBorder || 'transparent'}`
+        }}
+      >
+        {/* Draggable Title Bar for Login Screen */}
+        <div 
+          className="bg-white px-4 h-11 flex items-center justify-between border-b border-gray-100 relative z-[999] shrink-0 select-none" 
+          style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}
+        >
+          {/* Left: Window Controls */}
+          <div className="flex gap-1.5 z-10" style={{ WebkitAppRegion: 'no-drag' }}>
+            <button
+              onClick={() => sendIPC('close-window')}
+              className={`w-2.5 h-2.5 rounded-full bg-[#FF5F56] hover:bg-[#FF5F56]/80 transition-colors cursor-pointer flex items-center justify-center group`}
+              title={t('app.tooltip_close')}
+            >
+              <X className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
+            </button>
+            <button
+              onClick={() => sendIPC('minimize-window')}
+              className={`w-2.5 h-2.5 rounded-full bg-[#FFBD2E] hover:bg-[#FFBD2E]/80 transition-colors cursor-pointer flex items-center justify-center group`}
+              title={t('app.tooltip_minimize')}
+            >
+              <Minus className="w-1.5 h-1.5 text-black/50 opacity-0 group-hover:opacity-100" />
+            </button>
+          </div>
+
+          {/* Center: Title */}
+          <div className="flex-1 flex justify-center text-[11px] text-gray-400 font-semibold tracking-wider font-sans uppercase pointer-events-none">
+            <span>Code Tiara</span>
+          </div>
+
+          {/* Right Spacer */}
+          <div className="w-[30px]" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
+          <AuthScreen 
+            currentTheme={currentTheme} 
+            onAuthSuccess={handleAuthSuccess} 
+            onThemeChange={setCurrentTheme}
+            customAlert={customAlert}
+          />
+        </div>
+
+        {customDialog && (() => {
+          const isAuthTheme = customDialog.isAuth || !user;
+          return (
+            <div 
+              className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => customDialog.type === 'confirm' ? customDialog.resolve(false) : customDialog.resolve(true)}
+            >
+              <div
+                className={`w-full max-w-sm p-6 transition-all relative overflow-hidden
+                  ${isAuthTheme
+                    ? 'bg-white border border-gray-100 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] font-sans text-gray-800'
+                    : (currentTheme === 'princess'
+                      ? 'bg-white border-[#FFF0F5] border rounded-[28px] shadow-[0_10px_40px_rgba(255,182,193,0.5)] font-gamja'
+                      : (currentTheme === 'excel'
+                        ? 'bg-white border-2 border-[#107C41] shadow-2xl rounded-none p-0 font-sans'
+                        : 'bg-[#1E1E1E] border border-[#3E3E42] rounded shadow-xl font-mono text-[#ABB2BF]'))}`}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className={`flex items-center gap-3 mb-4 
+                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white' : ''}`}>
+                  {(() => {
+                    const iconType = customDialog.iconType || 'warning';
+                    let bgClass = '';
+                    let IconComponent = AlertTriangle;
+
+                    if (iconType === 'mail') {
+                      IconComponent = Mail;
+                      bgClass = isAuthTheme ? 'bg-blue-50 text-blue-500' : 'bg-blue-500/10 text-blue-400';
+                    } else if (iconType === 'success') {
+                      IconComponent = CheckCircle2;
+                      bgClass = isAuthTheme ? 'bg-emerald-50 text-emerald-500' : 'bg-emerald-500/10 text-emerald-400';
+                    } else {
+                      IconComponent = AlertTriangle;
+                      bgClass = isAuthTheme ? 'bg-red-50 text-red-500' : '';
+                    }
+
+                    if (isAuthTheme) {
+                      return (
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full ${bgClass}`}>
+                          <IconComponent className="w-5 h-5 stroke-[2.5px]" />
+                        </div>
+                      );
+                    }
+
+                    if (currentTheme === 'princess') {
+                      return (
+                        <div className="flex items-center justify-center w-10 h-10 bg-[#FFF0F5] rounded-full text-[#FF6B81]">
+                          <IconComponent className="w-5 h-5 stroke-[2.5px]" />
+                        </div>
+                      );
+                    }
+
+                    if (currentTheme === 'excel') {
+                      return (
+                        <div className="flex items-center justify-center">
+                          <IconComponent className="w-5 h-5 text-white" />
+                        </div>
+                      );
+                    }
+
+                    const devColor = iconType === 'success' ? 'text-[#98C379]' : (iconType === 'mail' ? 'text-[#61AFEF]' : 'text-[#E5C07B]');
+                    return (
+                      <div className="flex items-center justify-center">
+                        <IconComponent className={`w-5 h-5 ${devColor}`} />
+                      </div>
+                    );
+                  })()}
+                  <h3 className={`font-bold text-lg 
+                    ${isAuthTheme
+                      ? 'text-black font-sans font-extrabold'
+                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]'))}`}>
+                    {customDialog.title}
+                  </h3>
+                </div>
+
+                {/* Content */}
+                <p className={`text-sm mb-6 break-words whitespace-pre-line leading-relaxed 
+                  ${isAuthTheme
+                    ? 'text-gray-500 font-medium font-sans'
+                    : (currentTheme === 'princess' ? 'text-slate-500 font-bold' : (currentTheme === 'excel' ? 'text-slate-800 px-6 mt-4 text-[#333333]' : 'text-[#ABB2BF]'))}`}>
+                  {customDialog.message}
+                </p>
+
+                {/* Actions */}
+                <div className={`flex justify-end gap-2 ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#F3F2F1] p-3 -m-6 mt-4 border-t border-[#D1D1D1]' : ''}`}>
+                  {customDialog.type === 'confirm' && (
+                    <button
+                      onClick={() => customDialog.resolve(false)}
+                      className={`transition-all font-bold
+                        ${isAuthTheme
+                          ? 'px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-[20px] text-xs'
+                          : (currentTheme === 'princess'
+                            ? 'px-5 py-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 text-xs'
+                            : (currentTheme === 'excel'
+                              ? 'px-6 py-1 bg-white border border-[#D1D1D1] text-xs hover:bg-[#E1E1E1] shadow-sm text-[#333333]'
+                              : 'px-4 py-2 text-[#ABB2BF] hover:bg-[#2C313A] text-xs rounded border border-transparent hover:border-[#3E4451]'))}`}
+                    >
+                      {isAuthTheme ? t('app.cancel') : (currentTheme === 'developer' ? '[CANCEL]' : t('app.cancel'))}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => customDialog.resolve(true)}
+                    className={`transition-all font-bold shadow-sm
+                      ${isAuthTheme
+                        ? 'px-6 py-2.5 bg-black hover:bg-gray-900 text-white rounded-[20px] text-xs hover:-translate-y-0.5 active:translate-y-0 shadow-md cursor-pointer'
+                        : (currentTheme === 'princess'
+                          ? 'px-5 py-2.5 rounded-full bg-[#FF6B81] text-white hover:bg-[#FF5271] hover:shadow-lg hover:-translate-y-0.5 text-xs'
+                          : (currentTheme === 'excel'
+                            ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
+                            : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded'))}`}
+                  >
+                    {isAuthTheme ? t('app.confirm') : (currentTheme === 'developer' ? '[OK]' : t('app.confirm'))}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
     );
   }
 
@@ -2583,6 +2845,7 @@ const CodeTiara = () => {
               setIsAuthModalOpen(true);
               setIsSettingsOpen(false);
             }}
+            onDeleteAccount={handleDeleteAccount}
           />
 
 
@@ -3667,10 +3930,131 @@ const CodeTiara = () => {
                 onAuthSuccess={handleAuthSuccess} 
                 onThemeChange={setCurrentTheme}
                 isModal={true}
+                customAlert={customAlert}
               />
             </div>
           </div>
         )}
+
+        {customDialog && (() => {
+          const isAuthTheme = customDialog.isAuth || !user;
+          return (
+            <div 
+              className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => customDialog.type === 'confirm' ? customDialog.resolve(false) : customDialog.resolve(true)}
+            >
+              <div
+                className={`w-full max-w-sm p-6 transition-all relative overflow-hidden
+                  ${isAuthTheme
+                    ? 'bg-white border border-gray-100 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] font-sans text-gray-800'
+                    : (currentTheme === 'princess'
+                      ? 'bg-white border-[#FFF0F5] border rounded-[28px] shadow-[0_10px_40px_rgba(255,182,193,0.5)] font-gamja'
+                      : (currentTheme === 'excel'
+                        ? 'bg-white border-2 border-[#107C41] shadow-2xl rounded-none p-0 font-sans'
+                        : 'bg-[#1E1E1E] border border-[#3E3E42] rounded shadow-xl font-mono text-[#ABB2BF]'))}`}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className={`flex items-center gap-3 mb-4 
+                  ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#107C41] p-3 -m-6 mb-4 text-white' : ''}`}>
+                  {(() => {
+                    const iconType = customDialog.iconType || 'warning';
+                    let bgClass = '';
+                    let IconComponent = AlertTriangle;
+
+                    if (iconType === 'mail') {
+                      IconComponent = Mail;
+                      bgClass = isAuthTheme ? 'bg-blue-50 text-blue-500' : 'bg-blue-500/10 text-blue-400';
+                    } else if (iconType === 'success') {
+                      IconComponent = CheckCircle2;
+                      bgClass = isAuthTheme ? 'bg-emerald-50 text-emerald-500' : 'bg-emerald-500/10 text-emerald-400';
+                    } else {
+                      IconComponent = AlertTriangle;
+                      bgClass = isAuthTheme ? 'bg-red-50 text-red-500' : '';
+                    }
+
+                    if (isAuthTheme) {
+                      return (
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full ${bgClass}`}>
+                          <IconComponent className="w-5 h-5 stroke-[2.5px]" />
+                        </div>
+                      );
+                    }
+
+                    if (currentTheme === 'princess') {
+                      return (
+                        <div className="flex items-center justify-center w-10 h-10 bg-[#FFF0F5] rounded-full text-[#FF6B81]">
+                          <IconComponent className="w-5 h-5 stroke-[2.5px]" />
+                        </div>
+                      );
+                    }
+
+                    if (currentTheme === 'excel') {
+                      return (
+                        <div className="flex items-center justify-center">
+                          <IconComponent className="w-5 h-5 text-white" />
+                        </div>
+                      );
+                    }
+
+                    const devColor = iconType === 'success' ? 'text-[#98C379]' : (iconType === 'mail' ? 'text-[#61AFEF]' : 'text-[#E5C07B]');
+                    return (
+                      <div className="flex items-center justify-center">
+                        <IconComponent className={`w-5 h-5 ${devColor}`} />
+                      </div>
+                    );
+                  })()}
+                  <h3 className={`font-bold text-lg 
+                    ${isAuthTheme
+                      ? 'text-black font-sans font-extrabold'
+                      : (currentTheme === 'princess' ? 'text-slate-700 font-[Gaegu] tracking-wide' : (currentTheme === 'excel' ? 'text-white' : 'text-[#E5C07B]'))}`}>
+                    {customDialog.title}
+                  </h3>
+                </div>
+
+                {/* Content */}
+                <p className={`text-sm mb-6 break-words whitespace-pre-line leading-relaxed 
+                  ${isAuthTheme
+                    ? 'text-gray-500 font-medium font-sans'
+                    : (currentTheme === 'princess' ? 'text-slate-500 font-bold' : (currentTheme === 'excel' ? 'text-slate-800 px-6 mt-4 text-[#333333]' : 'text-[#ABB2BF]'))}`}>
+                  {customDialog.message}
+                </p>
+
+                {/* Actions */}
+                <div className={`flex justify-end gap-2 ${!isAuthTheme && currentTheme === 'excel' ? 'bg-[#F3F2F1] p-3 -m-6 mt-4 border-t border-[#D1D1D1]' : ''}`}>
+                  {customDialog.type === 'confirm' && (
+                    <button
+                      onClick={() => customDialog.resolve(false)}
+                      className={`transition-all font-bold
+                        ${isAuthTheme
+                          ? 'px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-[20px] text-xs'
+                          : (currentTheme === 'princess'
+                            ? 'px-5 py-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 text-xs'
+                            : (currentTheme === 'excel'
+                              ? 'px-6 py-1 bg-white border border-[#D1D1D1] text-xs hover:bg-[#E1E1E1] shadow-sm text-[#333333]'
+                              : 'px-4 py-2 text-[#ABB2BF] hover:bg-[#2C313A] text-xs rounded border border-transparent hover:border-[#3E4451]'))}`}
+                    >
+                      {isAuthTheme ? t('app.cancel') : (currentTheme === 'developer' ? '[CANCEL]' : t('app.cancel'))}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => customDialog.resolve(true)}
+                    className={`transition-all font-bold shadow-sm
+                      ${isAuthTheme
+                        ? 'px-6 py-2.5 bg-black hover:bg-gray-900 text-white rounded-[20px] text-xs hover:-translate-y-0.5 active:translate-y-0 shadow-md cursor-pointer'
+                        : (currentTheme === 'princess'
+                          ? 'px-5 py-2.5 rounded-full bg-[#FF6B81] text-white hover:bg-[#FF5271] hover:shadow-lg hover:-translate-y-0.5 text-xs'
+                          : (currentTheme === 'excel'
+                            ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
+                            : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded'))}`}
+                  >
+                    {isAuthTheme ? t('app.confirm') : (currentTheme === 'developer' ? '[OK]' : t('app.confirm'))}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div >
     </div >
   );

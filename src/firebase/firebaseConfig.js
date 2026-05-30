@@ -6,7 +6,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -76,5 +77,6 @@ export {
   collection,
   query,
   where,
-  isConfigured
+  isConfigured,
+  sendPasswordResetEmail
 };

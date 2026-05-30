@@ -27,7 +27,7 @@ const SettingsPanel = ({
     finalDeleteCategory, categoryToDelete, setCategoryToDelete,
     confirmDeleteCategory, exportData, triggerImport, fileInputRef, importData,
     handleResetRequest, isResetConfirming, getIcon, openOnboardingGuide,
-    user, onSignOut, onLoginClick
+    user, onSignOut, onLoginClick, onDeleteAccount
 }) => {
     const { t, i18n } = useTranslation();
     const [isThemeSettingsExpanded, setIsThemeSettingsExpanded] = useState(false);
@@ -497,12 +497,21 @@ const SettingsPanel = ({
                         <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔑</span> {t('settings.login')}
                     </button>
                 ) : (
-                    <button
-                        onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
-                        className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
-                    >
-                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> {t('settings.logout')}
-                    </button>
+                    <>
+                        <button
+                            onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
+                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                        >
+                            <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> {t('settings.logout')}
+                        </button>
+                        <button
+                            onClick={onDeleteAccount}
+                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.dangerBtn} w-full sm:w-auto`}
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {t('settings.deleteAccount')}
+                        </button>
+                    </>
                 )}
                 <button
                     onClick={handleResetRequest}
