@@ -216,6 +216,13 @@
     "import_guest_data_title": "Import Guest Data",
     "import_guest_data_desc": "We detected tasks and categories from your guest session. Would you like to import them into your new account?",
     "import_success": "Import successful! Your data is now safely synced with your account.",
-    "err_invalid_email_tooltip": "Please include an '@' in the email address. The address is missing an '@'."
+    "err_invalid_email_tooltip": "Please include an '@' in the email address. The address is missing an '@'.",
+    "verification_title": "Email Verification",
+    "verification_sent": "A verification email has been sent. Please check your inbox.",
+    "verification_success": "Email verification completed! Your account is secured.",
+    "verification_pending": "Verification is not completed yet. Please click the link in your email and try again.",
+    "verification_banner_text": "Please verify your email address to secure your account.",
+    "resend_verification": "Resend Verification Email",
+    "check_verification": "I've Verified"
   }
 }

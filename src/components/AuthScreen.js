@@ -8,7 +8,8 @@ import {
   signOut,
   googleProvider,
   isConfigured,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from '../firebase/firebaseConfig';
 import { THEME_CONFIG } from '../constants/themeConfig';
 import { 
@@ -99,7 +100,9 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     try {
       if (isSignUp) {
         localStorage.setItem('signing_up', 'true');
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        auth.languageCode = 'en';
+        await sendEmailVerification(userCredential.user);
         await signOut(auth);
         
         setPassword('');
@@ -174,6 +177,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     setError('');
     setLoading(true);
     try {
+      auth.languageCode = 'en';
       await sendPasswordResetEmail(auth, email);
       if (customAlert) {
         await customAlert(t('auth.forgot_pwd') || '비밀번호 찾기', t('auth.pwd_reset_sent'), true, 'mail');

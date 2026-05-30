@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -78,5 +79,6 @@ export {
   query,
   where,
   isConfigured,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 };
