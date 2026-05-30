@@ -430,6 +430,13 @@ const CodeTiara = () => {
   const [isTimerPinned, setIsTimerPinned] = useState(() => {
     return localStorage.getItem('lumora_timer_pinned') !== 'false';
   });
+  const [isTimerPlaceholderDismissed, setIsTimerPlaceholderDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!poppedOutCategories.includes('timer')) {
+      setIsTimerPlaceholderDismissed(false);
+    }
+  }, [poppedOutCategories]);
   const [timerTargetTime, setTimerTargetTime] = useState(() => {
     return Number(localStorage.getItem('lumora_timer_target_time')) || 0;
   });
@@ -1301,6 +1308,7 @@ const CodeTiara = () => {
         setPoppedOutCategories(updated);
         localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
       }
+      setIsTimerPlaceholderDismissed(false);
       sendIPC('open-popout', 'timer');
     }
   };
@@ -3047,7 +3055,7 @@ const CodeTiara = () => {
             {!popoutCategoryId && (!isMiniMode || isTimerOpen) && (
               <div className={`shrink-0 transition-all min-h-[58px] flex flex-col justify-center ${currentTheme === 'princess' ? 'bg-white px-6 py-2 border-b border-[#FFC0CB]/30' : 'px-4 pt-4 pb-2 border-b border-slate-800/50'}`}>
 
-                {isTimerOpen ? (
+                {isTimerOpen && !(poppedOutCategories.includes('timer') && isTimerPlaceholderDismissed) ? (
                   poppedOutCategories.includes('timer') ? (
                     /* ⏱️ Popped Out Timer Placeholder */
                     <div className="flex items-center justify-between w-full gap-2 animate-in fade-in slide-in-from-top-1 duration-300 select-none min-w-0">
@@ -3059,17 +3067,26 @@ const CodeTiara = () => {
                           {t('app.timer_detached')}
                         </span>
                       </div>
-                      <button 
-                        onClick={() => {
-                          const updated = poppedOutCategories.filter(id => id !== 'timer');
-                          setPoppedOutCategories(updated);
-                          localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
-                          sendIPC('close-popout-by-id', 'timer');
-                        }}
-                        className={`text-xs px-2.5 py-1 whitespace-nowrap shrink-0 transition-colors font-bold ${currentTheme === 'princess' ? 'bg-[#FF6B81]/15 text-[#FF6B81] hover:bg-[#FF6B81]/25 rounded-full' : (currentTheme === 'excel' ? 'bg-[#107C41]/15 text-[#107C41] hover:bg-[#107C41]/25 rounded-none border border-[#107C41]/30' : 'bg-[#61AFEF]/15 text-[#61AFEF] hover:bg-[#61AFEF]/25 rounded')}`}
-                      >
-                        {t('app.recall')}
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button 
+                          onClick={() => {
+                            const updated = poppedOutCategories.filter(id => id !== 'timer');
+                            setPoppedOutCategories(updated);
+                            localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                            sendIPC('close-popout-by-id', 'timer');
+                          }}
+                          className={`text-xs px-2.5 py-1 whitespace-nowrap shrink-0 transition-colors font-bold ${currentTheme === 'princess' ? 'bg-[#FF6B81]/15 text-[#FF6B81] hover:bg-[#FF6B81]/25 rounded-full' : (currentTheme === 'excel' ? 'bg-[#107C41]/15 text-[#107C41] hover:bg-[#107C41]/25 rounded-none border border-[#107C41]/30' : 'bg-[#61AFEF]/15 text-[#61AFEF] hover:bg-[#61AFEF]/25 rounded')}`}
+                        >
+                          {t('app.recall')}
+                        </button>
+                        <button
+                          onClick={() => setIsTimerPlaceholderDismissed(true)}
+                          className={`p-1 rounded-full text-slate-400 hover:text-slate-600 transition-colors hover:bg-black/5 ${currentTheme === 'developer' ? 'text-[#ABB2BF] hover:bg-[#3E3E42]' : ''}`}
+                          title={t('app.tooltip_dismiss') || '닫기'}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     /* ✨ Compact Timer UI (Replaces Date/Progress) */
