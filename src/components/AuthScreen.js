@@ -355,16 +355,30 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   <Mail className="absolute right-5 w-5 h-5 text-gray-400" />
                 </div>
 
-                <div className="relative flex items-center">
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t('auth.pwd_placeholder')}
-                    disabled={loading}
-                    className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
-                  />
-                  <Lock className="absolute right-5 w-5 h-5 text-gray-400" />
+                <div className="space-y-1.5">
+                  <div className="relative flex items-center">
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('auth.pwd_placeholder')}
+                      disabled={loading}
+                      className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
+                    />
+                    <Lock className="absolute right-5 w-5 h-5 text-gray-400" />
+                  </div>
+                  {!isSignUp && (
+                    <div className="flex justify-end px-2">
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsForgotPassword(true); setError(''); }}
+                        disabled={loading}
+                        className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
+                      >
+                        {t('auth.forgot_pwd')}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {isSignUp && (
@@ -395,19 +409,11 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 )}
 
                 {!isSignUp && (
-                  <div className="flex justify-between items-center px-2 mt-2 gap-2">
+                  <div className="flex items-center px-2">
                     <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
                       <input type="checkbox" className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
                       {t('auth.keep_logged_in')}
                     </label>
-                    <button 
-                      type="button" 
-                      onClick={() => { setIsForgotPassword(true); setError(''); }}
-                      disabled={loading}
-                      className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
-                    >
-                      {t('auth.forgot_pwd')}
-                    </button>
                   </div>
                 )}
 
