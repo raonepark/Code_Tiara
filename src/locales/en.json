@@ -215,6 +215,7 @@
     "back_to_login": "Back to Login",
     "import_guest_data_title": "Import Guest Data",
     "import_guest_data_desc": "We detected tasks and categories from your guest session. Would you like to import them into your new account?",
-    "import_success": "Import successful! Your data is now safely synced with your account."
+    "import_success": "Import successful! Your data is now safely synced with your account.",
+    "err_invalid_email_tooltip": "Please include an '@' in the email address. The address is missing an '@'."
   }
 }

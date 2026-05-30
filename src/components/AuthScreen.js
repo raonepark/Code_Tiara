@@ -281,6 +281,8 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onInvalid={(e) => e.target.setCustomValidity(t('auth.err_invalid_email_tooltip'))}
+                    onInput={(e) => e.target.setCustomValidity('')}
                     placeholder={t('auth.email_placeholder')}
                     disabled={loading}
                     className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
@@ -348,6 +350,8 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onInvalid={(e) => e.target.setCustomValidity(t('auth.err_invalid_email_tooltip'))}
+                    onInput={(e) => e.target.setCustomValidity('')}
                     placeholder={t('auth.email_placeholder')}
                     disabled={loading}
                     className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
