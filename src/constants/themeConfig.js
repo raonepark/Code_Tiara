@@ -111,7 +111,7 @@ export const THEME_CONFIG = {
             closeBtn: 'bg-transparent hover:bg-[#E06C75]/10 text-[#5C6370] hover:text-[#E06C75] border border-transparent hover:border-[#E06C75] rounded-none font-mono',
             saveBtn: 'bg-transparent hover:bg-[#98C379] text-[#98C379] hover:text-[#282C34] border border-[#98C379] rounded-none font-mono',
             dangerBtn: 'bg-transparent border border-[#E06C75] text-[#E06C75] rounded-none hover:bg-[#E06C75] hover:text-[#282C34] font-mono',
-            outlineBtn: 'bg-transparent border border-dashed border-[#61AFEF] text-[#61AFEF] rounded-none hover:bg-[#61AFEF]/10 font-mono',
+            outlineBtn: 'bg-transparent border border-[#61AFEF] text-[#61AFEF] rounded-none hover:bg-[#61AFEF]/10 font-mono',
             modalClose: 'p-1 text-[#5C6370] hover:text-white',
             modalConfirm: 'bg-[#404E67] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#E06C75] hover:text-[#282C34] hover:border-[#E06C75]',
             modalCancel: 'bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E3E42] hover:text-white rounded-none',
