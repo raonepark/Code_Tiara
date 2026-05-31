@@ -110,7 +110,14 @@ const CodeTiara = () => {
     return null;
   });
   const [authLoading, setAuthLoading] = useState(true);
-  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(() => {
+    try {
+      const isPopout = new URLSearchParams(window.location.search).get('popout');
+      return !!isPopout;
+    } catch (e) {
+      return false;
+    }
+  });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isGuestModeRef = useRef(false); // 게스트 모드 보호용 ref
   const [isVerificationDismissed, setIsVerificationDismissed] = useState(false);
@@ -566,7 +573,7 @@ const CodeTiara = () => {
 
   // --- Load User Data from Firestore ---
   useEffect(() => {
-    if (!user || localStorage.getItem('signing_up') === 'true') return;
+    if (!user || localStorage.getItem('signing_up') === 'true' || popoutCategoryId) return;
 
     const loadUserData = async () => {
       setIsInitialLoadComplete(false);
