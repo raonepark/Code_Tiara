@@ -94,7 +94,21 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
 
 const CodeTiara = () => {
   const { t, i18n } = useTranslation();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const isPopout = new URLSearchParams(window.location.search).get('popout');
+      if (isPopout) {
+        if (localStorage.getItem('lumora_guest_mode') === 'true') {
+          return { uid: "guest_user", email: "guest@codetiara.com" };
+        }
+        const uid = localStorage.getItem('lumora_current_user_uid');
+        if (uid) {
+          return { uid, email: localStorage.getItem('lumora_current_user_email') || '' };
+        }
+      }
+    } catch (e) {}
+    return null;
+  });
   const [authLoading, setAuthLoading] = useState(true);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -491,11 +505,11 @@ const CodeTiara = () => {
 
   // --- Firebase Authentication State Observer ---
   useEffect(() => {
-    if (!auth) {
+    if (!auth || popoutCategoryId) {
       setAuthLoading(false);
       return;
     }
-    // Check if guest mode was active (especially for popout windows)
+    // Check if guest mode was active
     if (localStorage.getItem('lumora_guest_mode') === 'true') {
       isGuestModeRef.current = true;
       setUser({ uid: "guest_user", email: "guest@codetiara.com" });
@@ -510,6 +524,10 @@ const CodeTiara = () => {
         isGuestModeRef.current = false;
         localStorage.removeItem('lumora_guest_mode');
         setUser(firebaseUser);
+        try {
+          localStorage.setItem('lumora_current_user_uid', firebaseUser.uid);
+          localStorage.setItem('lumora_current_user_email', firebaseUser.email || '');
+        } catch (e) {}
       } else {
         // 🛡️ 게스트 모드 중이면 데이터 초기화 방지 (race condition 방어)
         if (isGuestModeRef.current || localStorage.getItem('lumora_guest_mode') === 'true') {
@@ -517,6 +535,10 @@ const CodeTiara = () => {
           return;
         }
         setUser(null);
+        try {
+          localStorage.removeItem('lumora_current_user_uid');
+          localStorage.removeItem('lumora_current_user_email');
+        } catch (e) {}
         // Reset states on logout
         setTasks([]);
         setCategories([]);
@@ -525,7 +547,7 @@ const CodeTiara = () => {
       setAuthLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [popoutCategoryId]);
 
   const handleAuthSuccess = (mockUser) => {
     if (mockUser) {
@@ -738,7 +760,7 @@ const CodeTiara = () => {
   // --- Firestore Diff-and-Sync for Tasks ---
   const prevTasksRef = useRef([]);
   useEffect(() => {
-    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) {
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete || popoutCategoryId) {
       prevTasksRef.current = tasks;
       return;
     }
@@ -769,7 +791,7 @@ const CodeTiara = () => {
   // --- Firestore Diff-and-Sync for Categories ---
   const prevCategoriesRef = useRef([]);
   useEffect(() => {
-    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) {
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete || popoutCategoryId) {
       prevCategoriesRef.current = categories;
       return;
     }
@@ -799,7 +821,7 @@ const CodeTiara = () => {
 
   // --- Firestore Settings Save ---
   useEffect(() => {
-    if (!user || user.uid === "guest_user" || !isInitialLoadComplete) return;
+    if (!user || user.uid === "guest_user" || !isInitialLoadComplete || popoutCategoryId) return;
 
     const saveSettings = async () => {
       try {
