@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
+import packageJson from '../../package.json';
 
 const { ipcRenderer } = window.require ? window.require('electron') : {};
 
@@ -599,7 +600,7 @@ const SettingsPanel = ({
             <div className={`text-center mt-5 text-[10px] opacity-40 select-none ${
                 currentTheme === 'developer' ? 'font-mono' : currentTheme === 'princess' ? 'font-gamja font-bold' : 'font-sans'
             }`}>
-                {currentTheme === 'developer' ? '// version 1.7.0' : `${t('settings.version')} 1.7.0`}
+                {currentTheme === 'developer' ? `// version ${packageJson.version}` : `${t('settings.version')} ${packageJson.version}`}
             </div>
 
 
