@@ -9,7 +9,10 @@ import {
   googleProvider,
   isConfigured,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from '../firebase/firebaseConfig';
 import { THEME_CONFIG } from '../constants/themeConfig';
 import { 
@@ -39,6 +42,24 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lumora_keep_logged_in');
+      return saved !== 'false'; // default to true
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const handleKeepLoggedInChange = (e) => {
+    const checked = e.target.checked;
+    setKeepLoggedIn(checked);
+    try {
+      localStorage.setItem('lumora_keep_logged_in', String(checked));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const theme = THEME_CONFIG[currentTheme] || THEME_CONFIG.developer;
 
@@ -109,6 +130,8 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
         setConfirmPassword('');
         setSignUpSuccess(true);
       } else {
+        const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
+        await setPersistence(auth, persistence);
         await signInWithEmailAndPassword(auth, email, password);
         onAuthSuccess();
       }
@@ -151,6 +174,8 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     setError('');
     setLoading(true);
     try {
+      const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       await signInWithPopup(auth, googleProvider);
       onAuthSuccess();
     } catch (err) {
@@ -419,7 +444,12 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 {!isSignUp && (
                   <div className="flex items-center px-2">
                     <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
-                      <input type="checkbox" className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" />
+                      <input 
+                        type="checkbox" 
+                        checked={keepLoggedIn}
+                        onChange={handleKeepLoggedInChange}
+                        className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" 
+                      />
                       {t('auth.keep_logged_in')}
                     </label>
                   </div>

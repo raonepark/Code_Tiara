@@ -4,6 +4,9 @@ console.log('Electron require value:', electron);
 console.log('Versions:', process.versions);
 const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session } = electron;
 const path = require('path');
+
+// ✨ Optimize startup performance (especially for frameless/transparent windows on Windows boot)
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const http = require('http');
 const fs = require('fs');
 
@@ -131,7 +134,7 @@ function createWindow() {
 
     const startUrl = isDev
         ? 'http://localhost:3000'
-        : `http://localhost:${localServerPort}`;
+        : `http://127.0.0.1:${localServerPort}`;
 
     console.log('Loading URL:', startUrl);
     mainWindow.loadURL(startUrl);
@@ -348,7 +351,7 @@ function createWindow() {
 
         const popoutUrl = isDev
             ? `http://localhost:3000/?popout=${categoryId}`
-            : `http://localhost:${localServerPort}/?popout=${categoryId}`;
+            : `http://127.0.0.1:${localServerPort}/?popout=${categoryId}`;
 
         console.log(`[Main Process] Loading URL for popout category ${categoryId}: ${popoutUrl}`);
         

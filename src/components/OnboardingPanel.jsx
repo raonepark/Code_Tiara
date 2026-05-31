@@ -107,6 +107,14 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
     onClose();
   };
 
+  const handleClose = () => {
+    const userId = user?.uid || 'guest_user';
+    localStorage.setItem(`lumora_onboarding_completed_${userId}`, 'true');
+    localStorage.setItem('lumora_onboarding_completed', 'true');
+    window.dispatchEvent(new Event('storage'));
+    onClose();
+  };
+
   const nextSlide = () => {
     if (currentPage < slides.length - 1) {
       setCurrentPage(prev => prev + 1);
@@ -190,7 +198,7 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
           <span>{isDeveloper ? 'MANUAL.md' : t('onboarding.userGuide')}</span>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className={`p-1 rounded-full hover:bg-black/5 transition-colors cursor-pointer flex items-center justify-center`}
           style={{ WebkitAppRegion: 'no-drag' }}
           title={t('onboarding.close')}
