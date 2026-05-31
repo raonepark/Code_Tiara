@@ -25,7 +25,7 @@ module.exports = {
     },
     nsis: {
         oneClick: true,
-        terminateProcess: true,
+        include: "installer.nsh",
         allowToChangeInstallationDirectory: false,
         installerIcon: "assets/icon.ico",
         uninstallerIcon: "assets/icon.ico",
