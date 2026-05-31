@@ -99,11 +99,15 @@ const CodeTiara = () => {
       const isPopout = new URLSearchParams(window.location.search).get('popout');
       if (isPopout) {
         if (localStorage.getItem('lumora_guest_mode') === 'true') {
-          return { uid: "guest_user", email: "guest@codetiara.com" };
+          return { uid: "guest_user", email: "guest@codetiara.com", emailVerified: true };
         }
         const uid = localStorage.getItem('lumora_current_user_uid');
         if (uid) {
-          return { uid, email: localStorage.getItem('lumora_current_user_email') || '' };
+          return { 
+            uid, 
+            email: localStorage.getItem('lumora_current_user_email') || '',
+            emailVerified: localStorage.getItem('lumora_current_user_email_verified') === 'true'
+          };
         }
       }
     } catch (e) {}
@@ -534,6 +538,7 @@ const CodeTiara = () => {
         try {
           localStorage.setItem('lumora_current_user_uid', firebaseUser.uid);
           localStorage.setItem('lumora_current_user_email', firebaseUser.email || '');
+          localStorage.setItem('lumora_current_user_email_verified', firebaseUser.emailVerified ? 'true' : 'false');
         } catch (e) {}
       } else {
         // 🛡️ 게스트 모드 중이면 데이터 초기화 방지 (race condition 방어)
@@ -545,6 +550,7 @@ const CodeTiara = () => {
         try {
           localStorage.removeItem('lumora_current_user_uid');
           localStorage.removeItem('lumora_current_user_email');
+          localStorage.removeItem('lumora_current_user_email_verified');
         } catch (e) {}
         // Reset states on logout
         setTasks([]);
@@ -3078,7 +3084,7 @@ const CodeTiara = () => {
           /* --- DASHBOARD MODE (Compact) with Custom Scrollbar --- */
           <>
             {/* Email Verification Banner */}
-            {user && user.uid !== 'guest_user' && !user.emailVerified && !isVerificationDismissed && (
+            {user && user.uid !== 'guest_user' && !user.emailVerified && !isVerificationDismissed && !popoutCategoryId && (
               <div 
                 className={`w-full shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-b text-xs transition-all duration-300 select-none
                   ${currentTheme === 'princess' 
