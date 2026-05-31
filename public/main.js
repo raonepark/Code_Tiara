@@ -29,82 +29,90 @@ let localServer = null;
 
 function startLocalServer() {
     return new Promise((resolve, reject) => {
-        localServer = http.createServer((req, res) => {
-            const parsedUrl = new URL(req.url, `http://localhost`);
-            let filePath = parsedUrl.pathname;
-            
-            if (filePath === '/') {
-                filePath = '/index.html';
-            }
-            
-            const absolutePath = path.join(__dirname, '..', 'build', filePath);
-            
-            fs.access(absolutePath, fs.constants.F_OK, (err) => {
-                if (err) {
-                    const indexPath = path.join(__dirname, '..', 'build', 'index.html');
-                    fs.readFile(indexPath, (readErr, content) => {
-                        if (readErr) {
-                            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-                            res.end('Not Found');
-                        } else {
-                            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-                            res.end(content, 'utf-8');
-                        }
-                    });
-                    return;
+        const tryListen = (port) => {
+            localServer = http.createServer((req, res) => {
+                const parsedUrl = new URL(req.url, `http://localhost`);
+                let filePath = parsedUrl.pathname;
+                
+                if (filePath === '/') {
+                    filePath = '/index.html';
                 }
                 
-                fs.readFile(absolutePath, (readErr, content) => {
-                    if (readErr) {
-                        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-                        res.end(`Internal Server Error: ${readErr.code}`);
+                const absolutePath = path.join(__dirname, '..', 'build', filePath);
+                
+                fs.access(absolutePath, fs.constants.F_OK, (err) => {
+                    if (err) {
+                        const indexPath = path.join(__dirname, '..', 'build', 'index.html');
+                        fs.readFile(indexPath, (readErr, content) => {
+                            if (readErr) {
+                                res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+                                res.end('Not Found');
+                            } else {
+                                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                                res.end(content, 'utf-8');
+                            }
+                        });
                         return;
                     }
                     
-                    const ext = path.extname(absolutePath).toLowerCase();
-                    let contentType = 'text/html';
-                    const mimeTypes = {
-                        '.html': 'text/html',
-                        '.js': 'text/javascript',
-                        '.css': 'text/css',
-                        '.json': 'application/json',
-                        '.png': 'image/png',
-                        '.jpg': 'image/jpeg',
-                        '.jpeg': 'image/jpeg',
-                        '.gif': 'image/gif',
-                        '.svg': 'image/svg+xml',
-                        '.wav': 'audio/wav',
-                        '.mp4': 'video/mp4',
-                        '.woff': 'font/woff',
-                        '.woff2': 'font/woff2',
-                        '.ttf': 'font/ttf',
-                        '.eot': 'application/vnd.ms-fontobject',
-                        '.otf': 'font/otf',
-                        '.wasm': 'application/wasm',
-                        '.ico': 'image/x-icon'
-                    };
-                    
-                    if (mimeTypes[ext]) {
-                        contentType = mimeTypes[ext];
-                    }
-                    
-                    res.writeHead(200, { 'Content-Type': contentType });
-                    res.end(content);
+                    fs.readFile(absolutePath, (readErr, content) => {
+                        if (readErr) {
+                            res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                            res.end(`Internal Server Error: ${readErr.code}`);
+                            return;
+                        }
+                        
+                        const ext = path.extname(absolutePath).toLowerCase();
+                        let contentType = 'text/html';
+                        const mimeTypes = {
+                            '.html': 'text/html',
+                            '.js': 'text/javascript',
+                            '.css': 'text/css',
+                            '.json': 'application/json',
+                            '.png': 'image/png',
+                            '.jpg': 'image/jpeg',
+                            '.jpeg': 'image/jpeg',
+                            '.gif': 'image/gif',
+                            '.svg': 'image/svg+xml',
+                            '.wav': 'audio/wav',
+                            '.mp4': 'video/mp4',
+                            '.woff': 'font/woff',
+                            '.woff2': 'font/woff2',
+                            '.ttf': 'font/ttf',
+                            '.eot': 'application/vnd.ms-fontobject',
+                            '.otf': 'font/otf',
+                            '.wasm': 'application/wasm',
+                            '.ico': 'image/x-icon'
+                        };
+                        
+                        if (mimeTypes[ext]) {
+                            contentType = mimeTypes[ext];
+                        }
+                        
+                        res.writeHead(200, { 'Content-Type': contentType });
+                        res.end(content);
+                    });
                 });
             });
-        });
+            
+            localServer.listen(port, '127.0.0.1', () => {
+                localServerPort = port;
+                console.log(`Production local server listening on http://127.0.0.1:${localServerPort}`);
+                resolve(localServerPort);
+            });
+            
+            localServer.on('error', (err) => {
+                if (err.code === 'EADDRINUSE' && port !== 0) {
+                    console.warn(`Port ${port} is in use, trying next port...`);
+                    tryListen(port + 1);
+                } else {
+                    console.error('Local server error:', err);
+                    reject(err);
+                }
+            });
+        };
         
-        localServer.listen(0, '127.0.0.1', () => {
-            const address = localServer.address();
-            localServerPort = address.port;
-            console.log(`Production local server listening on http://127.0.0.1:${localServerPort}`);
-            resolve(localServerPort);
-        });
-        
-        localServer.on('error', (err) => {
-            console.error('Local server error:', err);
-            reject(err);
-        });
+        tryListen(51283); // Use a persistent high port (origin remains consistent)
     });
 }
 
