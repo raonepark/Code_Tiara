@@ -55,10 +55,13 @@ let googleProvider = null;
 if (isConfigured) {
   try {
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    const isPopout = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('popout');
+    if (!isPopout) {
+      auth = getAuth(app);
+      db = getFirestore(app);
+      googleProvider = new GoogleAuthProvider();
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+    }
   } catch (err) {
     console.error("Firebase initialization failed:", err);
   }

@@ -150,7 +150,7 @@ const CodeTiara = () => {
   }, []);
 
   const handleResendVerification = async () => {
-    if (!auth.currentUser) return;
+    if (!auth || !auth.currentUser) return;
     try {
       auth.languageCode = 'en';
       await sendEmailVerification(auth.currentUser);
@@ -172,7 +172,7 @@ const CodeTiara = () => {
   };
 
   const handleCheckVerification = async () => {
-    if (!auth.currentUser) return;
+    if (!auth || !auth.currentUser) return;
     try {
       await auth.currentUser.reload();
       const refreshedUser = auth.currentUser;
@@ -2178,7 +2178,7 @@ const CodeTiara = () => {
 
       // 4. Delete user account from Firebase Auth
       console.log("Deleting Firebase Auth user account");
-      const currentUser = auth.currentUser;
+      const currentUser = auth ? auth.currentUser : null;
       if (currentUser) {
         await currentUser.delete();
       }
