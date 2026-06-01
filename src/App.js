@@ -1929,6 +1929,7 @@ const CodeTiara = () => {
     const targetHeight = Math.min(naturalHeight, isFormActive ? 680 : 640);
     const targetWidth = Math.round(window.innerWidth);
 
+    if (lastCalculatedHeightRef.current === targetHeight) return;
     lastCalculatedHeightRef.current = targetHeight;
     sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
   }, [popoutCategoryId, miniModeAdderId, currentTheme, editingTaskId]);
@@ -1941,17 +1942,31 @@ const CodeTiara = () => {
     if (lastCalculatedHeightRef.current === null) return;
 
     const wasFormClosing = prevMiniModeAdderIdRef.current && !miniModeAdderId;
+    const wasFormOpening = !prevMiniModeAdderIdRef.current && miniModeAdderId;
     prevMiniModeAdderIdRef.current = miniModeAdderId;
 
     // 💡 If the form was closing, wait 350ms for CSS height transition.
-    // If opening, wait 150ms. For instant list changes (duplicate/delete), wait 80ms.
-    const delay = wasFormClosing ? 350 : (miniModeAdderId ? 150 : 80);
-
-    const timeoutId = setTimeout(() => {
-      triggerPopoutResize();
-    }, delay);
-
-    return () => clearTimeout(timeoutId);
+    // If opening, wait 150ms. For list changes (add/duplicate/delete), schedule multiple resizing ticks
+    // to ensure we capture the height accurately after any React DND animations or layouts settle.
+    if (wasFormClosing) {
+      const t1 = setTimeout(triggerPopoutResize, 350);
+      return () => clearTimeout(t1);
+    } else if (wasFormOpening) {
+      const t1 = setTimeout(triggerPopoutResize, 150);
+      return () => clearTimeout(t1);
+    } else {
+      // For tasks additions, duplicates, or deletions (which trigger transitions and DOM layout updates)
+      const t1 = setTimeout(triggerPopoutResize, 50);
+      const t2 = setTimeout(triggerPopoutResize, 150);
+      const t3 = setTimeout(triggerPopoutResize, 350);
+      const t4 = setTimeout(triggerPopoutResize, 600);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+      };
+    }
   }, [miniModeAdderId, popoutCategoryId, editingTaskId, tasks, triggerPopoutResize]);
 
   // ✨ Click Outside to Close Quick Add Form
