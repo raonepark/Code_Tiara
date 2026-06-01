@@ -126,7 +126,7 @@ const SettingsPanel = ({
                                         : 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] text-slate-600 hover:border-[#FF6B81]'
                                     }`}
                             >
-                                <span className={`text-sm font-bold truncate ${
+                                <span className={`text-base font-bold truncate ${
                                     currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
                                         ? 'text-[#FF6B81]'
                                         : ''

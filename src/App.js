@@ -888,10 +888,11 @@ const CodeTiara = () => {
   }, [tasks]);
 
   useEffect(() => {
+    if (popoutCategoryId) return; // ✨ 팝업 윈도우에서는 타이틀을 로컬 스토리지에 저장하지 않음
     if (localStorage.getItem('lumora_title') !== projectTitle) {
       localStorage.setItem('lumora_title', projectTitle);
     }
-  }, [projectTitle]);
+  }, [projectTitle, popoutCategoryId]);
 
   useEffect(() => {
     if (Number(localStorage.getItem('lumora_focus_duration')) !== focusDuration) {
@@ -966,6 +967,8 @@ const CodeTiara = () => {
         if (e.newValue) setFontSize(Number(e.newValue));
       } else if (e.key === 'lumora_font_family') {
         if (e.newValue) setFontFamily(e.newValue);
+      } else if (e.key === 'lumora_title') {
+        if (e.newValue) setProjectTitle(e.newValue);
       } else if (e.key === 'lumora_filter_mode') {
         if (e.newValue) setFilterMode(e.newValue);
       } else if (e.key === 'lumora_filter_date') {
@@ -1196,7 +1199,14 @@ const CodeTiara = () => {
   };
 
   // --- ⏰ 알람 체크 로직 ---
+  const tasksRef = useRef(tasks);
   useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  useEffect(() => {
+    if (popoutCategoryId) return; // ✨ 팝업 윈도우에서는 알람 체크 인터벌을 실행하지 않음
+
     const checkInterval = setInterval(() => {
       const now = new Date();
       const currentHours = String(now.getHours()).padStart(2, '0');
@@ -1209,7 +1219,7 @@ const CodeTiara = () => {
       const day = String(now.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
-      const tasksToAlert = tasks.filter(t =>
+      const tasksToAlert = tasksRef.current.filter(t =>
         t.dueTime === currentTimeStr &&
         (!t.dueDate || t.dueDate === todayStr) && // ✨ 날짜가 없거나 오늘 날짜일 때만
         !t.completed &&
@@ -1246,7 +1256,7 @@ const CodeTiara = () => {
     }, 1000);
 
     return () => clearInterval(checkInterval);
-  }, [tasks]);
+  }, [popoutCategoryId]);
 
 
 
@@ -1264,26 +1274,28 @@ const CodeTiara = () => {
           setIsTimerRunning(false);
           localStorage.setItem('lumora_timer_running', 'false');
           
-          const notifiedTimestamp = Number(localStorage.getItem('lumora_timer_notified_timestamp')) || 0;
-          if (Math.abs(target - notifiedTimestamp) > 5000) {
-            localStorage.setItem('lumora_timer_notified_timestamp', String(target));
-            
-            const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
-            const title = mode === 'focus' ? t('app.timer_focus_end_title') : t('app.timer_break_end_title');
-            const msg = mode === 'focus' ? t('app.timer_focus_end_msg') : t('app.timer_break_end_msg');
-            setNotifications(prev => [{
-              id: Date.now(),
-              title,
-              message: msg,
-              time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
-              read: false
-            }, ...prev]);
+          if (!popoutCategoryId) {
+            const notifiedTimestamp = Number(localStorage.getItem('lumora_timer_notified_timestamp')) || 0;
+            if (Math.abs(target - notifiedTimestamp) > 5000) {
+              localStorage.setItem('lumora_timer_notified_timestamp', String(target));
+              
+              const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
+              const title = mode === 'focus' ? t('app.timer_focus_end_title') : t('app.timer_break_end_title');
+              const msg = mode === 'focus' ? t('app.timer_focus_end_msg') : t('app.timer_break_end_msg');
+              setNotifications(prev => [{
+                id: Date.now(),
+                title,
+                message: msg,
+                time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
+                read: false
+              }, ...prev]);
 
-            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-              new Notification('Code Tiara', {
-                body: msg,
-                silent: false
-              });
+              if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                new Notification('Code Tiara', {
+                  body: msg,
+                  silent: false
+                });
+              }
             }
           }
         }
@@ -1496,7 +1508,7 @@ const CodeTiara = () => {
   const isTaskMatchingDateFilter = (task) => {
     if (filterMode === 'all') return true;
     
-    if (!task.dueDate && (!task.recurrence || task.recurrence === 'none')) return false;
+    if (!task.dueDate && (!task.recurrence || task.recurrence === 'none')) return true;
 
     const baseDateStr = task.dueDate || getLocalDateString();
     const tDate = parseLocalDate(baseDateStr);
@@ -2774,7 +2786,11 @@ const CodeTiara = () => {
           <div className={`flex-1 flex justify-center text-[10px] ${currentTheme === 'excel' ? 'text-white' : theme.header.text} font-bold px-4 pointer-events-none`}>
             <div className={`${isMiniMode ? 'flex' : 'hidden min-[220px]:flex'} items-center gap-1`}>
               <span 
-                className={`truncate max-w-[150px] sm:max-w-[200px] ${currentTheme === 'princess' ? 'text-sm font-bold tracking-tight text-[#FF6B81]' : (theme.header.text + ' uppercase tracking-widest')}`}
+                className={`truncate max-w-[150px] sm:max-w-[200px] ${
+                  currentTheme === 'princess' 
+                    ? 'text-sm font-bold tracking-tight text-[#FF6B81]' 
+                    : `text-xs sm:text-sm font-bold ${theme.header.text} uppercase tracking-widest`
+                }`}
               >
                 {currentTheme === 'princess' && projectTitle === defaultTitle ? <>{t('app.my_diary')} <span className="text-xs">🎀</span></> : projectTitle}
               </span>
@@ -3143,8 +3159,14 @@ const CodeTiara = () => {
             )}
 
             {/* ✨ Fixed Status Header (Integrated Timer) - Shows in Mini Mode ONLY if Timer is Active */}
-            {!popoutCategoryId && (!isMiniMode || (isTimerOpen && !(poppedOutCategories.includes('timer') && isTimerPlaceholderDismissed))) && (
-              <div className={`shrink-0 transition-all min-h-[58px] flex flex-col justify-center ${currentTheme === 'princess' ? 'bg-white px-6 py-2 border-b border-[#FFC0CB]/30' : 'px-4 pt-4 pb-2 border-b border-slate-800/50'}`}>
+            {!popoutCategoryId && (
+              <div className={`shrink-0 flex flex-col justify-center ${
+                isMiniMode ? 'min-h-[30px] py-0.5' : 'min-h-[58px]'
+              } ${
+                currentTheme === 'princess' 
+                  ? `bg-white border-b border-[#FFC0CB]/30 ${isMiniMode ? 'px-3' : 'px-6 py-2'}` 
+                  : `border-b border-slate-800/50 ${isMiniMode ? 'px-2' : 'px-4 pt-4 pb-2'}`
+              }`}>
 
                 {isTimerOpen && !(poppedOutCategories.includes('timer') && isTimerPlaceholderDismissed) ? (
                   poppedOutCategories.includes('timer') ? (
@@ -3262,7 +3284,7 @@ const CodeTiara = () => {
                   /* ✨ Default: Date & Progress or Excel Formula Bar */
                   currentTheme === 'excel' ? (
                     /* 📊 Excel Formula Bar Style */
-                    <div className="flex flex-wrap items-center gap-1.5 px-1 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[11px] font-sans text-[#444]">
+                    <div className={`flex ${isMiniMode ? 'flex-nowrap' : 'flex-wrap'} items-center gap-1.5 px-1 py-1 bg-[#F3F2F1] border-b border-[#E1E1E1] text-[11px] font-sans text-[#444]`}>
                       <div className="font-serif italic text-slate-500 font-bold px-1 shrink-0">fx</div>
                       
                       {/* Date Filter Integrated into Formula Bar */}
@@ -3301,23 +3323,25 @@ const CodeTiara = () => {
                         )}
                       </div>
 
-                      <div className="flex-1 bg-white border border-[#D1D5DB] px-2 py-0.5 text-slate-700 h-[22px] flex items-center gap-2 shadow-sm inset-shadow min-w-max">
-                        <span className="font-bold text-[#217346]">Total:</span> {totalTasks}
-                        <span className="w-px h-3 bg-slate-300 mx-1"></span>
-                        <span className="font-bold text-[#217346]">Done:</span> {completedTasks}
-                        <span className="w-px h-3 bg-slate-300 mx-1"></span>
-                        <span className="text-slate-400 italic whitespace-nowrap text-[11px] sm:text-xs">
-                          {progressPercentage}% <span className="hidden min-[290px]:inline">Complete</span>
-                        </span>
-                      </div>
+                      {!isMiniMode && (
+                        <div className="flex-1 bg-white border border-[#D1D5DB] px-2 py-0.5 text-slate-700 h-[22px] flex items-center gap-2 shadow-sm inset-shadow min-w-max">
+                          <span className="font-bold text-[#217346]">Total:</span> {totalTasks}
+                          <span className="w-px h-3 bg-slate-300 mx-1"></span>
+                          <span className="font-bold text-[#217346]">Done:</span> {completedTasks}
+                          <span className="w-px h-3 bg-slate-300 mx-1"></span>
+                          <span className="text-slate-400 italic whitespace-nowrap text-[11px] sm:text-xs">
+                            {progressPercentage}% <span className="hidden min-[290px]:inline">Complete</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* ✨ Default Style */
                     <>
                       {/* 1. Statistics Row (Date Left, Count Right) */}
-                      <div className="flex justify-between items-end mb-1">
+                      <div className={`flex justify-between ${isMiniMode ? 'items-center' : 'items-end mb-1'}`}>
                         {/* Left: Date Navigation Filter */}
-                        <div className={`flex items-center gap-1 text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
+                        <div className={`flex items-center gap-0.5 text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
                           <CustomDatePicker
                             value={filterDate}
                             onChange={(e) => {
@@ -3335,7 +3359,7 @@ const CodeTiara = () => {
                               setFilterMode(e.target.value);
                               setFilterDate(getLocalDateString());
                             }}
-                            className={`outline-none cursor-pointer ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
+                            className={`outline-none cursor-pointer text-[10px] sm:text-[11px] ${currentTheme === 'developer' ? 'bg-[#1E1E1E] text-[#ABB2BF]' : 'bg-transparent'}`}
                             title={t('app.tooltip_view_mode')}
                           >
                             <option value="all" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.filter_all')}</option>
@@ -3345,41 +3369,43 @@ const CodeTiara = () => {
                           </select>
                           
                           {filterMode !== 'all' && (
-                            <div className="flex items-center gap-0.5 ml-1">
+                            <div className="flex items-center gap-0.5 ml-0.5">
                               <button onClick={() => shiftFilterDate('prev')} className={`p-0.5 rounded transition-colors hover:scale-110 active:scale-95 ${currentTheme === 'princess' ? 'hover:bg-[#FFC0CB]/30' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}><ChevronLeft className="w-3 h-3" /></button>
-                              <span className="min-w-[50px] text-center">{getFilterDisplayString()}</span>
+                              <span className="min-w-[40px] text-center text-[10px] sm:text-[11px]">{getFilterDisplayString()}</span>
                               <button onClick={() => shiftFilterDate('next')} className={`p-0.5 rounded transition-colors hover:scale-110 active:scale-95 ${currentTheme === 'princess' ? 'hover:bg-[#FFC0CB]/30' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}><ChevronRight className="w-3 h-3" /></button>
                             </div>
                           )}
                         </div>
 
                         {/* Right: Task Count */}
-                        <span className={`text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
-                          {completedTasks}/{totalTasks} {t('app.completed')}
+                        <span className={`text-[10px] sm:text-[11px] font-bold ${currentTheme === 'princess' ? 'text-[#FF6B81]' : 'text-slate-500'}`}>
+                          {completedTasks}/{totalTasks} {!isMiniMode && t('app.completed')}
                         </span>
                       </div>
 
                       {/* 2. Progress Bar */}
-                      <div className="relative">
-                        <div className={`overflow-hidden h-1.5 mb-0 text-[10px] flex rounded-full ${currentTheme === 'princess' ? 'bg-white border border-[#FFC0CB]' : 'bg-slate-800 border border-slate-700'}`}>
-                          <div
-                            style={{ width: `${progressPercentage}%` }}
-                            className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-700 ease-out 
-                              ${currentTheme === 'princess'
-                                ? (progressPercentage === 100
-                                  ? 'bg-gradient-to-r from-[#FDC830] to-[#F37335] animate-pulse shadow-[0_0_10px_#FDC830]'
-                                  : 'bg-gradient-to-r from-[#FF9A9E] via-[#FECFEF] to-[#FF6B81]')
-                                : getOverallProgressColor()}`}
-                          ></div>
+                      {!isMiniMode && (
+                        <div className="relative">
+                          <div className={`overflow-hidden h-1.5 mb-0 text-[10px] flex rounded-full ${currentTheme === 'princess' ? 'bg-white border border-[#FFC0CB]' : 'bg-slate-800 border border-slate-700'}`}>
+                            <div
+                              style={{ width: `${progressPercentage}%` }}
+                              className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-700 ease-out 
+                                ${currentTheme === 'princess'
+                                  ? (progressPercentage === 100
+                                    ? 'bg-gradient-to-r from-[#FDC830] to-[#F37335] animate-pulse shadow-[0_0_10px_#FDC830]'
+                                    : 'bg-gradient-to-r from-[#FF9A9E] via-[#FECFEF] to-[#FF6B81]')
+                                  : getOverallProgressColor()}`}
+                            ></div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   )
                 )}
               </div>
             )}
 
-            <div className={`flex-1 flex flex-col ${popoutCategoryId ? 'overflow-hidden p-0' : 'overflow-y-auto custom-scrollbar ' + (currentTheme === 'princess' ? (isMiniMode ? 'p-1' : 'px-6 py-4') : 'p-3 sm:p-4')}`}>
+            <div className={`flex-1 flex flex-col ${popoutCategoryId ? 'overflow-hidden p-0' : 'overflow-y-auto custom-scrollbar ' + (isMiniMode ? 'p-1.5' : (currentTheme === 'princess' ? 'px-6 py-4' : 'p-3 sm:p-4'))}`}>
 
               {/* Input Form (Compact) - ✨ HIDDEN IN MINI MODE */}
               {/* ✨ Main Add Task UI - Hidden for themes that have category-specific adders */}
@@ -3529,7 +3555,7 @@ const CodeTiara = () => {
               {/* Task Lists */}
               {/* Task Lists */}
               <DragDropContext onDragEnd={onDragEnd}>
-                <div className={popoutCategoryId ? "flex-1 flex flex-col" : "space-y-3 flex-1"}>
+                <div className={popoutCategoryId ? "flex-1 flex flex-col" : `${isMiniMode ? 'space-y-2' : 'space-y-3'} flex-1`}>
                   {(popoutCategoryId ? categories.filter(c => String(c.id) === String(popoutCategoryId)) : categories).map(category => {
                     const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
                     const categoryTasks = tasks.filter(t => t.categoryId === category.id && isTaskMatchingDateFilter(t));
@@ -3544,74 +3570,12 @@ const CodeTiara = () => {
                       ? hexToRgba(categoryColor, 0.45)
                       : undefined;
 
-                    if (isPoppedOut) {
-                      const restoreCategory = () => {
-                        const updated = poppedOutCategories.filter(id => id !== category.id);
-                        setPoppedOutCategories(updated);
-                        localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
-                        sendIPC('close-popout-by-id', category.id);
-                      };
-
-                      if (currentTheme === 'developer') {
-                        return (
-                          <div key={category.id} className="flex items-center justify-between p-3 mb-4 bg-[#1E1E1E] border border-dashed border-[#3E3E42] opacity-80">
-                            <div className="flex items-center gap-2 font-mono">
-                              {getIcon(category.icon, `w-4 h-4 text-[#5C6370]`)}
-                              <span className="text-[#5C6370] text-sm">{`// [${category.label}] is running in detached mode...`}</span>
-                            </div>
-                            <button
-                                onClick={restoreCategory}
-                                className="px-3 py-1 bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors text-xs font-mono"
-                            >
-                              [RETURN]
-                            </button>
-                          </div>
-                        );
-                      }
-                      
-                      if (currentTheme === 'excel') {
-                        return (
-                          <div key={category.id} className="flex items-center justify-between p-2 mb-2 bg-[#F3F2F1] border border-dashed border-[#D1D1D1] opacity-80">
-                            <div className="flex items-center gap-2 font-sans">
-                              {getIcon(category.icon, `w-4 h-4 text-[#666]`)}
-                              <span className="text-[#666] text-xs font-bold uppercase">[{category.label}] - EXTERNAL LINK</span>
-                            </div>
-                            <button
-                                onClick={restoreCategory}
-                                className="px-3 py-1 bg-white border border-[#D1D1D1] text-[#333] hover:bg-[#E1E1E1] transition-colors text-xs font-sans"
-                            >
-                              Restore
-                            </button>
-                          </div>
-                        );
-                      }
-
-                      // Princess theme
-                      return (
-                        <div key={category.id} className={`flex items-center justify-between p-4 mb-4 mx-2 rounded-[20px] border-2 border-dashed bg-white/50 backdrop-blur-sm opacity-80 transition-all`}
-                          style={{ borderColor: hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FBCFE8', 0.8) }}
-                        >
-                          <div className="flex items-center gap-3">
-                            {getIcon(category.icon, `w-5 h-5 text-slate-400`)}
-                            <span className={`text-slate-500 font-bold text-lg`}>{category.label} <span className="text-sm opacity-60 ml-1">💭 {t('app.popout_out')}</span></span>
-                          </div>
-                          <button
-                              onClick={restoreCategory}
-                              style={{
-                                color: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
-                                backgroundColor: 'white',
-                                borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8',
-                                borderWidth: '1.5px'
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); e.currentTarget.style.color = 'white'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = (CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185'); }}
-                              className={`text-xs px-3 py-1.5 rounded-[12px] font-bold transition-all shadow-sm`}
-                          >
-                            {t('app.recall')}
-                          </button>
-                        </div>
-                      );
-                    }
+                    const restoreCategory = () => {
+                      const updated = poppedOutCategories.filter(id => id !== category.id);
+                      setPoppedOutCategories(updated);
+                      localStorage.setItem('lumora_popped_out', JSON.stringify(updated));
+                      sendIPC('close-popout-by-id', category.id);
+                    };
 
                     return (
                       <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${theme.category.container} 
@@ -3624,8 +3588,11 @@ const CodeTiara = () => {
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] m-0' : '')
-                            )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden' : ''} transition-all duration-300`}
-                        style={popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}}
+                            )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden' : ''} transition-all duration-300 relative`}
+                        style={{
+                          ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),
+                          ...(isPoppedOut ? { maxHeight: '160px', minHeight: '110px', overflow: 'hidden' } : {})
+                        }}
                       >
                         <div
                           className={`${theme.category.header} ${popoutCategoryId ? 'pt-2 pb-1.5 shrink-0' : ''}
@@ -3784,7 +3751,10 @@ const CodeTiara = () => {
                                 className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'flex-1 overflow-y-auto custom-scrollbar' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                style={currentTheme === 'princess' ? { backgroundColor: dropBg } : {}}
+                                style={{
+                                  ...(currentTheme === 'princess' ? { backgroundColor: dropBg } : {}),
+                                  ...(isPoppedOut ? { maxHeight: '100px', overflow: 'hidden' } : {})
+                                }}
                               >
                                 {categoryTasks.length === 0 && !snapshot.isDraggingOver && miniModeAdderId !== category.id && (
                                   <p className={`text-[10px] italic p-1.5 py-4 text-center ${
@@ -3896,7 +3866,7 @@ const CodeTiara = () => {
                                 onChange={(e) => setNewTaskMemo(e.target.value)}
                                 placeholder={currentTheme === 'excel' ? t('app.detail_memo_excel') : t('app.detail_memo')}
                                 rows={2}
-                                className={`w-full block resize-none outline-none transition-all
+                                className={`w-full block resize-y min-h-[40px] outline-none transition-colors duration-200
                                       ${currentTheme === 'princess'
                                     ? `bg-white border border-[var(--c-light-rgb)] text-slate-600 placeholder-[var(--c-dark)]/50 focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-semibold ${isMiniMode ? 'text-[11px] p-1.5 px-2.5 rounded-[10px]' : 'text-[12px] p-2 px-3.5 rounded-[14px]'}`
                                     : (currentTheme === 'excel'
@@ -3997,6 +3967,61 @@ const CodeTiara = () => {
                           </form>
                         </div>
 
+                        {isPoppedOut && (
+                          currentTheme === 'developer' ? (
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-2 text-center bg-[#1E1E1E]/85 backdrop-blur-[2px] border border-[#3E3E42] rounded-md font-mono select-none">
+                              <div className="text-[#5C6370] text-[10px] sm:text-xs space-y-0.5 mb-2">
+                                <div>{`// STATUS: DETACHED`}</div>
+                                <div>{`// [${category.label}] active`}</div>
+                              </div>
+                              <button
+                                onClick={restoreCategory}
+                                className="px-3 py-1 bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors text-[10px] sm:text-xs font-mono rounded shadow-md"
+                              >
+                                [RECALL_BOARD]
+                              </button>
+                            </div>
+                          ) : currentTheme === 'excel' ? (
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-2 text-center bg-[#F3F2F1]/90 backdrop-blur-[1px] border border-[#D1D1D1] font-sans select-none">
+                              <div className="text-slate-500 text-[10px] sm:text-xs font-bold mb-0.5">
+                                [EXTERNAL REFERENCE]
+                              </div>
+                              <div className="text-slate-400 text-[9px] sm:text-[11px] mb-2">
+                                Opened in another window.
+                              </div>
+                              <button
+                                onClick={restoreCategory}
+                                className="px-3 py-1 bg-white border border-[#D1D1D1] text-[#333] hover:bg-[#F3F2F1] transition-colors text-[10px] sm:text-xs font-semibold shadow-sm"
+                              >
+                                Restore Window
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-2 text-center bg-white/70 backdrop-blur-[3px] border border-dashed rounded-[15px] select-none"
+                              style={{ borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8' }}
+                            >
+                              <div className="text-slate-500 font-bold text-xs sm:text-sm mb-0.5">
+                                {category.label} 💭
+                              </div>
+                              <div className="text-slate-400 text-[10px] sm:text-xs mb-2">
+                                외출 중이에요!
+                              </div>
+                              <button
+                                onClick={restoreCategory}
+                                style={{
+                                  color: 'white',
+                                  backgroundColor: CATEGORY_ICON_HUES[category.colorTheme] || '#FB7185',
+                                  boxShadow: `0 4px 12px ${hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FFC0CB', 0.5)}`
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                className="px-3 py-1 sm:py-1.5 rounded-[10px] text-[10px] sm:text-xs font-bold transition-all"
+                              >
+                                보드 데려오기 💖
+                              </button>
+                            </div>
+                          )
+                        )}
 
                       </div>
                     );

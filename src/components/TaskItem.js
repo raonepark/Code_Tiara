@@ -228,7 +228,7 @@ const TaskItem = memo(({
                         </div>
 
                         <div className={`mt-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2 border-t border-[#D1D1D1]' : ''}`}>
-                            <textarea
+                             <textarea
                                 value={editingMemo}
                                 onChange={(e) => setEditingMemo(e.target.value)}
                                 onKeyDown={(e) => {
@@ -240,7 +240,7 @@ const TaskItem = memo(({
                                 }}
                                 placeholder={t('app.memo_placeholder')}
                                 rows={2}
-                                className={`w-full bg-transparent focus:outline-none resize-none transition-all block
+                                className={`w-full bg-transparent focus:outline-none resize-y min-h-[40px] transition-colors duration-200 block
                                     ${currentTheme === 'princess'
                                         ? 'border border-[var(--c-light-rgb)] focus:border-[var(--c-dark)] text-slate-600 rounded-xl p-2 text-xs font-semibold bg-white'
                                         : (currentTheme === 'excel'
@@ -424,7 +424,7 @@ const TaskItem = memo(({
                                 ) : (
                                     /* Expanded (Detail) Mode */
                                     <div 
-                                        className={`p-2.5 text-xs shadow-inner cursor-pointer select-text transition-all duration-200
+                                        className={`p-2.5 text-xs shadow-inner cursor-pointer select-text
                                             ${currentTheme === 'princess'
                                                 ? 'bg-gradient-to-br from-[var(--c-bg)] to-white border border-dashed border-[var(--c-light)] text-slate-700 font-medium rounded-2xl whitespace-pre-wrap leading-relaxed'
                                                 : (currentTheme === 'excel'
