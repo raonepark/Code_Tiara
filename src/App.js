@@ -1933,22 +1933,26 @@ const CodeTiara = () => {
     sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
   }, [popoutCategoryId, miniModeAdderId, currentTheme, editingTaskId]);
 
-  // ✨ Auto-resize popout window when Quick Add Form toggles or Task Edit toggles
+  const prevMiniModeAdderIdRef = useRef(miniModeAdderId);
+
+  // ✨ Auto-resize popout window when Quick Add Form toggles, Task Edit toggles, or tasks list changes
   useEffect(() => {
     if (!popoutCategoryId || popoutCategoryId === 'timer' || popoutCategoryId === 'onboarding') return;
     if (lastCalculatedHeightRef.current === null) return;
 
-    // 💡 If the Quick Add Form is closing, wait 350ms for the CSS height transition (300ms) to finish.
-    // Otherwise, wait 150ms to resize as it opens.
-    const isFormClosing = !miniModeAdderId;
-    const delay = isFormClosing ? 350 : 150;
+    const wasFormClosing = prevMiniModeAdderIdRef.current && !miniModeAdderId;
+    prevMiniModeAdderIdRef.current = miniModeAdderId;
+
+    // 💡 If the form was closing, wait 350ms for CSS height transition.
+    // If opening, wait 150ms. For instant list changes (duplicate/delete), wait 80ms.
+    const delay = wasFormClosing ? 350 : (miniModeAdderId ? 150 : 80);
 
     const timeoutId = setTimeout(() => {
       triggerPopoutResize();
     }, delay);
 
     return () => clearTimeout(timeoutId);
-  }, [miniModeAdderId, popoutCategoryId, editingTaskId, triggerPopoutResize]);
+  }, [miniModeAdderId, popoutCategoryId, editingTaskId, tasks, triggerPopoutResize]);
 
   // ✨ Click Outside to Close Quick Add Form
   useEffect(() => {
