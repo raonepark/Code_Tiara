@@ -1135,32 +1135,47 @@ const CodeTiara = () => {
       if (!headerEl || !listEl) return;
 
       const headerHeight = headerEl.offsetHeight;
+
+      // To prevent container flex-stretch height miscalculations, we manually sum individual TaskItem heights.
       let trueListHeight = 0;
-      const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
-      if (validChildren.length > 0) {
-          const first = validChildren[0];
-          const last = validChildren[validChildren.length - 1];
-          trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
-          trueListHeight += 16; // Add container padding buffer
-      } else {
-          trueListHeight = 60; // Minimum height for empty list
-      }      
-      let quickAddHeight = 0;
-      const lastEl = wrapper.lastElementChild;
-      if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
-         quickAddHeight = lastEl.offsetHeight;
-      }
+      const children = Array.from(listEl.children);
+      children.forEach((el) => {
+        const isForm = el.querySelector('form') || el.tagName === 'FORM' || el.classList.contains('max-h-80');
+        if (!isForm) {
+          const taskItems = Array.from(el.children);
+          let activeTaskItemsCount = 0;
+          let itemsSum = 0;
+          taskItems.forEach((item) => {
+            if (item.offsetHeight > 0) {
+              itemsSum += item.offsetHeight;
+              activeTaskItemsCount++;
+            }
+          });
+          if (activeTaskItemsCount > 0) {
+            trueListHeight += itemsSum;
+            trueListHeight += (activeTaskItemsCount - 1) * 4; // space-y-1 gap
+            trueListHeight += 16; // Padding padding buffer (pt-1 + pb-3)
+          } else {
+            trueListHeight += 50; // Fallback height when category is empty
+          }
+        } else {
+          const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
+          if (isFormActive) {
+            trueListHeight += el.scrollHeight || 280;
+          }
+        }
+      });
       
       let buffer = 16;
       if (currentTheme === 'developer') {
-        buffer = 24;
+        buffer = 16;
       } else if (currentTheme === 'princess') {
-        buffer = 36;
+        buffer = 20; // Slightly larger for princess theme rounded bottom
       } else if (currentTheme === 'excel') {
-        buffer = 24;
+        buffer = 16;
       }
       
-      const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
+      const naturalHeight = Math.round(headerHeight + trueListHeight + buffer);
       const targetHeight = Math.min(naturalHeight, 640);
       const targetWidth = Math.round(window.innerWidth);
       
@@ -1184,7 +1199,7 @@ const CodeTiara = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [popoutCategoryId, isInitialLoadComplete, categories, tasks, currentTheme]);
+  }, [popoutCategoryId, isInitialLoadComplete, currentTheme]);
 
   // 설정 변경 시 타이머 리셋 반영
   useEffect(() => {
@@ -1899,18 +1914,33 @@ const CodeTiara = () => {
 
     const headerHeight = headerEl.offsetHeight;
 
-    // 💡 Sum the actual offsetHeight of all visible children (tasks list + Quick Add Form).
-    // This ensures that when the form transitions to height 0 (closed), the measured height shrinks correctly.
-    // If the Quick Add Form is active and is the last child, we use its scrollHeight to get the final height immediately, bypassing transition delay.
+    // To prevent container flex-stretch height miscalculations, we manually sum individual TaskItem heights.
     let trueListHeight = 0;
     const children = Array.from(listEl.children);
-    children.forEach((el, idx) => {
-      const isLastChild = idx === children.length - 1;
-      const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
-      if (isLastChild && isFormActive) {
-        trueListHeight += el.scrollHeight || 280;
-      } else if (el.offsetHeight > 0) {
-        trueListHeight += el.offsetHeight;
+    children.forEach((el) => {
+      const isForm = el.querySelector('form') || el.tagName === 'FORM' || el.classList.contains('max-h-80');
+      if (!isForm) {
+        const taskItems = Array.from(el.children);
+        let activeTaskItemsCount = 0;
+        let itemsSum = 0;
+        taskItems.forEach((item) => {
+          if (item.offsetHeight > 0) {
+            itemsSum += item.offsetHeight;
+            activeTaskItemsCount++;
+          }
+        });
+        if (activeTaskItemsCount > 0) {
+          trueListHeight += itemsSum;
+          trueListHeight += (activeTaskItemsCount - 1) * 4; // space-y-1 gap
+          trueListHeight += 16; // Padding padding buffer (pt-1 + pb-3)
+        } else {
+          trueListHeight += 50; // Fallback height when category is empty
+        }
+      } else {
+        const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
+        if (isFormActive) {
+          trueListHeight += el.scrollHeight || 280;
+        }
       }
     });
 
