@@ -64,6 +64,48 @@ const getFontScaleMultiplier = (fontFamily, themeId, size) => {
     return 1 + (baseScale - 1) * factor;
 };
 
+const openExternalLink = (url) => {
+    try {
+        const { shell } = window.require ? window.require('electron') : {};
+        if (shell) {
+            shell.openExternal(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    } catch (err) {
+        console.error('Failed to open link:', err);
+        window.open(url, '_blank');
+    }
+};
+
+const renderMemoWithLinks = (text) => {
+    if (!text) return null;
+    
+    // URL matching regex
+    const urlRegex = /(https?:\/\/[^\s\n\r]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, i) => {
+        if (part.match(urlRegex)) {
+            return (
+                <a
+                    key={i}
+                    href={part}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openExternalLink(part);
+                    }}
+                    className="text-blue-500 hover:text-blue-600 dark:text-[#569cd6] dark:hover:text-[#4fc1ff] underline cursor-pointer"
+                >
+                    {part}
+                </a>
+            );
+        }
+        return part;
+    });
+};
+
 const TaskItem = memo(({
     task, index, provided, snapshot,
     currentTheme, theme, isMiniMode,
@@ -228,7 +270,7 @@ const TaskItem = memo(({
                         </div>
 
                         <div className={`mt-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2 border-t border-[#D1D1D1]' : ''}`}>
-                             <textarea
+                              <textarea
                                 value={editingMemo}
                                 onChange={(e) => setEditingMemo(e.target.value)}
                                 onKeyDown={(e) => {
@@ -238,9 +280,14 @@ const TaskItem = memo(({
                                     }
                                     if (e.key === 'Escape') cancelEditing();
                                 }}
+                                onMouseUp={() => {
+                                    if (triggerPopoutResize) {
+                                        setTimeout(triggerPopoutResize, 100);
+                                    }
+                                }}
                                 placeholder={t('app.memo_placeholder')}
                                 rows={2}
-                                className={`w-full bg-transparent focus:outline-none resize-y min-h-[40px] transition-colors duration-200 block
+                                className={`w-full bg-transparent focus:outline-none resize-y min-h-[40px] max-h-[160px] transition-colors duration-200 block
                                     ${currentTheme === 'princess'
                                         ? 'border border-[var(--c-light-rgb)] focus:border-[var(--c-dark)] text-slate-600 rounded-xl p-2 text-xs font-semibold bg-white'
                                         : (currentTheme === 'excel'
@@ -448,7 +495,7 @@ const TaskItem = memo(({
                                                 {currentTheme === 'developer' ? 'Click to collapse' : t('app.click_to_collapse')}
                                             </span>
                                         </div>
-                                        <div className="whitespace-pre-wrap break-words">{task.memo}</div>
+                                        <div className="whitespace-pre-wrap break-words">{renderMemoWithLinks(task.memo)}</div>
                                     </div>
                                 )}
                             </div>

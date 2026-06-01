@@ -770,6 +770,28 @@ const CodeTiara = () => {
     loadUserData();
   }, [user]);
 
+  // --- 🔄 재시작 시 팝업 창 복원(재오픈) 로직 ---
+  const hasRestoredPopoutsRef = useRef(false);
+  useEffect(() => {
+    if (isInitialLoadComplete && !popoutCategoryId && !hasRestoredPopoutsRef.current) {
+      hasRestoredPopoutsRef.current = true;
+      console.log("[App] Restoring popped out windows:", poppedOutCategories);
+      
+      poppedOutCategories.forEach(categoryId => {
+        if (categoryId === 'timer') {
+          sendIPC('open-popout', 'timer');
+        } else {
+          sendIPC('open-popout', { 
+            categoryId, 
+            isPinned: pinnedCategories.includes(categoryId) || 
+                      pinnedCategories.includes(Number(categoryId)) || 
+                      pinnedCategories.includes(String(categoryId)) 
+          });
+        }
+      });
+    }
+  }, [isInitialLoadComplete, popoutCategoryId, poppedOutCategories, pinnedCategories]);
+
   // --- Firestore Diff-and-Sync for Tasks ---
   const prevTasksRef = useRef([]);
   useEffect(() => {
@@ -1876,52 +1898,54 @@ const CodeTiara = () => {
     if (!headerEl || !listEl) return;
 
     const headerHeight = headerEl.offsetHeight;
-    let trueListHeight = 0;
-    const validChildren = Array.from(listEl.children).filter(el => el.offsetHeight > 0);
-    if (validChildren.length > 0) {
-        const first = validChildren[0];
-        const last = validChildren[validChildren.length - 1];
-        trueListHeight = last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
-        trueListHeight += 16; // Add container padding buffer
-    } else {
-        trueListHeight = 60; // Minimum height for empty list
-    }
 
-    let quickAddHeight = 0;
-    const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
-    if (isFormActive) {
-      const lastEl = wrapper.lastElementChild;
-      if (lastEl && lastEl !== listEl && lastEl !== headerEl) {
-        quickAddHeight = lastEl.scrollHeight || lastEl.offsetHeight;
+    // 💡 Sum the actual offsetHeight of all visible children (tasks list + Quick Add Form).
+    // This ensures that when the form transitions to height 0 (closed), the measured height shrinks correctly.
+    // If the Quick Add Form is active and is the last child, we use its scrollHeight to get the final height immediately, bypassing transition delay.
+    let trueListHeight = 0;
+    const children = Array.from(listEl.children);
+    children.forEach((el, idx) => {
+      const isLastChild = idx === children.length - 1;
+      const isFormActive = miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId);
+      if (isLastChild && isFormActive) {
+        trueListHeight += el.scrollHeight || 280;
+      } else if (el.offsetHeight > 0) {
+        trueListHeight += el.offsetHeight;
       }
-    }
+    });
+
+    const isFormActive = (miniModeAdderId && String(miniModeAdderId) === String(popoutCategoryId)) || (editingTaskId !== null);
 
     let buffer = 16;
     if (currentTheme === 'developer') {
-      buffer = isFormActive ? 42 : 24;
+      buffer = 16;
     } else if (currentTheme === 'princess') {
-      buffer = isFormActive ? 40 : 36;
+      buffer = 20; // Slightly larger for princess theme rounded bottom
     } else if (currentTheme === 'excel') {
-      buffer = isFormActive ? 36 : 24;
+      buffer = 16;
     }
 
-    const naturalHeight = Math.round(headerHeight + trueListHeight + quickAddHeight + buffer);
+    const naturalHeight = Math.round(headerHeight + trueListHeight + buffer);
     const targetHeight = Math.min(naturalHeight, isFormActive ? 680 : 640);
     const targetWidth = Math.round(window.innerWidth);
 
     lastCalculatedHeightRef.current = targetHeight;
     sendIPC('resize-popout-window', { categoryId: popoutCategoryId, width: targetWidth, height: targetHeight });
-  }, [popoutCategoryId, miniModeAdderId, currentTheme]);
+  }, [popoutCategoryId, miniModeAdderId, currentTheme, editingTaskId]);
 
   // ✨ Auto-resize popout window when Quick Add Form toggles or Task Edit toggles
   useEffect(() => {
     if (!popoutCategoryId || popoutCategoryId === 'timer' || popoutCategoryId === 'onboarding') return;
     if (lastCalculatedHeightRef.current === null) return;
 
-    // Delay slightly to allow React to update the DOM classes
+    // 💡 If the Quick Add Form is closing, wait 350ms for the CSS height transition (300ms) to finish.
+    // Otherwise, wait 150ms to resize as it opens.
+    const isFormClosing = !miniModeAdderId;
+    const delay = isFormClosing ? 350 : 150;
+
     const timeoutId = setTimeout(() => {
       triggerPopoutResize();
-    }, 80);
+    }, delay);
 
     return () => clearTimeout(timeoutId);
   }, [miniModeAdderId, popoutCategoryId, editingTaskId, triggerPopoutResize]);
@@ -3578,7 +3602,7 @@ const CodeTiara = () => {
                     };
 
                     return (
-                      <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${theme.category.container} 
+                      <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${popoutCategoryId ? '' : theme.category.container} 
                         ${currentTheme === 'princess'
                           ? (isMiniMode 
                               ? (popoutCategoryId 
@@ -3588,7 +3612,7 @@ const CodeTiara = () => {
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] m-0' : '')
-                            )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden' : ''} transition-all duration-300 relative`}
+                            )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
                           ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),
                           ...(isPoppedOut ? { maxHeight: '160px', minHeight: '110px', overflow: 'hidden' } : {})
@@ -3740,22 +3764,27 @@ const CodeTiara = () => {
                           </div>
                         </div>
 
-                        <Droppable droppableId={String(category.id)}>
-                          {(provided, snapshot) => {
-                            const dropBg = currentTheme === 'princess' && snapshot.isDraggingOver
-                              ? hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FF6B81', 0.12)
-                              : undefined;
+                        {/* 💡 공동 스크롤 컨테이너 시작 (Droppable과 Quick Add Form을 함께 스크롤되게 묶음) */}
+                        <div 
+                          className={popoutCategoryId ? "flex-1 overflow-y-auto custom-scrollbar relative flex flex-col min-h-0" : "contents"}
+                          style={popoutCategoryId ? { maxHeight: 'calc(100vh - 48px)' } : {}}
+                        >
+                          <Droppable droppableId={String(category.id)}>
+                            {(provided, snapshot) => {
+                              const dropBg = currentTheme === 'princess' && snapshot.isDraggingOver
+                                ? hexToRgba(CATEGORY_HUES[category.colorTheme] || '#FF6B81', 0.12)
+                                : undefined;
 
-                            return (
-                              <div
-                                className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'flex-1 overflow-y-auto custom-scrollbar' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                style={{
-                                  ...(currentTheme === 'princess' ? { backgroundColor: dropBg } : {}),
-                                  ...(isPoppedOut ? { maxHeight: '100px', overflow: 'hidden' } : {})
-                                }}
-                              >
+                              return (
+                                <div
+                                  className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'pb-1.5 shrink-0' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[60px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                  style={{
+                                    ...(currentTheme === 'princess' ? { backgroundColor: dropBg } : {}),
+                                    ...(isPoppedOut ? { maxHeight: '100px', overflow: 'hidden' } : {})
+                                  }}
+                                >
                                 {categoryTasks.length === 0 && !snapshot.isDraggingOver && miniModeAdderId !== category.id && (
                                   <p className={`text-[10px] italic p-1.5 py-4 text-center ${
                                     currentTheme === 'princess' 
@@ -3825,7 +3854,7 @@ const CodeTiara = () => {
                         </Droppable>
 
                         {/* ✨ Quick Add Form (Collapsible) */}
-                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} className={`${miniModeAdderId === category.id ? `max-h-80 opacity-100 overflow-visible mb-4 ${currentTheme === 'princess' ? 'mt-1 px-2' : 'mt-2 px-2'}` : `max-h-0 opacity-0 mt-0 px-2 overflow-hidden`} transition-all duration-300 ease-in-out`}>
+                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} className={`${miniModeAdderId === category.id ? `max-h-80 opacity-100 overflow-visible mb-4 ${(currentTheme === 'princess' || popoutCategoryId) ? 'mt-1 px-2' : 'mt-2 px-2'}` : `max-h-0 opacity-0 mt-0 px-2 overflow-hidden`} transition-all duration-300 ease-in-out ${popoutCategoryId ? 'shrink-0' : ''}`}>
                             <form
                               onSubmit={(e) => addTask(e, category.id)}
                               style={currentTheme === 'princess' ? {
@@ -3966,6 +3995,8 @@ const CodeTiara = () => {
                             </div>
                           </form>
                         </div>
+
+                        </div> {/* 💡 공동 스크롤 컨테이너 닫기 */}
 
                         {isPoppedOut && (
                           currentTheme === 'developer' ? (
