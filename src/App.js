@@ -442,8 +442,17 @@ const CodeTiara = () => {
 
 
   // --- 🔔 알림(Notification) State ---
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lumora_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+  });
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('lumora_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   // --- 🍅 포모도로 타이머 State (동적 동기화 구현) ---
   const [isTimerOpen, setIsTimerOpen] = useState(false);
@@ -977,6 +986,8 @@ const CodeTiara = () => {
     const handleStorageChange = (e) => {
       if (e.key === 'lumora_tasks') {
         try { setTasks(JSON.parse(e.newValue) || []); } catch (err) {}
+      } else if (e.key === 'lumora_notifications') {
+        try { setNotifications(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_categories') {
         try { setCategories(JSON.parse(e.newValue) || []); } catch (err) {}
       } else if (e.key === 'lumora_popped_out') {
@@ -1232,7 +1243,7 @@ const CodeTiara = () => {
     const ampm = hour >= 12 ? t('app.pm') : t('app.am');
     hour = hour % 12;
     hour = hour ? hour : 12;
-    return `${ampm} ${String(hour).padStart(2, '0')}:${m}`;
+    return `${ampm} ${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   };
 
   // --- ⏰ 알람 체크 로직 ---
@@ -1295,9 +1306,6 @@ const CodeTiara = () => {
     return () => clearInterval(checkInterval);
   }, [popoutCategoryId]);
 
-
-
-
   // --- 타이머 로직 (동기화 기반) ---
   useEffect(() => {
     let interval = null;
@@ -1311,28 +1319,26 @@ const CodeTiara = () => {
           setIsTimerRunning(false);
           localStorage.setItem('lumora_timer_running', 'false');
           
-          if (!popoutCategoryId) {
-            const notifiedTimestamp = Number(localStorage.getItem('lumora_timer_notified_timestamp')) || 0;
-            if (Math.abs(target - notifiedTimestamp) > 5000) {
-              localStorage.setItem('lumora_timer_notified_timestamp', String(target));
-              
-              const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
-              const title = mode === 'focus' ? t('app.timer_focus_end_title') : t('app.timer_break_end_title');
-              const msg = mode === 'focus' ? t('app.timer_focus_end_msg') : t('app.timer_break_end_msg');
-              setNotifications(prev => [{
-                id: Date.now(),
-                title,
-                message: msg,
-                time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
-                read: false
-              }, ...prev]);
+          const notifiedTimestamp = Number(localStorage.getItem('lumora_timer_notified_timestamp')) || 0;
+          if (Math.abs(target - notifiedTimestamp) > 5000) {
+            localStorage.setItem('lumora_timer_notified_timestamp', String(target));
+            
+            const mode = localStorage.getItem('lumora_timer_mode') || timerMode;
+            const title = mode === 'focus' ? t('app.timer_focus_end_title') : t('app.timer_break_end_title');
+            const msg = mode === 'focus' ? t('app.timer_focus_end_msg') : t('app.timer_break_end_msg');
+            setNotifications(prev => [{
+              id: Date.now(),
+              title,
+              message: msg,
+              time: formatTimeDisplay(`${new Date().getHours()}:${new Date().getMinutes()}`),
+              read: false
+            }, ...prev]);
 
-              if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                new Notification('Code Tiara', {
-                  body: msg,
-                  silent: false
-                });
-              }
+            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+              new Notification('Code Tiara', {
+                body: msg,
+                silent: false
+              });
             }
           }
         }
@@ -1347,16 +1353,24 @@ const CodeTiara = () => {
   }, [isTimerRunning, timerTargetTime, timerMode]);
 
   const toggleTimer = () => {
+    let currentLeft = timeLeft;
+    if (!isTimerRunning && timeLeft <= 0) {
+      const duration = timerMode === 'focus' ? focusDuration : breakDuration;
+      currentLeft = duration * 60;
+      setTimeLeft(currentLeft);
+      localStorage.setItem('lumora_timer_time_left', String(currentLeft));
+    }
+
     const newRunning = !isTimerRunning;
     setIsTimerRunning(newRunning);
     localStorage.setItem('lumora_timer_running', String(newRunning));
     
     if (newRunning) {
-      const target = Date.now() + timeLeft * 1000;
+      const target = Date.now() + currentLeft * 1000;
       setTimerTargetTime(target);
       localStorage.setItem('lumora_timer_target_time', String(target));
     } else {
-      localStorage.setItem('lumora_timer_time_left', String(timeLeft));
+      localStorage.setItem('lumora_timer_time_left', String(currentLeft));
     }
   };
 
@@ -3046,11 +3060,11 @@ const CodeTiara = () => {
 
                 <div className={`px-3 py-2 flex justify-between items-center ${theme.notification.header}`}>
                   <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs font-sans' : (currentTheme === 'developer' ? 'text-[10px] font-mono tracking-wider' : 'text-xs font-gamja')}`}>
-                    {currentTheme === 'developer' ? '// ACTIVE_ALERTS.log' : (currentTheme === 'princess' ? t('app.notif_title_princess') : t('app.notif_title_default'))} ({unreadCount})
+                    {currentTheme === 'princess' ? t('app.notif_title_princess') : t('app.notif_title_default')} ({unreadCount})
                   </span>
                   {unreadCount > 0 && (
                     <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-0.5 rounded transition-colors ${theme.notification.clearBtn}`}>
-                      {currentTheme === 'developer' ? 'clear()' : (currentTheme === 'princess' ? t('app.clear_all_princess') : t('app.clear_all_default'))}
+                      {currentTheme === 'princess' ? t('app.clear_all_princess') : t('app.clear_all_default')}
                     </button>
                   )}
                 </div>
@@ -4058,7 +4072,7 @@ const CodeTiara = () => {
                                 onClick={restoreCategory}
                                 className="px-3 py-1 bg-[#282C34] border border-[#3E3E42] text-[#ABB2BF] hover:bg-[#3E4451] hover:text-white transition-colors text-[10px] sm:text-xs font-mono rounded shadow-md"
                               >
-                                [RECALL_BOARD]
+                                {t('app.recall')}
                               </button>
                             </div>
                           ) : currentTheme === 'excel' ? (

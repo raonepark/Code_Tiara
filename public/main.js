@@ -209,21 +209,25 @@ function createWindow() {
             if (win && !win.isDestroyed()) {
                 const isPinned = popoutPinnedStates[id];
                 if (isPinned) {
-                    win.setAlwaysOnTop(true);
+                    win.setAlwaysOnTop(true, 'pop-up-menu');
                 }
             }
         });
     });
 
     mainWindow.on('focus', () => {
-        if (mainWindow.isMaximized()) {
-            Object.keys(popoutWindows).forEach((id) => {
-                const win = popoutWindows[id];
-                if (win && !win.isDestroyed()) {
+        Object.keys(popoutWindows).forEach((id) => {
+            const win = popoutWindows[id];
+            if (win && !win.isDestroyed()) {
+                const isPinned = popoutPinnedStates[id];
+                const isTimer = id === 'timer';
+                if (isTimer || isPinned) {
+                    win.setAlwaysOnTop(true, 'pop-up-menu');
+                } else if (mainWindow.isMaximized()) {
                     win.setAlwaysOnTop(false);
                 }
-            });
-        }
+            }
+        });
     });
 
     mainWindow.on('blur', () => {
@@ -232,21 +236,25 @@ function createWindow() {
             if (win && !win.isDestroyed()) {
                 const isPinned = popoutPinnedStates[id];
                 if (isPinned) {
-                    win.setAlwaysOnTop(true);
+                    win.setAlwaysOnTop(true, 'pop-up-menu');
                 }
             }
         });
     });
 
     mainWindow.on('maximize', () => {
-        if (mainWindow.isFocused()) {
-            Object.keys(popoutWindows).forEach((id) => {
-                const win = popoutWindows[id];
-                if (win && !win.isDestroyed()) {
+        Object.keys(popoutWindows).forEach((id) => {
+            const win = popoutWindows[id];
+            if (win && !win.isDestroyed()) {
+                const isPinned = popoutPinnedStates[id];
+                const isTimer = id === 'timer';
+                if (isTimer || isPinned) {
+                    win.setAlwaysOnTop(true, 'pop-up-menu');
+                } else if (mainWindow.isFocused()) {
                     win.setAlwaysOnTop(false);
                 }
-            });
-        }
+            }
+        });
     });
 
     // ✨ IPC Handlers for Custom Title Bar
@@ -325,7 +333,8 @@ function createWindow() {
             }
         }
 
-        const shouldBeOnTop = isPinned && !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused());
+        const isTimer = categoryId === 'timer';
+        const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
 
         const popoutWin = new BrowserWindow({
             width: 320,
@@ -394,15 +403,20 @@ function createWindow() {
         }
     });
 
-    // ✨ Toggle always-on-top for popout windows
-    ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
-        console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
-        popoutPinnedStates[categoryId] = isPinned;
-        if (popoutWindows[categoryId]) {
-            const shouldBeOnTop = isPinned && !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused());
-            popoutWindows[categoryId].setAlwaysOnTop(shouldBeOnTop);
-        }
-    });
+     // ✨ Toggle always-on-top for popout windows
+     ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
+         console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
+         popoutPinnedStates[categoryId] = isPinned;
+         if (popoutWindows[categoryId]) {
+             const isTimer = categoryId === 'timer';
+             const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
+             if (shouldBeOnTop) {
+                 popoutWindows[categoryId].setAlwaysOnTop(true, 'pop-up-menu');
+             } else {
+                 popoutWindows[categoryId].setAlwaysOnTop(false);
+             }
+         }
+     });
 
     // ✨ Auto-resize popout window based on content
     ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
@@ -419,6 +433,16 @@ function createWindow() {
         console.log(`[Main Process] show-popout-window received for categoryId: ${categoryId}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].show();
+            // Re-enforce always-on-top state after showing, to prevent OS z-order losses
+            const isPinned = popoutPinnedStates[categoryId];
+            const isTimer = categoryId === 'timer';
+            const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
+            if (shouldBeOnTop) {
+                popoutWindows[categoryId].setAlwaysOnTop(true, 'pop-up-menu');
+            } else {
+                popoutWindows[categoryId].setAlwaysOnTop(false);
+            }
+            console.log(`[Main Process] Enforced alwaysOnTop: ${shouldBeOnTop} for categoryId: ${categoryId} post-show`);
         }
     });
 
