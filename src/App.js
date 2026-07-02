@@ -417,6 +417,8 @@ const CodeTiara = () => {
   const [taskRecurrenceInterval, setTaskRecurrenceInterval] = useState(1);
   const [editingRecurrence, setEditingRecurrence] = useState('none');
   const [editingRecurrenceInterval, setEditingRecurrenceInterval] = useState(1);
+  const [taskReminder, setTaskReminder] = useState('none');
+  const [editingReminder, setEditingReminder] = useState('none');
 
   // ✨ Auto-resize height tracking ref
   const lastCalculatedHeightRef = useRef(null);
@@ -1256,39 +1258,86 @@ const CodeTiara = () => {
 
     const checkInterval = setInterval(() => {
       const now = new Date();
-      const currentHours = String(now.getHours()).padStart(2, '0');
-      const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-      const currentTimeStr = `${currentHours}:${currentMinutes}`;
+      const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      // ✨ 날짜 체크: YYYY-MM-DD 형식
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${year}-${month}-${day}`;
-
-      const tasksToAlert = tasksRef.current.filter(t =>
-        t.dueTime === currentTimeStr &&
-        (!t.dueDate || t.dueDate === todayStr) && // ✨ 날짜가 없거나 오늘 날짜일 때만
-        !t.completed &&
-        !t.alerted
-      );
+      const tasksToAlert = tasksRef.current.filter(t => {
+        if (!t.dueTime || t.completed || t.alerted) return false;
+        
+        // Treat undefined reminder as 'none'
+        const reminderVal = t.reminder || 'none';
+        if (reminderVal === 'none') return false;
+        
+        const reminderOffsetMinutes = Number(reminderVal);
+        
+        // 마감 시간(YYYY-MM-DD HH:MM)을 Date 객체로 변환
+        const taskDueDate = t.dueDate ? new Date(t.dueDate) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const [dueH, dueM] = t.dueTime.split(':').map(Number);
+        const taskDueDatetime = new Date(taskDueDate.getFullYear(), taskDueDate.getMonth(), taskDueDate.getDate(), dueH, dueM, 0, 0);
+        
+        // 💡 마감 시간에서 알림 설정 오프셋(분)을 뺀 알림 예약 시각 계산
+        const alertDatetime = new Date(taskDueDatetime.getTime() - reminderOffsetMinutes * 60 * 1000);
+        
+        const isTimeMatch = now.getHours() === alertDatetime.getHours() && now.getMinutes() === alertDatetime.getMinutes();
+        
+        if (t.dueDate) {
+          const isDateMatch = 
+            now.getFullYear() === alertDatetime.getFullYear() &&
+            now.getMonth() === alertDatetime.getMonth() &&
+            now.getDate() === alertDatetime.getDate();
+          return isDateMatch && isTimeMatch;
+        } else {
+          return isTimeMatch; // 반복 일정이거나 날짜가 지정되지 않은 경우 시간만 대조
+        }
+      });
 
       if (tasksToAlert.length > 0) {
-        const newNotifs = tasksToAlert.map(t => ({
-          id: Date.now() + Math.random(),
-          title: '알림',
-          message: `"${t.text}" 마감 시간!`,
-          time: formatTimeDisplay(currentTimeStr),
-          read: false,
-          taskId: t.id // ✨ Link notification to task
-        }));
+        const newNotifs = tasksToAlert.map(t => {
+          const offset = t.reminder ? Number(t.reminder) : 0;
+          let timeLabel = '';
+          if (offset === 0) {
+            timeLabel = t('app.reminder_at_time') || '정각';
+          } else if (offset === 1440) {
+            timeLabel = '하루 전';
+          } else if (offset === 60) {
+            timeLabel = '1시간 전';
+          } else {
+            timeLabel = `${offset}분 전`;
+          }
+          const alertMsg = offset === 0 
+            ? `"${t.text}" 마감 시간!` 
+            : `"${t.text}" 마감 ${timeLabel}!`;
+
+          return {
+            id: Date.now() + Math.random(),
+            title: t('app.reminder_title') || '알림',
+            message: alertMsg,
+            time: formatTimeDisplay(currentTimeStr),
+            read: false,
+            taskId: t.id
+          };
+        });
         setNotifications(prev => [...newNotifs, ...prev]);
 
         // 시스템 알림 발생
         tasksToAlert.forEach(t => {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            const offset = t.reminder ? Number(t.reminder) : 0;
+            let timeLabel = '';
+            if (offset === 0) {
+              timeLabel = t('app.reminder_at_time') || '정각';
+            } else if (offset === 1440) {
+              timeLabel = '하루 전';
+            } else if (offset === 60) {
+              timeLabel = '1시간 전';
+            } else {
+              timeLabel = `${offset}분 전`;
+            }
+            const bodyMsg = offset === 0 
+              ? `"${t.text}" 마감 시간입니다!` 
+              : `"${t.text}" 마감 ${timeLabel}입니다!`;
+
             new Notification('Code Tiara', {
-              body: `"${t.text}" 마감 시간입니다!`,
+              body: bodyMsg,
               silent: false
             });
           }
@@ -1440,6 +1489,7 @@ const CodeTiara = () => {
       recurrence: taskRecurrence, // ✨ 반복
       recurrenceInterval: taskRecurrenceInterval,
       recurrenceDays: taskRecurrenceDays,
+      reminder: taskReminder, // ✨ 미리 알림 저장
       memo: newTaskMemo // ✨ 상세 메모 저장
     };
     
@@ -1469,6 +1519,7 @@ const CodeTiara = () => {
     setTaskRecurrence('none');
     setTaskRecurrenceInterval(1);
     setTaskRecurrenceDays([]);
+    setTaskReminder('none'); // ✨ 초기화
 
     // ✨ Close the quick add form if it was open
     if (forcedCatId) {
@@ -1774,6 +1825,7 @@ const CodeTiara = () => {
     setEditingRecurrence(task.recurrence || 'none');
     setEditingRecurrenceInterval(task.recurrenceInterval || 1);
     setEditingRecurrenceDays(task.recurrenceDays || []);
+    setEditingReminder(task.reminder || 'none'); // ✨ 알림 설정 로드
     if (task.dueTime) {
       // 24시간제 -> 12시간제 변환
       let [h, m] = task.dueTime.split(':');
@@ -1802,6 +1854,7 @@ const CodeTiara = () => {
     setEditingRecurrence('none');
     setEditingRecurrenceInterval(1);
     setEditingRecurrenceDays([]);
+    setEditingReminder('none'); // ✨ 초기화
   };
 
   const saveEditing = (id) => {
@@ -1819,7 +1872,8 @@ const CodeTiara = () => {
       alerted: false, // 시간 수정 시 알림 리셋
       recurrence: editingRecurrence,
       recurrenceInterval: editingRecurrenceInterval,
-      recurrenceDays: editingRecurrenceDays
+      recurrenceDays: editingRecurrenceDays,
+      reminder: editingReminder // ✨ 알림 설정 저장
     } : t));
 
     cancelEditing();
@@ -3624,6 +3678,29 @@ const CodeTiara = () => {
                             {taskAmpm === '오전' ? 'AM' : 'PM'}
                           </button>
                         </div>
+
+                        {currentTheme === 'princess' && <span className="text-pink-200">|</span>}
+
+                        {/* Bell / Reminder Picker */}
+                        <div className={`flex items-center gap-1 h-8 px-1
+                          ${currentTheme === 'princess'
+                            ? 'bg-transparent'
+                            : `${currentTheme === 'developer' ? 'bg-[#282C34] border border-[#3E3E42] rounded-none' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D5DB] rounded-none' : 'bg-white border border-slate-200 rounded')}`}`}>
+                          <Bell className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" />
+                          <select
+                            value={taskReminder}
+                            onChange={(e) => setTaskReminder(e.target.value)}
+                            className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[#FF6B81] font-bold' : (currentTheme === 'excel' ? 'bg-white border-none h-6 px-1' : 'text-slate-400')}`}
+                            title={t('app.reminder_title')}
+                          >
+                            <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_none')}</option>
+                            <option value="0" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_at_time')}</option>
+                            <option value="15" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_15m')}</option>
+                            <option value="30" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_30m')}</option>
+                            <option value="60" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1h')}</option>
+                            <option value="1440" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1d')}</option>
+                          </select>
+                        </div>
                       </div>
 
                       <button type="submit" className={`${theme.accent.bg} ${theme.accent.hover} text-white px-3 py-1.5 rounded font-medium transition-all flex items-center justify-center gap-1
@@ -3857,6 +3934,8 @@ const CodeTiara = () => {
                                         index={index}
                                         provided={provided}
                                         snapshot={snapshot}
+                                        editingReminder={editingReminder}
+                                        setEditingReminder={setEditingReminder}
                                         currentTheme={currentTheme}
                                         theme={theme}
                                         isMiniMode={isMiniMode}
@@ -4018,6 +4097,25 @@ const CodeTiara = () => {
                                   <span className={`${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold text-xs mx-0.5' : 'text-slate-400'}`}>:</span>
                                   <input type="text" value={taskMinute} onChange={(e) => setTaskMinute(e.target.value.replace(/[^0-9]/g, ''))} placeholder="00" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
                                   <button type="button" onClick={() => setTaskAmpm(p => p === '오전' ? '오후' : '오전')} className={`ml-1 flex items-center justify-center transition-all ${currentTheme === 'princess' ? `bg-[var(--c-dark)] text-white font-bold shadow-sm opacity-90 hover:opacity-100 ${isMiniMode ? 'px-1.5 py-0.5 rounded-[6px] text-[8px]' : 'px-2 py-1 rounded-[8px] text-[9px]'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1 text-[10px]' : 'text-[#569CD6] text-xs')}`}>{taskAmpm === '오전' ? 'AM' : 'PM'}</button>
+                                </div>
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
+                                <div className="flex items-center gap-1.5">
+                                  <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
+                                    <Bell className="w-3 h-3 text-amber-500 fill-amber-500/20" />
+                                  </div>
+                                  <select
+                                    value={taskReminder}
+                                    onChange={(e) => setTaskReminder(e.target.value)}
+                                    className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
+                                    title={t('app.reminder_title')}
+                                  >
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_none')}</option>
+                                    <option value="0" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_at_time')}</option>
+                                    <option value="15" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_15m')}</option>
+                                    <option value="30" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_30m')}</option>
+                                    <option value="60" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1h')}</option>
+                                    <option value="1440" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1d')}</option>
+                                  </select>
                                 </div>
                               </div>
 

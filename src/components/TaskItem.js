@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText
+    Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText, Bell
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
 import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate } from '../constants';
@@ -127,6 +127,8 @@ const TaskItem = memo(({
     editFormRef,
     editingMemo,
     setEditingMemo,
+    editingReminder,
+    setEditingReminder,
     triggerPopoutResize
 }) => {
     const { t } = useTranslation();
@@ -377,6 +379,25 @@ const TaskItem = memo(({
                                         {editingAmpm === '오전' ? t('app.am') : t('app.pm')}
                                     </button>
                                 </div>
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
+                                <div className="flex items-center gap-1.5 justify-center sm:justify-start w-full sm:w-auto mt-1 sm:mt-0">
+                                  <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
+                                    <Bell className="w-3 h-3 text-amber-500 fill-amber-500/20" />
+                                  </div>
+                                  <select
+                                    value={editingReminder}
+                                    onChange={(e) => setEditingReminder(e.target.value)}
+                                    className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1' : 'text-[#ABB2BF]')}`}
+                                    title={t('app.reminder_title')}
+                                  >
+                                    <option value="none" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_none')}</option>
+                                    <option value="0" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_at_time')}</option>
+                                    <option value="15" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_15m')}</option>
+                                    <option value="30" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_30m')}</option>
+                                    <option value="60" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1h')}</option>
+                                    <option value="1440" className={currentTheme === 'developer' ? 'bg-[#252526] text-[#D4D4D4]' : (currentTheme === 'princess' ? 'bg-white text-[#FF6B81] font-bold' : 'bg-white text-slate-800')}>{t('app.reminder_1d')}</option>
+                                  </select>
+                                </div>
                             </div>
 
                             {/* Right: Actions */}
@@ -439,6 +460,14 @@ const TaskItem = memo(({
                                         <Repeat className="w-2.5 h-2.5" />
                                         <span className={currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold' : ''}>
                                             {getRecurrenceDisplayText(task)}
+                                        </span>
+                                    </span>
+                                )}
+                                {task.reminder && task.reminder !== 'none' && (
+                                    <span className={`flex items-center gap-0.5 ${(task.dueTime || task.dueDate || (task.recurrence && task.recurrence !== 'none')) ? 'ml-1 border-l pl-1.5' : ''} ${currentTheme === 'princess' ? 'border-[var(--c-light)]' : 'border-slate-500'}`} title={t('app.reminder_title')}>
+                                        <Bell className="w-2.5 h-2.5 text-amber-500 fill-amber-500/20" />
+                                        <span className="text-[9px] font-normal opacity-85">
+                                            {task.reminder === '0' ? '' : (task.reminder === '1440' ? '1d' : (task.reminder === '60' ? '1h' : `${task.reminder}m`))}
                                         </span>
                                     </span>
                                 )}
