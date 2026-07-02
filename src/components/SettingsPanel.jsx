@@ -96,26 +96,6 @@ const SettingsPanel = ({
 
 
 
-                {/* 📝 Board Name Card */}
-                <div className={theme.settings.wrapper}>
-                    <div className={theme.settings.header}>
-                        {t('settings.boardName')}
-                    </div>
-                    <div className="flex items-center gap-2 w-full">
-                        <div
-                            className={`flex-1 flex items-center justify-between px-3 py-2 select-none ${currentTheme === 'developer'
-                                ? 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF]/50 cursor-not-allowed'
-                                : currentTheme === 'excel'
-                                    ? 'bg-[#F3F2F1] border border-[#D1D1D1] text-[#000]/50 cursor-not-allowed'
-                                    : 'bg-[#FFF0F2] border-[1.5px] border-[#FFC0CB]/60 rounded-[30px] text-slate-400 cursor-not-allowed'
-                                }`}
-                        >
-                            <span className="text-base font-bold truncate">
-                                Code Tiara
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
                 {/* 🎨 Theme Settings Card - Unified (Collapsible) */}
                 <div className={theme.settings.wrapper}>

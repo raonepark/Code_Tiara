@@ -3839,7 +3839,7 @@ const CodeTiara = () => {
 
                               return (
                                 <div
-                                  className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'pb-1.5 shrink-0' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[36px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
+                                  className={`${(popoutCategoryId && !['princess', 'excel'].includes(currentTheme)) ? 'px-3 pb-3 pt-1' : `p-1 ${isMiniMode ? 'pb-1 pt-0' : 'pb-1'}`} ${popoutCategoryId ? 'pb-1.5 shrink-0' : ''} space-y-1 ${categoryTasks.length === 0 && miniModeAdderId === category.id ? 'min-h-0 !p-0' : (categoryTasks.length > 0 ? 'min-h-0' : 'min-h-[28px]')} transition-colors duration-200 ${snapshot.isDraggingOver ? (currentTheme === 'princess' ? 'rounded-b-[15px]' : 'bg-slate-800/50 rounded') : ''} ${currentTheme === 'princess' ? (isMiniMode ? 'mx-[6px] mb-1 rounded-b-[15px]' : 'mx-[6px] mb-[6px] rounded-b-[15px]') : ''}`}
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
                                   style={{
@@ -3847,13 +3847,6 @@ const CodeTiara = () => {
                                     ...(isPoppedOut ? { maxHeight: '100px', overflow: 'hidden' } : {})
                                   }}
                                 >
-                                {categoryTasks.length === 0 && !snapshot.isDraggingOver && miniModeAdderId !== category.id && (
-                                  <p className={`text-[10px] italic p-1.5 py-2 text-center ${
-                                    currentTheme === 'princess' 
-                                      ? 'text-[#D8A0A6] opacity-50' 
-                                      : (currentTheme === 'developer' ? 'text-[#ABB2BF] opacity-50' : 'text-slate-500 opacity-60')
-                                  }`}>비어 있음</p>
-                                )}
 
                                 {categoryTasks.map((task, index) => (
                                   <Draggable key={task.id} draggableId={String(task.id)} index={index}>
