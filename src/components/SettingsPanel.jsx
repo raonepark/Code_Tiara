@@ -101,48 +101,19 @@ const SettingsPanel = ({
                     <div className={theme.settings.header}>
                         {t('settings.boardName')}
                     </div>
-                    <div className="flex items-center gap-2">
-                        {isEditingName ? (
-                            <input
-                                ref={nameInputRef}
-                                type="text"
-                                value={projectTitle}
-                                onChange={(e) => setProjectTitle(e.target.value)}
-                                onBlur={() => setIsEditingName(false)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') setIsEditingName(false);
-                                    if (e.key === 'Escape') setIsEditingName(false);
-                                }}
-                                className={`flex-1 ${theme.settings.input} transition-all`}
-                                placeholder={defaultTitle || 'My Board'}
-                            />
-                        ) : (
-                            <div
-                                onClick={() => setIsEditingName(true)}
-                                className={`flex-1 flex items-center justify-between cursor-pointer group px-3 py-2 transition-all ${currentTheme === 'developer'
-                                    ? 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] hover:border-[#61AFEF]'
-                                    : currentTheme === 'excel'
-                                        ? 'bg-white border border-[#D1D1D1] text-[#000] hover:border-[#217346]'
-                                        : 'bg-white border-[1.5px] border-[#FFC0CB] rounded-[30px] text-slate-600 hover:border-[#FF6B81]'
-                                    }`}
-                            >
-                                <span className={`text-base font-bold truncate ${
-                                    currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
-                                        ? 'text-[#FF6B81]'
-                                        : ''
-                                }`}>
-                                    {currentTheme === 'princess' && projectTitle === (defaultTitle || 'My Board')
-                                        ? <>{t('app.my_diary')} <span className="text-xs">🎀</span></>
-                                        : projectTitle
-                                    }
-                                </span>
-                                <Edit2 className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ${
-                                    currentTheme === 'developer' ? 'text-[#61AFEF]'
-                                        : currentTheme === 'excel' ? 'text-[#217346]'
-                                            : 'text-[#FF6B81]'
-                                }`} />
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2 w-full">
+                        <div
+                            className={`flex-1 flex items-center justify-between px-3 py-2 select-none ${currentTheme === 'developer'
+                                ? 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF]/50 cursor-not-allowed'
+                                : currentTheme === 'excel'
+                                    ? 'bg-[#F3F2F1] border border-[#D1D1D1] text-[#000]/50 cursor-not-allowed'
+                                    : 'bg-[#FFF0F2] border-[1.5px] border-[#FFC0CB]/60 rounded-[30px] text-slate-400 cursor-not-allowed'
+                                }`}
+                        >
+                            <span className="text-base font-bold truncate">
+                                Code Tiara
+                            </span>
+                        </div>
                     </div>
                 </div>
 
