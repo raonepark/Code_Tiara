@@ -157,7 +157,11 @@ function createWindow() {
             action: 'allow',
             overrideBrowserWindowOptions: {
                 icon: path.join(__dirname, '../assets/icons/icon.ico'),
-                autoHideMenuBar: true
+                autoHideMenuBar: true,
+                webPreferences: {
+                    nodeIntegration: false,
+                    contextIsolation: true
+                }
             }
         };
     });

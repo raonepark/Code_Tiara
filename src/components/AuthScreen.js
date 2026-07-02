@@ -33,7 +33,7 @@ import {
 console.log('AuthScreen lucide imports:', { Crown, AlertCircle, Mail, Lock, RefreshCw, User });
 
 export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange, isModal = false, customAlert }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -122,7 +122,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
       if (isSignUp) {
         localStorage.setItem('signing_up', 'true');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        auth.languageCode = 'en';
+        auth.languageCode = i18n.language || 'en';
         await sendEmailVerification(userCredential.user);
         await signOut(auth);
         
@@ -174,6 +174,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     setError('');
     setLoading(true);
     try {
+      auth.languageCode = i18n.language || 'en';
       const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithPopup(auth, googleProvider);
@@ -202,7 +203,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     setError('');
     setLoading(true);
     try {
-      auth.languageCode = 'en';
+      auth.languageCode = i18n.language || 'en';
       await sendPasswordResetEmail(auth, email);
       if (customAlert) {
         await customAlert(t('auth.forgot_pwd') || '비밀번호 찾기', t('auth.pwd_reset_sent'), true, 'mail');

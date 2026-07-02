@@ -163,7 +163,7 @@ const CodeTiara = () => {
   const handleResendVerification = async () => {
     if (!auth || !auth.currentUser) return;
     try {
-      auth.languageCode = 'en';
+      auth.languageCode = i18n.language || 'en';
       await sendEmailVerification(auth.currentUser);
       await customAlert(
         t('auth.verification_title') || 'Email Verification',
