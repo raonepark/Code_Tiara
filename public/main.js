@@ -12,9 +12,13 @@ const fs = require('fs');
 
 // Basic dev detection
 const isDev = !app.isPackaged;
+const isMac = process.platform === 'darwin';
+const isWin = process.platform === 'win32';
 
 // ✨ Set App ID for Windows Notifications to show "Code Tiara"
-app.setAppUserModelId("Code Tiara");
+if (isWin) {
+    app.setAppUserModelId("Code Tiara");
+}
 
 // Global reference for popout windows to prevent garbage collection
 const popoutWindows = {};
@@ -23,6 +27,16 @@ const popoutPinnedStates = {};
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
+
+// ✨ Crucial for macOS: allow Cmd+Q or menu quit to properly exit
+app.on('before-quit', () => {
+    isQuitting = true;
+});
+
+// App icon for window headers/taskbar
+const appIconPath = isWin
+    ? path.join(__dirname, '../assets/icons/icon.ico')
+    : path.join(__dirname, '../assets/icon.png');
 
 let localServerPort = null;
 let localServer = null;
@@ -130,7 +144,7 @@ function createWindow() {
         frame: false, // ✨ Frameless Window
         transparent: true, // ✨ Rounded Corners Support
         backgroundColor: '#00000000', // ✨ Transparent Background
-        icon: path.join(__dirname, '../assets/icons/icon.ico')
+        icon: appIconPath
     });
 
     // Load URL
@@ -156,7 +170,7 @@ function createWindow() {
         return {
             action: 'allow',
             overrideBrowserWindowOptions: {
-                icon: path.join(__dirname, '../assets/icons/icon.ico'),
+                icon: appIconPath,
                 autoHideMenuBar: true,
                 webPreferences: {
                     nodeIntegration: false,
@@ -356,7 +370,7 @@ function createWindow() {
             transparent: true,
             backgroundColor: '#00000000',
             alwaysOnTop: shouldBeOnTop, // Dynamic always on top
-            icon: path.join(__dirname, '../assets/icons/icon.ico'),
+            icon: appIconPath,
             show: false // ✨ Hide initially to prevent size flashing
         });
 
@@ -450,12 +464,13 @@ function createWindow() {
         }
     });
 
-    // ✨ Toggle launch at Windows startup
+    // ✨ Toggle launch at OS startup (Windows & macOS)
     ipcMain.on('set-auto-launch', (event, enabled) => {
-        app.setLoginItemSettings({
-            openAtLogin: enabled,
-            path: app.getPath('exe')
-        });
+        const settings = { openAtLogin: enabled };
+        if (isWin) {
+            settings.path = app.getPath('exe');
+        }
+        app.setLoginItemSettings(settings);
     });
 
     ipcMain.handle('get-auto-launch', () => {
@@ -465,8 +480,19 @@ function createWindow() {
 }
 
 function createTray() {
-    const iconPath = path.join(__dirname, '../assets/icons/icon.ico');
-    tray = new Tray(iconPath);
+    let trayIcon;
+    if (isMac) {
+        const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
+        if (fs.existsSync(macTrayPath)) {
+            const nImage = electron.nativeImage.createFromPath(macTrayPath);
+            trayIcon = nImage.resize({ width: 18, height: 18 });
+        } else {
+            trayIcon = path.join(__dirname, '../assets/icons/16x16.png');
+        }
+    } else {
+        trayIcon = path.join(__dirname, '../assets/icons/icon.ico');
+    }
+    tray = new Tray(trayIcon);
 
     const contextMenu = Menu.buildFromTemplate([
         { label: '열기', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
@@ -504,8 +530,19 @@ if (!gotTheLock) {
     });
 
     app.whenReady().then(async () => {
+        // Set macOS Dock Icon if available
+        if (isMac && app.dock) {
+            const dockIconPath = path.join(__dirname, '../assets/icon.png');
+            if (fs.existsSync(dockIconPath)) {
+                app.dock.setIcon(dockIconPath);
+            }
+        }
+
         if (session && session.defaultSession) {
-            session.defaultSession.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+            const userAgent = isMac
+                ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+            session.defaultSession.setUserAgent(userAgent);
         }
         
         if (!isDev) {
@@ -525,7 +562,7 @@ app.on('window-all-closed', () => {
     if (localServer) {
         localServer.close();
     }
-    if (process.platform !== 'darwin') {
+    if (!isMac) {
         app.quit();
     }
 });
@@ -535,5 +572,6 @@ app.on('activate', () => {
         createWindow();
     } else {
         mainWindow.show();
+        mainWindow.focus();
     }
 });

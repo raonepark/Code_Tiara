@@ -33,5 +33,32 @@ module.exports = {
         createDesktopShortcut: true,
         createStartMenuShortcut: true,
         shortcutName: "Code Tiara"
+    },
+    mac: {
+        target: [
+            {
+                target: "default",
+                arch: ["x64", "arm64"]
+            }
+        ],
+        icon: "assets/icons/icon.icns",
+        category: "public.app-category.productivity",
+        hardenedRuntime: true,
+        gatekeeperAssess: false
+    },
+    dmg: {
+        contents: [
+            {
+                x: 130,
+                y: 220
+            },
+            {
+                x: 410,
+                y: 220,
+                type: "link",
+                path: "/Applications"
+            }
+        ],
+        artifactName: "${productName} ${version}.${ext}"
     }
 };
