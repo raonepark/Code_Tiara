@@ -490,21 +490,51 @@ function createTray() {
         const macTrayPath2x = path.join(__dirname, '../assets/tray_icon@2x.png');
         const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
         const targetPath = fs.existsSync(macTrayPath2x) ? macTrayPath2x : macTrayPath;
-        if (fs.existsSync(targetPath)) {
-            let nImage = electron.nativeImage.createFromPath(targetPath);
-            nImage = nImage.resize({ width: 18, height: 18 });
-            nImage.setTemplateImage(true);
-            trayIcon = nImage;
-        } else {
-            trayIcon = path.join(__dirname, '../assets/icons/16x16.png');
+        
+        try {
+            if (fs.existsSync(targetPath)) {
+                const buffer = fs.readFileSync(targetPath);
+                let nImage = electron.nativeImage.createFromBuffer(buffer);
+                if (!nImage.isEmpty()) {
+                    nImage = nImage.resize({ width: 18, height: 18 });
+                    nImage.setTemplateImage(true);
+                    trayIcon = nImage;
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load tray icon buffer:', err);
+        }
+
+        if (!trayIcon) {
+            try {
+                const fallbackPath = path.join(__dirname, '../assets/icons/16x16.png');
+                if (fs.existsSync(fallbackPath)) {
+                    let nImage = electron.nativeImage.createFromBuffer(fs.readFileSync(fallbackPath));
+                    nImage.setTemplateImage(true);
+                    trayIcon = nImage;
+                }
+            } catch (err) {
+                console.error('Failed fallback tray icon:', err);
+            }
         }
     } else {
         trayIcon = path.join(__dirname, '../assets/icons/icon.ico');
     }
+
+    if (!trayIcon) return;
+
+    if (tray && !tray.isDestroyed()) {
+        try { tray.destroy(); } catch (e) {}
+    }
+
     tray = new Tray(trayIcon);
 
+    if (isMac) {
+        tray.setIgnoreDoubleClickEvents(true);
+    }
+
     const contextMenu = Menu.buildFromTemplate([
-        { label: '열기', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
+        { label: 'Code Tiara 열기', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
         { type: 'separator' },
         { label: '종료', click: () => { isQuitting = true; app.quit(); } }
     ]);
