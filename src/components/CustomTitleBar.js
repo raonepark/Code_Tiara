@@ -36,8 +36,7 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
                     {/* Close (Red) */}
                     <button
                         onClick={() => sendIPC('close-window')}
-                        className="w-3 h-3 rounded-full bg-[#FF5F56] hover:bg-[#E0443E] active:bg-[#C0392B] flex items-center justify-center transition-colors text-[9px] text-[#4D0000] opacity-90 hover:opacity-100"
-                        title="닫기"
+                        className="w-3 h-3 rounded-full bg-[#FF5F56] hover:bg-[#E0443E] active:bg-[#C0392B] flex items-center justify-center transition-colors text-[9px] text-[#4D0000] opacity-90 hover:opacity-100 cursor-default"
                         tabIndex={-1}
                     >
                         <X className="w-2 h-2 opacity-0 group-hover:opacity-100 stroke-[3px]" />
@@ -45,8 +44,7 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
                     {/* Minimize (Yellow) */}
                     <button
                         onClick={() => sendIPC('minimize-window')}
-                        className="w-3 h-3 rounded-full bg-[#FFBD2E] hover:bg-[#DEA123] active:bg-[#B78117] flex items-center justify-center transition-colors text-[9px] text-[#5C4000] opacity-90 hover:opacity-100"
-                        title="최소화"
+                        className="w-3 h-3 rounded-full bg-[#FFBD2E] hover:bg-[#DEA123] active:bg-[#B78117] flex items-center justify-center transition-colors text-[9px] text-[#5C4000] opacity-90 hover:opacity-100 cursor-default"
                         tabIndex={-1}
                     >
                         <Minus className="w-2 h-2 opacity-0 group-hover:opacity-100 stroke-[3px]" />
