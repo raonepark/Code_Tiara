@@ -1,5 +1,6 @@
 import React from 'react';
-import { Minus, X, Heart } from 'lucide-react'; // Using Lucide icons for controls
+import { Minus, X, Heart } from 'lucide-react';
+import { isMac } from '../utils/platform';
 
 const CustomTitleBar = ({ theme = 'princess' }) => {
     // Safe IPC Call wrapper
@@ -24,13 +25,51 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
         }
     };
 
+    if (isMac) {
+        return (
+            <div
+                className="h-[30px] bg-[#FFF0F5] flex items-center justify-between px-3 select-none shrink-0"
+                style={{ WebkitAppRegion: 'drag' }}
+            >
+                {/* Left: macOS Traffic Lights (Close / Minimize) */}
+                <div className="flex items-center gap-2 group" style={{ WebkitAppRegion: 'no-drag' }}>
+                    {/* Close (Red) */}
+                    <button
+                        onClick={() => sendIPC('close-window')}
+                        className="w-3 h-3 rounded-full bg-[#FF5F56] hover:bg-[#E0443E] active:bg-[#C0392B] flex items-center justify-center transition-colors text-[9px] text-[#4D0000] opacity-90 hover:opacity-100"
+                        title="닫기"
+                        tabIndex={-1}
+                    >
+                        <X className="w-2 h-2 opacity-0 group-hover:opacity-100 stroke-[3px]" />
+                    </button>
+                    {/* Minimize (Yellow) */}
+                    <button
+                        onClick={() => sendIPC('minimize-window')}
+                        className="w-3 h-3 rounded-full bg-[#FFBD2E] hover:bg-[#DEA123] active:bg-[#B78117] flex items-center justify-center transition-colors text-[9px] text-[#5C4000] opacity-90 hover:opacity-100"
+                        title="최소화"
+                        tabIndex={-1}
+                    >
+                        <Minus className="w-2 h-2 opacity-0 group-hover:opacity-100 stroke-[3px]" />
+                    </button>
+                </div>
+
+                {/* Center / Right: Branding */}
+                <div className="flex items-center gap-1.5 text-[#FF6B81] font-bold text-xs" style={{ WebkitAppRegion: 'no-drag' }}>
+                    <Heart className="w-3 h-3 fill-current" />
+                    <span>Code Tiara</span>
+                </div>
+            </div>
+        );
+    }
+
+    // Windows Layout (Untouched Original)
     return (
         <div
             className="h-[30px] bg-[#FFF0F5] flex items-center justify-between px-3 select-none shrink-0"
-            style={{ WebkitAppRegion: 'drag' }} // ✨ Draggable Area
+            style={{ WebkitAppRegion: 'drag' }}
         >
             {/* Left: Branding */}
-            <div className="flex items-center gap-1.5 text-[#FF6B81] font-bold text-xs" style={{ WebkitAppRegion: 'no-drag' }}> {/* Make interactive if needed, else drag is fine */}
+            <div className="flex items-center gap-1.5 text-[#FF6B81] font-bold text-xs" style={{ WebkitAppRegion: 'no-drag' }}>
                 <Heart className="w-3 h-3 fill-current" />
                 <span>Code Tiara</span>
             </div>

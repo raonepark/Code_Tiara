@@ -95,10 +95,6 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
-    if (!isConfigured) {
-      setError(t('auth.err_no_firebase'));
-      return;
-    }
 
     if (!email || !password) {
       setError(t('auth.err_missing_fields'));
@@ -117,6 +113,18 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
     setError('');
     setLoading(true);
+
+    if (!isConfigured) {
+      setTimeout(() => {
+        setLoading(false);
+        if (isSignUp) {
+          setSignUpSuccess(true);
+        } else {
+          onAuthSuccess({ uid: "local_" + btoa(email).replace(/=/g, ''), email });
+        }
+      }, 300);
+      return;
+    }
 
     try {
       if (isSignUp) {
@@ -166,23 +174,35 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   };
 
   const handleGoogleAuth = async () => {
+    setError('');
+    setLoading(true);
+
     if (!isConfigured) {
-      setError(t('auth.err_no_firebase'));
+      setTimeout(() => {
+        setLoading(false);
+        onAuthSuccess({ uid: "google_local_user", email: "user@gmail.com" });
+      }, 300);
       return;
     }
 
-    setError('');
-    setLoading(true);
     try {
       auth.languageCode = i18n.language || 'en';
       const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
-      await signInWithPopup(auth, googleProvider);
-      onAuthSuccess();
+      const res = await signInWithPopup(auth, googleProvider);
+      onAuthSuccess(res ? res.user : null);
     } catch (err) {
-      console.error(err);
-      if (err.code !== "auth/popup-closed-by-user") {
-        setError(t('auth.err_google'));
+      console.error("Google Auth Error:", err);
+      if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
+        let errMsg = t('auth.err_google');
+        if (err.code === "auth/unauthorized-domain") {
+          errMsg = "Firebase Console에서 '127.0.0.1' 및 'localhost'를 승인된 도메인에 추가해야 합니다.";
+        } else if (err.code === "auth/operation-not-allowed") {
+          errMsg = "Firebase Console > Authentication에서 Google 로그인 활성화가 필요합니다.";
+        } else if (err.code) {
+          errMsg = `${t('auth.err_google')} (${err.code})`;
+        }
+        setError(errMsg);
       }
     } finally {
       setLoading(false);
@@ -190,11 +210,6 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   };
 
   const handleForgotPassword = async () => {
-    if (!isConfigured) {
-      setError(t('auth.err_no_firebase'));
-      return;
-    }
-
     if (!email) {
       setError(t('auth.err_enter_email_for_reset'));
       return;
@@ -202,6 +217,20 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
     setError('');
     setLoading(true);
+
+    if (!isConfigured) {
+      setTimeout(async () => {
+        setLoading(false);
+        if (customAlert) {
+          await customAlert(t('auth.forgot_pwd') || '비밀번호 찾기', t('auth.pwd_reset_sent'), true, 'mail');
+        } else {
+          alert(t('auth.pwd_reset_sent'));
+        }
+        setIsForgotPassword(false);
+      }, 300);
+      return;
+    }
+
     try {
       auth.languageCode = i18n.language || 'en';
       await sendPasswordResetEmail(auth, email);
@@ -236,7 +265,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   };
 
   return (
-    <div className={isModal ? "w-full max-w-sm bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-8 relative flex flex-col font-sans my-auto" : "h-full w-full flex flex-col items-center bg-gray-50 p-4 font-sans overflow-y-auto"}>
+    <div className={isModal ? "w-full max-w-sm bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 relative flex flex-col font-sans my-auto" : "h-full w-full flex flex-col items-center justify-center bg-gray-50 p-2 font-sans overflow-hidden"}>
       
       {/* If it's NOT a modal, wrap in the card container. If it IS a modal, we are already returning the card container. */}
       {(() => {
@@ -245,31 +274,31 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
           content = (
             <>
               {/* Header Icon */}
-              <div className="flex flex-col items-center justify-center mb-6 mt-4">
-                <div className="w-16 h-16 bg-gradient-to-tr from-black to-gray-700 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6">
-                  <Sparkles className="w-8 h-8 text-white animate-pulse" />
+              <div className="flex flex-col items-center justify-center mb-3 mt-1">
+                <div className="w-12 h-12 bg-gradient-to-tr from-black to-gray-700 rounded-xl flex items-center justify-center shadow-md transform -rotate-6">
+                  <Sparkles className="w-6 h-6 text-white animate-pulse" />
                 </div>
-                <div className="mt-4 font-extrabold tracking-widest text-sm text-gray-800 uppercase">Code Tiara</div>
+                <div className="mt-2 font-extrabold tracking-widest text-xs text-gray-800 uppercase">Code Tiara</div>
               </div>
 
               {/* Success Message */}
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-extrabold text-black tracking-tight mb-3 font-['Inter',sans-serif]">
+              <div className="text-center mb-4">
+                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
                   {t('auth.signup_complete_title')}
                 </h1>
-                <p className="text-sm text-gray-500 font-medium font-sans leading-relaxed whitespace-pre-line">
+                <p className="text-xs text-gray-500 font-medium font-sans leading-relaxed whitespace-pre-line">
                   {t('auth.signup_complete_desc')}
                 </p>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setSignUpSuccess(false);
                     setIsSignUp(false);
                   }}
-                  className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-sm hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                 >
                   {t('auth.go_to_login')}
                 </button>
@@ -280,32 +309,32 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
           content = (
             <>
               {/* Header Icon */}
-              <div className="flex flex-col items-center justify-center mb-6 mt-4">
-                <div className="w-16 h-16 bg-gradient-to-tr from-black to-gray-700 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
-                  <Lock className="w-8 h-8 text-white" />
+              <div className="flex flex-col items-center justify-center mb-3 mt-1">
+                <div className="w-12 h-12 bg-gradient-to-tr from-black to-gray-700 rounded-xl flex items-center justify-center shadow-md transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <Lock className="w-6 h-6 text-white" />
                 </div>
-                <div className="mt-4 font-extrabold tracking-widest text-sm text-gray-800 uppercase">Code Tiara</div>
+                <div className="mt-2 font-extrabold tracking-widest text-xs text-gray-800 uppercase">Code Tiara</div>
               </div>
 
               {/* Titles */}
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
+              <div className="text-center mb-4">
+                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-1 font-['Inter',sans-serif]">
                   {t('auth.forgot_pwd')}
                 </h1>
-                <p className="text-sm text-gray-500 font-medium font-sans">
+                <p className="text-xs text-gray-500 font-medium font-sans">
                   {t('auth.pwd_reset_subtitle')}
                 </p>
               </div>
 
               {error && (
-                <div className="mb-6 p-3 bg-red-50 text-red-500 text-xs font-semibold rounded-2xl flex items-center gap-2 justify-center">
+                <div className="mb-3 p-3 bg-red-50 text-red-500 text-xs font-semibold rounded-xl flex items-center gap-2 justify-center">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {/* Form */}
-              <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }} className="space-y-4">
+              <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }} className="space-y-3">
                 <div className="relative flex items-center">
                   <input
                     type="email"
@@ -315,25 +344,25 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     onInput={(e) => e.target.setCustomValidity('')}
                     placeholder={t('auth.email_placeholder')}
                     disabled={loading}
-                    className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
+                    className="w-full bg-[#F2F2F2] border-none rounded-[14px] px-4 py-2.5 text-xs text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                   />
-                  <Mail className="absolute right-5 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute right-4 w-4 h-4 text-gray-400" />
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-sm hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
+                    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
                     {t('auth.send_reset_link')}
                   </button>
                 </div>
               </form>
 
               {/* Footer */}
-              <div className="mt-8 text-center text-xs font-medium text-gray-500">
+              <div className="mt-4 text-center text-xs font-medium text-gray-500">
                 <span>
                   <button 
                     onClick={() => { setIsForgotPassword(false); setError(''); }} 
@@ -349,32 +378,32 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
           content = (
             <>
               {/* Header Icon */}
-              <div className="flex flex-col items-center justify-center mb-6 mt-4">
-                <div className="w-16 h-16 bg-gradient-to-tr from-black to-gray-700 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
-                  <Crown className="w-8 h-8 text-white" />
+              <div className="flex flex-col items-center justify-center mb-3 mt-1">
+                <div className="w-12 h-12 bg-gradient-to-tr from-black to-gray-700 rounded-xl flex items-center justify-center shadow-md transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <Crown className="w-6 h-6 text-white" />
                 </div>
-                <div className="mt-4 font-extrabold tracking-widest text-sm text-gray-800 uppercase">Code Tiara</div>
+                <div className="mt-2 font-extrabold tracking-widest text-xs text-gray-800 uppercase">Code Tiara</div>
               </div>
 
               {/* Titles */}
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
+              <div className="text-center mb-4">
+                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-1 font-['Inter',sans-serif]">
                   {isSignUp ? t('auth.signup') : t('auth.login')}
                 </h1>
-                <p className="text-sm text-gray-500 font-medium font-sans">
+                <p className="text-xs text-gray-500 font-medium font-sans">
                   {isSignUp ? t('auth.subtitle_signup') : t('auth.subtitle_login')}
                 </p>
               </div>
 
               {error && (
-                <div className="mb-6 p-3 bg-red-50 text-red-500 text-xs font-semibold rounded-2xl flex items-center gap-2 justify-center">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-semibold rounded-xl flex items-center gap-1.5 justify-center border border-red-100 shadow-sm">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {/* Form */}
-              <form onSubmit={handleEmailAuth} className="space-y-4">
+              <form onSubmit={handleEmailAuth} className="space-y-3">
                 <div className="relative flex items-center">
                   <input
                     type="email"
@@ -384,12 +413,12 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     onInput={(e) => e.target.setCustomValidity('')}
                     placeholder={t('auth.email_placeholder')}
                     disabled={loading}
-                    className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
+                    className="w-full bg-[#F2F2F2] border-none rounded-[14px] px-4 py-2.5 text-xs text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                   />
-                  <Mail className="absolute right-5 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute right-4 w-4 h-4 text-gray-400" />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="relative flex items-center">
                     <input
                       type="password"
@@ -397,17 +426,17 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t('auth.pwd_placeholder')}
                       disabled={loading}
-                      className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
+                      className="w-full bg-[#F2F2F2] border-none rounded-[14px] px-4 py-2.5 text-xs text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                     />
-                    <Lock className="absolute right-5 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute right-4 w-4 h-4 text-gray-400" />
                   </div>
                   {!isSignUp && (
-                    <div className="flex justify-end px-2">
+                    <div className="flex justify-end px-1">
                       <button 
                         type="button" 
                         onClick={() => { setIsForgotPassword(true); setError(''); }}
                         disabled={loading}
-                        className="text-xs text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
+                        className="text-[11px] text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
                       >
                         {t('auth.forgot_pwd')}
                       </button>
@@ -416,13 +445,13 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 </div>
 
                 {isSignUp && (
-                  <div className="mt-1 mb-2 px-3 text-left space-y-1">
-                    <div className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${isLengthValid ? 'text-emerald-600 font-bold' : 'text-gray-400 font-medium'}`}>
-                      <span className="flex-shrink-0 text-[10px]">{isLengthValid ? '●' : '○'}</span>
+                  <div className="mt-1 mb-1 px-2 text-left space-y-0.5">
+                    <div className={`flex items-center gap-1 text-[11px] transition-colors duration-200 ${isLengthValid ? 'text-emerald-600 font-bold' : 'text-gray-400 font-medium'}`}>
+                      <span className="flex-shrink-0 text-[9px]">{isLengthValid ? '●' : '○'}</span>
                       <span>{t('auth.pwd_req_length')}</span>
                     </div>
-                    <div className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${isComboValid ? 'text-emerald-600 font-bold' : 'text-gray-400 font-medium'}`}>
-                      <span className="flex-shrink-0 text-[10px]">{isComboValid ? '●' : '○'}</span>
+                    <div className={`flex items-center gap-1 text-[11px] transition-colors duration-200 ${isComboValid ? 'text-emerald-600 font-bold' : 'text-gray-400 font-medium'}`}>
+                      <span className="flex-shrink-0 text-[9px]">{isComboValid ? '●' : '○'}</span>
                       <span>{t('auth.pwd_req_combo')}</span>
                     </div>
                   </div>
@@ -436,15 +465,15 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder={t('auth.pwd_confirm_placeholder')}
                       disabled={loading}
-                      className="w-full bg-[#F2F2F2] border-none rounded-[20px] px-5 py-4 text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
+                      className="w-full bg-[#F2F2F2] border-none rounded-[14px] px-4 py-2.5 text-xs text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-black/5 transition-all placeholder-gray-400"
                     />
-                    <Lock className="absolute right-5 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute right-4 w-4 h-4 text-gray-400" />
                   </div>
                 )}
 
                 {!isSignUp && (
-                  <div className="flex items-center px-2">
-                    <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
+                  <div className="flex items-center px-1">
+                    <label className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium cursor-pointer select-none whitespace-nowrap">
                       <input 
                         type="checkbox" 
                         checked={keepLoggedIn}
@@ -456,31 +485,32 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-sm hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
+                    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
                     {isSignUp ? t('auth.signup') : t('auth.login')}
                   </button>
                 </div>
               </form>
 
-              <div className="mt-8 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between">
                 <div className="h-[1px] bg-gray-200 flex-1"></div>
-                <span className="px-4 text-xs text-gray-400 font-medium tracking-wider">{t('auth.or_easy_login')}</span>
+                <span className="px-3 text-[11px] text-gray-400 font-medium tracking-wider">{t('auth.or_easy_login')}</span>
                 <div className="h-[1px] bg-gray-200 flex-1"></div>
               </div>
 
-              <div className="mt-6 flex justify-center gap-5">
+              <div className="mt-3 flex justify-center gap-4">
                 <button
                   onClick={handleGoogleAuth}
                   disabled={loading}
-                  className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                  className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                  title="Google 로그인"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-1.14 2.78-2.4 3.63v3.02h3.88c2.28-2.1 3.57-5.19 3.57-8.5z"/>
                     <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.88-3.02c-1.08.72-2.47 1.16-4.08 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.13C3.26 20.17 7.37 24 12 24z"/>
                     <path fill="#FBBC05" d="M5.27 14.27c-.25-.72-.39-1.5-.39-2.27s.14-1.55.39-2.27V6.6H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.4l3.98-3.13z"/>
@@ -491,14 +521,14 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 <button
                   type="button"
                   onClick={handleGuestLogin}
-                  className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm text-gray-700"
+                  className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer shadow-sm text-gray-700"
                   title={t('auth.guest_mode')}
                 >
-                  <User className="w-5 h-5" />
+                  <User className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="mt-8 text-center text-xs font-medium text-gray-500">
+              <div className="mt-4 text-center text-xs font-medium text-gray-500">
                 {isSignUp ? (
                   <span>{t('auth.already_have_account')} <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.login')}</button></span>
                 ) : (
@@ -512,7 +542,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
         if (isModal) return content;
         
         return (
-          <div className="w-full max-w-sm bg-white rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] p-8 relative flex flex-col my-auto flex-shrink-0">
+          <div className="w-full max-w-xs bg-white rounded-[28px] shadow-[0_15px_40px_rgba(0,0,0,0.08)] p-5 relative flex flex-col my-auto flex-shrink-0">
             {content}
           </div>
         );

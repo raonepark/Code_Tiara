@@ -132,8 +132,8 @@ function startLocalServer() {
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 320,
-        height: 560,
+        width: 340,
+        height: 600,
         useContentSize: true, // This is important for precise sizing
         webPreferences: {
             nodeIntegration: true,
@@ -172,6 +172,7 @@ function createWindow() {
             overrideBrowserWindowOptions: {
                 icon: appIconPath,
                 autoHideMenuBar: true,
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 webPreferences: {
                     nodeIntegration: false,
                     contextIsolation: true
@@ -376,6 +377,10 @@ function createWindow() {
 
         popoutWindows[categoryId] = popoutWin;
 
+        if (isMac) {
+            popoutWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+        }
+
         popoutWin.on('closed', () => {
             delete popoutWindows[categoryId];
             delete popoutPinnedStates[categoryId];
@@ -485,6 +490,7 @@ function createTray() {
         const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
         if (fs.existsSync(macTrayPath)) {
             const nImage = electron.nativeImage.createFromPath(macTrayPath);
+            nImage.setTemplateImage(true);
             trayIcon = nImage.resize({ width: 18, height: 18 });
         } else {
             trayIcon = path.join(__dirname, '../assets/icons/16x16.png');

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
 import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate } from '../constants';
+import { cmdOrCtrlName } from '../utils/platform';
 
 const getFontScaleMultiplier = (fontFamily, themeId, size) => {
     let baseScale = 1.0;
@@ -298,7 +299,7 @@ const TaskItem = memo(({
                                     }`}
                             />
                             <div className={`text-[9px] mt-0.5 text-right opacity-60 ${currentTheme === 'developer' ? 'font-mono text-[#5C6370]' : 'text-slate-400'}`}>
-                                {t('app.save_hint')}
+                                {t('app.save_hint', { key: cmdOrCtrlName })}
                             </div>
                         </div>
 

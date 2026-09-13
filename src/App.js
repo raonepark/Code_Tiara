@@ -28,7 +28,8 @@ import {
   deleteDoc,
   collection,
   query,
-  sendEmailVerification
+  sendEmailVerification,
+  isConfigured
 } from './firebase/firebaseConfig';
 
 // ✨ Constants imported from constants.js
@@ -109,6 +110,17 @@ const CodeTiara = () => {
             emailVerified: localStorage.getItem('lumora_current_user_email_verified') === 'true'
           };
         }
+      }
+      if (localStorage.getItem('lumora_guest_mode') === 'true') {
+        return { uid: "guest_user", email: "guest@codetiara.com", emailVerified: true };
+      }
+      const savedUid = localStorage.getItem('lumora_current_user_uid');
+      if (savedUid) {
+        return {
+          uid: savedUid,
+          email: localStorage.getItem('lumora_current_user_email') || '',
+          emailVerified: localStorage.getItem('lumora_current_user_email_verified') === 'true'
+        };
       }
     } catch (e) {}
     return null;
@@ -519,21 +531,56 @@ const CodeTiara = () => {
 
   const handleLogOut = async () => {
     isGuestModeRef.current = false;
-    localStorage.removeItem('lumora_guest_mode');
-    await signOut(auth);
+    try {
+      localStorage.removeItem('lumora_guest_mode');
+      localStorage.removeItem('lumora_current_user_uid');
+      localStorage.removeItem('lumora_current_user_email');
+      localStorage.removeItem('lumora_current_user_email_verified');
+    } catch (e) {}
+    if (auth && isConfigured) {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+    }
     setUser(null);
+    setTasks([]);
+    setCategories([]);
+    setIsInitialLoadComplete(false);
   };
 
   // --- Firebase Authentication State Observer ---
   useEffect(() => {
-    if (!auth || popoutCategoryId) {
+    if (popoutCategoryId) {
       setAuthLoading(false);
       return;
     }
+
+    if (!auth || !isConfigured) {
+      if (localStorage.getItem('lumora_guest_mode') === 'true') {
+        isGuestModeRef.current = true;
+        setUser({ uid: "guest_user", email: "guest@codetiara.com", emailVerified: true });
+      } else {
+        const savedUid = localStorage.getItem('lumora_current_user_uid');
+        if (savedUid) {
+          isGuestModeRef.current = false;
+          setUser({
+            uid: savedUid,
+            email: localStorage.getItem('lumora_current_user_email') || '',
+            emailVerified: localStorage.getItem('lumora_current_user_email_verified') === 'true'
+          });
+        } else {
+          isGuestModeRef.current = false;
+          setUser(null);
+        }
+      }
+      setAuthLoading(false);
+      return;
+    }
+
     // Check if guest mode was active
     if (localStorage.getItem('lumora_guest_mode') === 'true') {
       isGuestModeRef.current = true;
-      setUser({ uid: "guest_user", email: "guest@codetiara.com" });
+      setUser({ uid: "guest_user", email: "guest@codetiara.com", emailVerified: true });
     }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -574,13 +621,22 @@ const CodeTiara = () => {
 
   const handleAuthSuccess = (mockUser) => {
     if (mockUser) {
-      // 게스트 모드 ref 설정
       if (mockUser.uid === 'guest_user') {
         isGuestModeRef.current = true;
-        localStorage.setItem('lumora_guest_mode', 'true');
+        try {
+          localStorage.setItem('lumora_guest_mode', 'true');
+          localStorage.removeItem('lumora_current_user_uid');
+          localStorage.removeItem('lumora_current_user_email');
+          localStorage.removeItem('lumora_current_user_email_verified');
+        } catch (e) {}
       } else {
         isGuestModeRef.current = false;
-        localStorage.removeItem('lumora_guest_mode');
+        try {
+          localStorage.removeItem('lumora_guest_mode');
+          localStorage.setItem('lumora_current_user_uid', mockUser.uid);
+          localStorage.setItem('lumora_current_user_email', mockUser.email || '');
+          localStorage.setItem('lumora_current_user_email_verified', mockUser.emailVerified ? 'true' : 'false');
+        } catch (e) {}
       }
       setUser(mockUser);
     }
@@ -593,48 +649,45 @@ const CodeTiara = () => {
 
     const loadUserData = async () => {
       setIsInitialLoadComplete(false);
+      const isLocalUser = !isConfigured || !db || user.uid === "guest_user" || String(user.uid).startsWith("local_") || String(user.uid).startsWith("google_local_");
+
       try {
-        console.log("Loading user data from Firestore for UID:", user.uid);
+        console.log("Loading user data for UID:", user.uid, "isLocalUser:", isLocalUser);
 
         let savedTheme = localStorage.getItem('lumora_theme') || 'developer';
-        let savedTitle = defaultTitle;
-        let savedFocus = 25;
-        let savedBreak = 5;
-        let savedFontSize = 14;
-        let savedFontFamily = 'default';
-        let savedFilterMode = 'all';
-        let savedFilterDate = getLocalDateString();
+        let savedTitle = localStorage.getItem('lumora_title') || defaultTitle;
+        let savedFocus = parseInt(localStorage.getItem('lumora_focus_duration')) || 25;
+        let savedBreak = parseInt(localStorage.getItem('lumora_break_duration')) || 5;
+        let savedFontSize = parseInt(localStorage.getItem('lumora_font_size')) || 14;
+        let savedFontFamily = localStorage.getItem('lumora_font_family') || 'default';
+        let savedFilterMode = localStorage.getItem('lumora_filter_mode') || 'all';
+        let savedFilterDate = localStorage.getItem('lumora_filter_date') || getLocalDateString();
         let savedPoppedOut = [];
         let savedPinned = [];
 
-        if (user.uid !== "guest_user") {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            savedTheme = data.currentTheme || savedTheme;
-            savedTitle = data.projectTitle || savedTitle;
-            savedFocus = data.focusDuration || savedFocus;
-            savedBreak = data.breakDuration || savedBreak;
-            savedFontSize = data.fontSize || savedFontSize;
-            savedFontFamily = data.fontFamily || savedFontFamily;
-            savedFilterMode = data.filterMode || savedFilterMode;
-            savedFilterDate = data.filterDate || savedFilterDate;
-            savedPoppedOut = data.poppedOutCategories || savedPoppedOut;
-            savedPinned = data.pinnedCategories || savedPinned;
+        try { savedPoppedOut = JSON.parse(localStorage.getItem('lumora_popped_out')) || []; } catch(e) {}
+        try { savedPinned = JSON.parse(localStorage.getItem('lumora_pinned_categories')) || []; } catch(e) {}
+
+        if (!isLocalUser) {
+          try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              savedTheme = data.currentTheme || savedTheme;
+              savedTitle = data.projectTitle || savedTitle;
+              savedFocus = data.focusDuration || savedFocus;
+              savedBreak = data.breakDuration || savedBreak;
+              savedFontSize = data.fontSize || savedFontSize;
+              savedFontFamily = data.fontFamily || savedFontFamily;
+              savedFilterMode = data.filterMode || savedFilterMode;
+              savedFilterDate = data.filterDate || savedFilterDate;
+              savedPoppedOut = data.poppedOutCategories || savedPoppedOut;
+              savedPinned = data.pinnedCategories || savedPinned;
+            }
+          } catch (fsErr) {
+            console.warn("Firestore config load warning:", fsErr);
           }
-        } else {
-          // If Guest user, use localStorage or defaults
-          savedTheme = localStorage.getItem('lumora_theme') || 'developer';
-          savedTitle = localStorage.getItem('lumora_title') || defaultTitle;
-          savedFocus = parseInt(localStorage.getItem('lumora_focus_duration')) || 25;
-          savedBreak = parseInt(localStorage.getItem('lumora_break_duration')) || 5;
-          savedFontSize = parseInt(localStorage.getItem('lumora_font_size')) || 14;
-          savedFontFamily = localStorage.getItem('lumora_font_family') || 'default';
-          savedFilterMode = localStorage.getItem('lumora_filter_mode') || 'all';
-          savedFilterDate = localStorage.getItem('lumora_filter_date') || getLocalDateString();
-          try { savedPoppedOut = JSON.parse(localStorage.getItem('lumora_popped_out')) || []; } catch(e) {}
-          try { savedPinned = JSON.parse(localStorage.getItem('lumora_pinned_categories')) || []; } catch(e) {}
         }
 
         // Apply settings states
@@ -653,14 +706,21 @@ const CodeTiara = () => {
         // 2. Load Categories
         let loadedCategories = [];
         let categoriesFromFirestore = [];
-        if (user.uid !== "guest_user") {
-          const catQuery = query(collection(db, 'users', user.uid, 'categories'));
-          const catSnapshot = await getDocs(catQuery);
-          catSnapshot.forEach((doc) => {
-            categoriesFromFirestore.push({ ...doc.data(), id: doc.id });
-          });
-          loadedCategories = [...categoriesFromFirestore];
-        } else {
+
+        if (!isLocalUser) {
+          try {
+            const catQuery = query(collection(db, 'users', user.uid, 'categories'));
+            const catSnapshot = await getDocs(catQuery);
+            catSnapshot.forEach((doc) => {
+              categoriesFromFirestore.push({ ...doc.data(), id: doc.id });
+            });
+            loadedCategories = [...categoriesFromFirestore];
+          } catch (fsErr) {
+            console.warn("Firestore categories load warning:", fsErr);
+          }
+        }
+
+        if (loadedCategories.length === 0) {
           try {
             const saved = localStorage.getItem('lumora_categories');
             loadedCategories = saved ? JSON.parse(saved) : defaultCategories;
@@ -670,92 +730,38 @@ const CodeTiara = () => {
         // 3. Load Tasks
         let loadedTasks = [];
         let tasksFromFirestore = [];
-        if (user.uid !== "guest_user") {
-          const taskQuery = query(collection(db, 'users', user.uid, 'tasks'));
-          const taskSnapshot = await getDocs(taskQuery);
-          taskSnapshot.forEach((doc) => {
-            tasksFromFirestore.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
-          });
-          loadedTasks = [...tasksFromFirestore];
-        } else {
+
+        if (!isLocalUser) {
+          try {
+            const taskQuery = query(collection(db, 'users', user.uid, 'tasks'));
+            const taskSnapshot = await getDocs(taskQuery);
+            taskSnapshot.forEach((doc) => {
+              tasksFromFirestore.push({ ...doc.data(), id: isNaN(doc.id) ? doc.id : Number(doc.id) });
+            });
+            loadedTasks = [...tasksFromFirestore];
+          } catch (fsErr) {
+            console.warn("Firestore tasks load warning:", fsErr);
+          }
+        }
+
+        if (loadedTasks.length === 0) {
           try {
             const saved = localStorage.getItem('lumora_tasks');
             loadedTasks = saved ? JSON.parse(saved) : defaultTasks;
           } catch(e) { loadedTasks = defaultTasks; }
         }
 
-        // Check if we should prompt for importing guest data
-        if (user.uid !== "guest_user") {
-          const isFirestoreEmpty = categoriesFromFirestore.length === 0 && tasksFromFirestore.length === 0;
-          const localCatsStr = localStorage.getItem('lumora_categories');
-          const localTasksStr = localStorage.getItem('lumora_tasks');
-          
-          if (isFirestoreEmpty && (localCatsStr || localTasksStr)) {
-            const hasPromptedKey = `lumora_guest_prompted_${user.uid}`;
-            if (!localStorage.getItem(hasPromptedKey)) {
-              localStorage.setItem(hasPromptedKey, 'true');
-              
-              let localCats = [];
-              let localTasks = [];
-              try { localCats = localCatsStr ? JSON.parse(localCatsStr) : []; } catch(e) {}
-              try { localTasks = localTasksStr ? JSON.parse(localTasksStr) : []; } catch(e) {}
-              
-              const hasGuestData = localCats.length > 0 || localTasks.length > 0;
-              
-              if (hasGuestData) {
-                const importConfirm = await customConfirm(
-                  t('auth.import_guest_data_title') || '게스트 데이터 가져오기',
-                  t('auth.import_guest_data_desc') || '게스트 모드에서 작성한 할 일과 카테고리가 감지되었습니다. 이 데이터를 새로 로그인한 계정으로 가져오시겠습니까?',
-                  true,
-                  'mail'
-                );
-                
-                if (importConfirm) {
-                  // Copy and upload categories to Firestore
-                  for (const cat of localCats) {
-                    await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), { ...cat, userId: user.uid });
-                  }
-                  // Copy and upload tasks to Firestore
-                  for (const task of localTasks) {
-                    await setDoc(doc(db, 'users', user.uid, 'tasks', String(task.id)), { ...task, userId: user.uid });
-                  }
-                  
-                  loadedCategories = localCats;
-                  loadedTasks = localTasks;
-                  
-                  await customAlert(
-                    t('auth.import_guest_data_title') || '게스트 데이터 가져오기',
-                    t('auth.import_success') || '데이터 가져오기 성공!',
-                    true,
-                    'success'
-                  );
-                }
-              }
-            }
-          }
-        }
-
         if (loadedCategories.length === 0) {
           loadedCategories = defaultCategories;
-          if (user.uid !== "guest_user") {
-            for (const cat of loadedCategories) {
-              await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), { ...cat, userId: user.uid });
-            }
-          }
         }
         setCategories(loadedCategories);
 
         if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
           loadedTasks = defaultTasks;
-          if (user.uid !== "guest_user") {
-            for (const task of loadedTasks) {
-              await setDoc(doc(db, 'users', user.uid, 'tasks', String(task.id)), { ...task, userId: user.uid });
-            }
-          }
         }
         setTasks(loadedTasks);
 
-        console.log("Initial load complete from Firestore");
+        console.log("Initial load complete for UID:", user.uid);
       } catch (err) {
         console.error("Failed to load user data:", err);
         try {
@@ -766,11 +772,6 @@ const CodeTiara = () => {
         } catch (e) {
           setCategories(defaultCategories);
           setTasks(defaultTasks);
-        }
-        if (user && user.uid !== "guest_user") {
-          setTimeout(async () => {
-            await customAlert("백엔드 로딩 실패", "백엔드(Firebase Firestore) 데이터 로딩에 실패했습니다. 오프라인(로컬) 데이터로 임시 구동합니다.\n\n[해결 방법]:\n1. Firebase 웹 콘솔에서 'Firestore Database'를 생성했는지 확인하세요.\n2. Firestore의 '규칙(Rules)' 탭에서 읽기/쓰기가 허용되어 있는지 확인하세요.");
-          }, 500);
         }
       } finally {
         setIsInitialLoadComplete(true);
