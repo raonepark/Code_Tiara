@@ -491,9 +491,10 @@ function createTray() {
         const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
         const targetPath = fs.existsSync(macTrayPath2x) ? macTrayPath2x : macTrayPath;
         if (fs.existsSync(targetPath)) {
-            const nImage = electron.nativeImage.createFromPath(targetPath);
+            let nImage = electron.nativeImage.createFromPath(targetPath);
+            nImage = nImage.resize({ width: 18, height: 18 });
             nImage.setTemplateImage(true);
-            trayIcon = nImage.resize({ width: 18, height: 18 });
+            trayIcon = nImage;
         } else {
             trayIcon = path.join(__dirname, '../assets/icons/16x16.png');
         }
