@@ -487,9 +487,11 @@ function createWindow() {
 function createTray() {
     let trayIcon;
     if (isMac) {
+        const macTrayPath2x = path.join(__dirname, '../assets/tray_icon@2x.png');
         const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
-        if (fs.existsSync(macTrayPath)) {
-            const nImage = electron.nativeImage.createFromPath(macTrayPath);
+        const targetPath = fs.existsSync(macTrayPath2x) ? macTrayPath2x : macTrayPath;
+        if (fs.existsSync(targetPath)) {
+            const nImage = electron.nativeImage.createFromPath(targetPath);
             nImage.setTemplateImage(true);
             trayIcon = nImage.resize({ width: 18, height: 18 });
         } else {
