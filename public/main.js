@@ -487,34 +487,27 @@ function createWindow() {
 function createTray() {
     let trayIcon;
     if (isMac) {
-        const macTrayPath2x = path.join(__dirname, '../assets/tray_icon@2x.png');
-        const macTrayPath = path.join(__dirname, '../assets/tray_icon.png');
-        const targetPath = fs.existsSync(macTrayPath2x) ? macTrayPath2x : macTrayPath;
+        const candidatePaths = [
+            path.join(__dirname, '../assets/tray_icon@2x.png'),
+            path.join(__dirname, '../assets/tray_icon.png'),
+            path.join(app.getAppPath(), 'assets/tray_icon@2x.png'),
+            path.join(app.getAppPath(), 'assets/tray_icon.png')
+        ];
         
-        try {
-            if (fs.existsSync(targetPath)) {
-                const buffer = fs.readFileSync(targetPath);
-                let nImage = electron.nativeImage.createFromBuffer(buffer);
-                if (!nImage.isEmpty()) {
-                    nImage = nImage.resize({ width: 18, height: 18 });
-                    nImage.setTemplateImage(true);
-                    trayIcon = nImage;
-                }
-            }
-        } catch (err) {
-            console.error('Failed to load tray icon buffer:', err);
-        }
-
-        if (!trayIcon) {
+        for (const targetPath of candidatePaths) {
             try {
-                const fallbackPath = path.join(__dirname, '../assets/icons/16x16.png');
-                if (fs.existsSync(fallbackPath)) {
-                    let nImage = electron.nativeImage.createFromBuffer(fs.readFileSync(fallbackPath));
-                    nImage.setTemplateImage(true);
-                    trayIcon = nImage;
+                if (fs.existsSync(targetPath)) {
+                    const buffer = fs.readFileSync(targetPath);
+                    let nImage = electron.nativeImage.createFromBuffer(buffer);
+                    if (!nImage.isEmpty()) {
+                        nImage = nImage.resize({ width: 18, height: 18 });
+                        nImage.setTemplateImage(true);
+                        trayIcon = nImage;
+                        break;
+                    }
                 }
             } catch (err) {
-                console.error('Failed fallback tray icon:', err);
+                console.error('Failed to load tray icon at:', targetPath, err);
             }
         }
     } else {
@@ -528,6 +521,11 @@ function createTray() {
     }
 
     tray = new Tray(trayIcon);
+    try {
+        console.log('Tray created successfully! Bounds:', tray.getBounds());
+    } catch (e) {
+        console.log('Tray getBounds error:', e);
+    }
 
     if (isMac) {
         tray.setIgnoreDoubleClickEvents(true);
