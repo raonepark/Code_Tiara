@@ -16,6 +16,7 @@
 | `src/locales/ko.json` `en.json` | 모든 문자열. 두 파일 동시 수정 |
 | `assets/` | 아이콘. macOS는 `icon_mac.png`(여백 패딩) → `icons/icon.icns` |
 | `public/fonts/` | 번들 웹폰트(Pretendard, Gamja Flower, Gaegu) + `fonts.css` + 라이선스. 규칙은 design-system §4 |
+| `scripts/make-tray-icon.js` | macOS 메뉴 바 아이콘 생성 (`npx electron scripts/make-tray-icon.js`) |
 | `firestore.rules` | `users/{uid}` 본인만 읽기/쓰기 |
 | `docs/design-system.md` | 디자인 시스템 · 결정 로그 |
 
