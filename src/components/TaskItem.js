@@ -407,13 +407,13 @@ const TaskItem = memo(({
                                     onClick={cancelEditing}
                                     className={`transition-all flex items-center justify-center flex-1 sm:flex-none ${theme.task.editCancelBtn}`}
                                 >
-                                    {currentTheme === 'excel' ? 'Cancel' : (currentTheme === 'developer' ? '[ESC]' : (isMiniMode ? '취소' : <X className="w-4 h-4" />))}
+                                    {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[ESC]' : (isMiniMode ? '취소' : <X className="w-4 h-4" />))}
                                 </button>
                                 <button
                                     onClick={() => saveEditing(task.id)}
                                     className={`transition-all flex items-center justify-center flex-1 sm:flex-none ${theme.task.editSaveBtn}`}
                                 >
-                                    {currentTheme === 'excel' ? 'Save' : (currentTheme === 'developer' ? '[ENTER]' : (isMiniMode ? '저장' : <Check className="w-4 h-4 stroke-[2.5px]" />))}
+                                    {currentTheme === 'excel' ? t('app.save') : (currentTheme === 'developer' ? '[ENTER]' : (isMiniMode ? '저장' : <Check className="w-4 h-4 stroke-[2.5px]" />))}
                                 </button>
                             </div>
                         </div>

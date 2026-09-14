@@ -41,10 +41,13 @@ app.on('before-quit', () => {
     isQuitting = true;
 });
 
-// App icon for window headers/taskbar
+// App icon for window headers/taskbar.
+// macOS uses icon_mac.png: same artwork, but padded to Apple's template
+// (artwork = 824/1024 of the canvas). Without the ~10% transparent margin the
+// Dock icon renders noticeably larger than every other app's.
 const appIconPath = isWin
     ? path.join(__dirname, '../assets/icons/icon.ico')
-    : path.join(__dirname, '../assets/icon.png');
+    : path.join(__dirname, '../assets/icon_mac.png');
 
 // ✨ Production loader
 // Firebase Auth (signInWithPopup) refuses to run on file:// or custom-scheme
@@ -529,7 +532,7 @@ if (!gotTheLock) {
     app.whenReady().then(async () => {
         // Set macOS Dock Icon if available
         if (isMac && app.dock) {
-            const dockIconPath = path.join(__dirname, '../assets/icon.png');
+            const dockIconPath = path.join(__dirname, '../assets/icon_mac.png');
             if (fs.existsSync(dockIconPath)) {
                 app.dock.setIcon(dockIconPath);
             }

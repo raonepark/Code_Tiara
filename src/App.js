@@ -3976,7 +3976,7 @@ const CodeTiara = () => {
                         </Droppable>
 
                         {/* ✨ Quick Add Form (Collapsible) */}
-                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} className={`${miniModeAdderId === category.id ? `max-h-80 opacity-100 overflow-visible mb-4 ${(currentTheme === 'princess' || popoutCategoryId) ? 'mt-1 px-2' : 'mt-2 px-2'}` : `max-h-0 opacity-0 mt-0 px-2 overflow-hidden`} transition-all duration-300 ease-in-out ${popoutCategoryId ? 'shrink-0' : ''}`}>
+                        <div ref={miniModeAdderId === category.id ? miniModeFormRef : null} inert={miniModeAdderId !== category.id} className={`${miniModeAdderId === category.id ? `max-h-80 opacity-100 overflow-visible mb-4 ${(currentTheme === 'princess' || popoutCategoryId) ? 'mt-1 px-2' : 'mt-2 px-2'}` : `max-h-0 opacity-0 mt-0 px-2 overflow-hidden`} transition-all duration-300 ease-in-out ${popoutCategoryId ? 'shrink-0' : ''}`}>
                             <form
                               onSubmit={(e) => addTask(e, category.id)}
                               style={currentTheme === 'princess' ? {
@@ -3999,7 +3999,7 @@ const CodeTiara = () => {
                                 type="text"
                                 value={newTaskText}
                                 onChange={(e) => setNewTaskText(e.target.value)}
-                                placeholder={t('app.edit_placeholder')}
+                                placeholder={t('app.add_placeholder')}
                                 className={`w-full block outline-none transition-all
                                       ${currentTheme === 'princess'
                                     ? `bg-white border border-[var(--c-light)] text-slate-700 placeholder-[var(--c-dark)] focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-bold ${isMiniMode ? 'text-[12px] p-1.5 px-2.5 rounded-[12px]' : 'text-[13px] p-2 px-3.5 rounded-[16px]'}`
@@ -4030,7 +4030,7 @@ const CodeTiara = () => {
                             <div className={`flex justify-between
                                 ${currentTheme === 'princess' ? `flex-col w-full ${isMiniMode ? 'gap-2' : 'gap-3'}` : `flex-col sm:flex-row sm:items-center gap-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2' : 'mt-4'}`}`}>
 
-                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? `bg-white border border-[var(--c-light)] shadow-sm justify-between ${isMiniMode ? 'p-1.5 rounded-[12px] pl-2 pr-1' : 'p-2 rounded-[16px] pl-3 pr-1.5'}` : 'flex-wrap justify-center sm:justify-start sm:w-auto'}`}>
+                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? `flex-wrap gap-y-1.5 bg-white border border-[var(--c-light)] shadow-sm justify-between ${isMiniMode ? 'p-1.5 rounded-[12px] pl-2 pr-1' : 'p-2 rounded-[16px] pl-3 pr-1.5'}` : 'flex-wrap justify-center sm:justify-start sm:w-auto'}`}>
                                 <CustomDatePicker
                                   value={taskDate}
                                   onChange={(e) => setTaskDate(e.target.value)}
@@ -4119,7 +4119,7 @@ const CodeTiara = () => {
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full sm:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
                                   title={t('app.cancel')}
                                 >
-                                  {currentTheme === 'excel' ? 'Cancel' : (currentTheme === 'developer' ? '[ESC]' : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
+                                  {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[ESC]' : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
                                 </button>
                                 {/* Submit */}
                                 <button
@@ -4130,7 +4130,7 @@ const CodeTiara = () => {
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full sm:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
                                   title={t('app.tooltip_add')}
                                 >
-                                  {currentTheme === 'excel' ? 'Add' : (currentTheme === 'developer' ? '[ENTER]' : <Check className="w-4 h-4 stroke-[2.5px]" />)}
+                                  {currentTheme === 'excel' ? t('app.add') : (currentTheme === 'developer' ? '[ENTER]' : <Check className="w-4 h-4 stroke-[2.5px]" />)}
                                 </button>
                               </div>
                             </div>
