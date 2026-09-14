@@ -167,7 +167,7 @@ const TaskItem = memo(({
         };
 
         return (
-            <div className="flex flex-wrap justify-center sm:justify-start gap-0.5">
+            <div className="flex flex-wrap justify-center [@container(min-width:560px)]:justify-start gap-0.5">
                 {daysArr.map((dayLabel, idx) => {
                     const isActive = activeDays.includes(idx);
                     let btnClass = '';
@@ -303,10 +303,10 @@ const TaskItem = memo(({
                             </div>
                         </div>
 
-                        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${theme.task.editActionRow}`}>
+                        <div className={`flex flex-col [@container(min-width:560px)]:flex-row [@container(min-width:560px)]:items-center justify-between gap-2 ${theme.task.editActionRow}`}>
 
-                            <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 w-full sm:w-auto ${theme.task.editDateWrapper}`}>
-                                <div className="w-full sm:w-auto flex justify-center sm:justify-start">
+                            <div className={`flex flex-wrap items-center justify-center [@container(min-width:560px)]:justify-start gap-1 [@container(min-width:560px)]:gap-2 w-full [@container(min-width:560px)]:w-auto ${theme.task.editDateWrapper}`}>
+                                <div className="w-full [@container(min-width:560px)]:w-auto flex justify-center [@container(min-width:560px)]:justify-start">
                                     <CustomDatePicker
                                         value={editingDate}
                                         onChange={(e) => setEditingDate(e.target.value)}
@@ -316,7 +316,7 @@ const TaskItem = memo(({
                                     />
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto">
+                                <div className="flex flex-wrap items-center justify-center [@container(min-width:560px)]:justify-start gap-1.5 w-full [@container(min-width:560px)]:w-auto">
                                   <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
                                     <Repeat className="w-3 h-3" />
                                   </div>
@@ -355,15 +355,15 @@ const TaskItem = memo(({
                                   )}
                                 </div>
 
-                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden [@container(min-width:560px)]:inline">|</span>}
 
-                                <div className="flex items-center justify-center sm:justify-start gap-0.5 w-full sm:w-auto">
+                                <div className="flex items-center justify-center [@container(min-width:560px)]:justify-start gap-0.5 w-full [@container(min-width:560px)]:w-auto">
                                     <input
                                         type="text"
                                         value={editingHour}
                                         onChange={(e) => setEditingHour(e.target.value.replace(/[^0-9]/g, ''))}
                                         placeholder="12" maxLength={2}
-                                        className={`w-4 sm:w-5 text-center bg-transparent focus:outline-none ${theme.task.editTimeInput}`}
+                                        className={`w-4 [@container(min-width:560px)]:w-5 text-center bg-transparent focus:outline-none ${theme.task.editTimeInput}`}
                                     />
                                     <span className={`${theme.task.editTimeSeparator}`}>:</span>
                                     <input
@@ -371,17 +371,17 @@ const TaskItem = memo(({
                                         value={editingMinute}
                                         onChange={(e) => setEditingMinute(e.target.value.replace(/[^0-9]/g, ''))}
                                         placeholder="00" maxLength={2}
-                                        className={`w-4 sm:w-5 text-center bg-transparent focus:outline-none ${theme.task.editTimeInput}`}
+                                        className={`w-4 [@container(min-width:560px)]:w-5 text-center bg-transparent focus:outline-none ${theme.task.editTimeInput}`}
                                     />
                                     <button
                                         onClick={() => setEditingAmpm(p => p === '오전' ? '오후' : '오전')}
-                                        className={`ml-1 flex items-center justify-center transition-all bg-transparent ${theme.task.editAmpmBtn}`}
+                                        className={`ml-1 flex items-center justify-center transition-all ${theme.task.editAmpmBtn}`}
                                     >
                                         {editingAmpm === '오전' ? t('app.am') : t('app.pm')}
                                     </button>
                                 </div>
-                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
-                                <div className="flex items-center gap-1.5 justify-center sm:justify-start w-full sm:w-auto mt-1 sm:mt-0">
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden [@container(min-width:560px)]:inline">|</span>}
+                                <div className="flex items-center gap-1.5 justify-center [@container(min-width:560px)]:justify-start w-full [@container(min-width:560px)]:w-auto mt-1 [@container(min-width:560px)]:mt-0">
                                   <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
                                     <Bell className="w-3 h-3 text-amber-500 fill-amber-500/20" />
                                   </div>
@@ -402,16 +402,16 @@ const TaskItem = memo(({
                             </div>
 
                             {/* Right: Actions */}
-                            <div className="flex items-center gap-2 w-full sm:w-auto mt-1 sm:mt-0">
+                            <div className="flex items-center gap-2 w-full [@container(min-width:560px)]:w-auto mt-1 [@container(min-width:560px)]:mt-0">
                                 <button
                                     onClick={cancelEditing}
-                                    className={`transition-all flex items-center justify-center flex-1 sm:flex-none ${theme.task.editCancelBtn}`}
+                                    className={`transition-all flex items-center justify-center flex-1 [@container(min-width:560px)]:flex-none ${theme.task.editCancelBtn}`}
                                 >
                                     {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? t('app.cancel') : (isMiniMode ? '취소' : <X className="w-4 h-4" />))}
                                 </button>
                                 <button
                                     onClick={() => saveEditing(task.id)}
-                                    className={`transition-all flex items-center justify-center flex-1 sm:flex-none ${theme.task.editSaveBtn}`}
+                                    className={`transition-all flex items-center justify-center flex-1 [@container(min-width:560px)]:flex-none ${theme.task.editSaveBtn}`}
                                 >
                                     {currentTheme === 'excel' ? t('app.save') : (currentTheme === 'developer' ? t('app.save') : (isMiniMode ? '저장' : <Check className="w-4 h-4 stroke-[2.5px]" />))}
                                 </button>

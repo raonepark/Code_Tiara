@@ -3739,7 +3739,7 @@ const CodeTiara = () => {
                     };
 
                     return (
-                      <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`${popoutCategoryId ? '' : theme.category.container} 
+                      <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`[container-type:inline-size] ${popoutCategoryId ? '' : theme.category.container} 
                         ${currentTheme === 'princess'
                           ? (isMiniMode 
                               ? (popoutCategoryId 
@@ -4037,9 +4037,9 @@ const CodeTiara = () => {
 
                             {/* Controls Area - Mobile First Vertical Stack */}
                             <div className={`flex justify-between
-                                ${currentTheme === 'princess' ? `flex-col w-full ${isMiniMode ? 'gap-2' : 'gap-3'}` : `flex-col sm:flex-row sm:items-center gap-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2' : 'mt-4'}`}`}>
+                                ${currentTheme === 'princess' ? `flex-col w-full ${isMiniMode ? 'gap-2' : 'gap-3'}` : `flex-col [@container(min-width:560px)]:flex-row [@container(min-width:560px)]:items-center gap-2 ${currentTheme === 'excel' ? 'bg-[#F3F2F1] border-t border-[#D1D1D1] p-2' : 'mt-4'}`}`}>
 
-                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? `flex-wrap gap-y-1.5 bg-white border border-[var(--c-light)] shadow-sm justify-between ${isMiniMode ? 'p-1.5 rounded-[12px] pl-2 pr-1' : 'p-2 rounded-[16px] pl-3 pr-1.5'}` : 'flex-wrap justify-center sm:justify-start sm:w-auto'}`}>
+                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? `flex-wrap gap-y-1.5 bg-white border border-[var(--c-light)] shadow-sm justify-between ${isMiniMode ? 'p-1.5 rounded-[12px] pl-2 pr-1' : 'p-2 rounded-[16px] pl-3 pr-1.5'}` : 'flex-wrap justify-center [@container(min-width:560px)]:justify-start [@container(min-width:560px)]:w-auto'}`}>
                                 <CustomDatePicker
                                   value={taskDate}
                                   onChange={(e) => setTaskDate(e.target.value)}
@@ -4088,14 +4088,14 @@ const CodeTiara = () => {
                                     </div>
                                   )}
                                 </div>
-                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden [@container(min-width:560px)]:inline">|</span>}
                                 <div className="flex items-center gap-1">
-                                  <input type="text" value={taskHour} onChange={(e) => setTaskHour(e.target.value.replace(/[^0-9]/g, ''))} placeholder="12" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
+                                  <input type="text" value={taskHour} onChange={(e) => setTaskHour(e.target.value.replace(/[^0-9]/g, ''))} placeholder="12" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 [@container(min-width:560px)]:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 [@container(min-width:560px)]:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 [@container(min-width:560px)]:w-5 text-[#D19A66] text-xs')}`} />
                                   <span className={`${currentTheme === 'princess' ? 'text-[var(--c-dark)] font-bold text-xs mx-0.5' : 'text-slate-400'}`}>:</span>
-                                  <input type="text" value={taskMinute} onChange={(e) => setTaskMinute(e.target.value.replace(/[^0-9]/g, ''))} placeholder="00" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 sm:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 sm:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 sm:w-5 text-[#D19A66] text-xs')}`} />
+                                  <input type="text" value={taskMinute} onChange={(e) => setTaskMinute(e.target.value.replace(/[^0-9]/g, ''))} placeholder="00" maxLength={2} className={`text-center outline-none bg-transparent ${currentTheme === 'princess' ? `bg-[var(--c-bg)] border border-[var(--c-light)] text-[var(--c-dark)] font-bold focus:border-[var(--c-dark)] focus:bg-white transition-colors ${isMiniMode ? 'w-6 h-5 rounded-[6px] text-[10px]' : 'w-8 [@container(min-width:560px)]:w-7 h-6 rounded-[8px] text-xs'}` : (currentTheme === 'excel' ? 'w-8 [@container(min-width:560px)]:w-5 bg-white border border-[#D1D1D1] h-6 text-xs' : 'w-8 [@container(min-width:560px)]:w-5 text-[#D19A66] text-xs')}`} />
                                   <button type="button" onClick={() => setTaskAmpm(p => p === '오전' ? '오후' : '오전')} className={`ml-1 flex items-center justify-center transition-all ${currentTheme === 'princess' ? `bg-[var(--c-dark)] text-white font-bold shadow-sm opacity-90 hover:opacity-100 ${isMiniMode ? 'px-1.5 py-0.5 rounded-[6px] text-[8px]' : 'px-2 py-1 rounded-[8px] text-[9px]'}` : (currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] h-6 px-1 text-[10px]' : 'text-[#569CD6] text-xs')}`}>{taskAmpm === '오전' ? 'AM' : 'PM'}</button>
                                 </div>
-                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden sm:inline">|</span>}
+                                {currentTheme === 'princess' && <span className="text-pink-200 text-[10px] hidden [@container(min-width:560px)]:inline">|</span>}
                                 <div className="flex items-center gap-1.5">
                                   <div className={`flex items-center justify-center p-1 rounded-sm ${currentTheme === 'princess' ? 'bg-[var(--c-bg)] text-[var(--c-dark)]' : (currentTheme === 'excel' ? 'bg-[#107C41] text-white' : 'bg-[#007ACC] text-white')}`}>
                                     <Bell className="w-3 h-3 text-amber-500 fill-amber-500/20" />
@@ -4117,15 +4117,15 @@ const CodeTiara = () => {
                               </div>
 
                               {/* Right: Actions */}
-                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? '' : 'sm:w-auto mt-1 sm:mt-0'}`}>
+                              <div className={`flex items-center gap-2 w-full ${currentTheme === 'princess' ? '' : '[@container(min-width:560px)]:w-auto mt-1 [@container(min-width:560px)]:mt-0'}`}>
                                 {/* Cancel */}
                                 <button
                                   type="button"
                                   onClick={() => setMiniModeAdderId(null)}
-                                  className={`flex items-center justify-center transition-all cursor-pointer flex-1 sm:flex-none
+                                  className={`flex items-center justify-center transition-all cursor-pointer flex-1 [@container(min-width:560px)]:flex-none
                                       ${currentTheme === 'princess'
-                                      ? `bg-white text-[var(--c-dark)] border border-[var(--c-light)] shadow-sm hover:bg-[var(--c-bg)] hover:text-[var(--c-dark)] ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
-                                      : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full sm:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
+                                      ? `bg-white text-[var(--c-dark)] border border-[var(--c-light)] shadow-sm hover:bg-[var(--c-bg)] hover:text-[var(--c-dark)] ${isMiniMode ? 'h-7 [@container(min-width:560px)]:w-7 [@container(min-width:560px)]:h-7 rounded-[10px]' : 'h-9 [@container(min-width:560px)]:w-9 [@container(min-width:560px)]:h-9 rounded-[14px]'}`
+                                      : (currentTheme === 'excel' ? 'w-full [@container(min-width:560px)]:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full [@container(min-width:560px)]:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
                                   title={t('app.cancel')}
                                 >
                                   {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? t('app.cancel') : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
@@ -4133,10 +4133,10 @@ const CodeTiara = () => {
                                 {/* Submit */}
                                 <button
                                   type="submit"
-                                  className={`flex items-center justify-center transition-all active:scale-95 cursor-pointer flex-1 sm:flex-none
+                                  className={`flex items-center justify-center transition-all active:scale-95 cursor-pointer flex-1 [@container(min-width:560px)]:flex-none
                                       ${currentTheme === 'princess'
-                                      ? `bg-[var(--c-dark)] text-white shadow-[0_4px_10px_var(--c-bg)] hover:shadow-[0_6px_15px_var(--c-bg)] hover:-translate-y-0.5 opacity-90 hover:opacity-100 ${isMiniMode ? 'h-7 sm:w-7 sm:h-7 rounded-[10px]' : 'h-9 sm:w-9 sm:h-9 rounded-[14px]'}`
-                                      : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full sm:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
+                                      ? `bg-[var(--c-dark)] text-white shadow-[0_4px_10px_var(--c-bg)] hover:shadow-[0_6px_15px_var(--c-bg)] hover:-translate-y-0.5 opacity-90 hover:opacity-100 ${isMiniMode ? 'h-7 [@container(min-width:560px)]:w-7 [@container(min-width:560px)]:h-7 rounded-[10px]' : 'h-9 [@container(min-width:560px)]:w-9 [@container(min-width:560px)]:h-9 rounded-[14px]'}`
+                                      : (currentTheme === 'excel' ? 'w-full [@container(min-width:560px)]:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full [@container(min-width:560px)]:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
                                   title={t('app.tooltip_add')}
                                 >
                                   {currentTheme === 'excel' ? t('app.add') : (currentTheme === 'developer' ? t('app.add') : <Check className="w-4 h-4 stroke-[2.5px]" />)}
@@ -4180,10 +4180,10 @@ const CodeTiara = () => {
                             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-2 text-center bg-white/70 backdrop-blur-[3px] border border-dashed rounded-[15px] select-none"
                               style={{ borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8' }}
                             >
-                              <div className="text-slate-500 font-bold text-xs sm:text-sm mb-0.5">
+                              <div className="text-slate-500 font-bold text-xs [@container(min-width:560px)]:text-sm mb-0.5">
                                 {display(category.label)} 💭
                               </div>
-                              <div className="text-slate-400 text-[10px] sm:text-xs mb-2">
+                              <div className="text-slate-400 text-[10px] [@container(min-width:560px)]:text-xs mb-2">
                                 외출 중이에요!
                               </div>
                               <button
@@ -4195,7 +4195,7 @@ const CodeTiara = () => {
                                 }}
                                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
                                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                                className="px-3 py-1 sm:py-1.5 rounded-[10px] text-[10px] sm:text-xs font-bold transition-all"
+                                className="px-3 py-1 [@container(min-width:560px)]:py-1.5 rounded-[10px] text-[10px] [@container(min-width:560px)]:text-xs font-bold transition-all"
                               >
                                 보드 데려오기 💖
                               </button>
