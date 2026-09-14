@@ -87,7 +87,11 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 
 - 기본 텍스트 크기 **14px**, 사용자가 5단계(작게~아주크게)로 조절. 컴포넌트는 `getTextSizeClass(fontSize)`를 존중해야 한다.
 - 한 화면에 **폰트 패밀리는 최대 2개**(본문 + 제목). 로그인 화면의 `Inter` 하드코딩 같은 예외를 더 만들지 않는다.
-- 웹폰트는 현재 CDN(Google Fonts, jsDelivr)에서 로드 → 오프라인 첫 실행 시 대체 폰트가 뜬다. **Pretendard는 로컬 번들 예정**(→ §16 결정 로그).
+- **테마 폰트 3종은 앱에 번들**되어 네트워크 없이 항상 같은 모양으로 나온다: `public/fonts/fonts.css`(`index.html`에서 링크)
+  - Pretendard v1.3.9 가변 폰트 1개 (`public/fonts/pretendard/`, weight 45–920)
+  - Gamja Flower, Gaegu 400/700 — Google Fonts와 동일한 **unicode-range 슬라이스**(`public/fonts/gamja-flower/` 93개, `public/fonts/gaegu/` 178개). 한글 11,172자 전부 커버하되 화면에 쓰인 범위의 파일만 로드된다. 총 ≈4.8MB.
+  - 나머지 선택 폰트(Nanum Gothic/Myeongjo/Pen Script, Jua, Dongle, Single Day)는 `src/index.css`의 Google Fonts `@import`로 네트워크 로드 — 오프라인이면 대체 폰트.
+  - 폰트를 추가/갱신할 때: Google Fonts CSS를 Chrome UA로 받아 `fonts.gstatic.com` URL을 로컬 경로로 치환해 `fonts.css`에 붙이고, 각 폰트 폴더에 `OFL.txt`/`LICENSE.txt`를 함께 둔다. 모바일 버전도 같은 파일을 그대로 쓸 수 있다.
 
 ---
 
@@ -266,5 +270,5 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-14 | macOS 아이콘은 별도 패딩 버전 사용 | Apple 템플릿 여백 규격 미준수로 Dock에서 아이콘이 크게 보임 |
 | 2026-09-14 | 전체 모드는 `auto-fill minmax(280px,1fr)` 그리드, 가로 스크롤 대신 줄바꿈 | 넓은 창에서 단일 열은 폭을 버림. 가로 스크롤은 마우스 휠과 충돌 |
 | 2026-09-14 | 저장된 원시 i18n 키는 로드 시 번역(`translateLegacyKeys`) | 예전 빌드가 `app.task_plan`을 텍스트로 저장해 둔 게스트 데이터가 남아 있었음. 키 추가만으로는 기존 데이터가 고쳐지지 않음 |
-| (예정) | Pretendard 로컬 번들 | 오프라인 첫 실행 시 폰트 누락 |
+| 2026-09-14 | 테마 폰트 3종(Pretendard·Gamja Flower·Gaegu) 로컬 번들, 슬라이스 방식 | 오프라인 첫 실행 시 폰트 누락·CDN 의존 제거. TTF 원본은 12MB(Gamja)라 Google Fonts 슬라이스(합 2.1MB)를 그대로 호스팅. 총 +4.8MB |
 | (검토) | 행 클릭=완료 → 체크=완료 / 텍스트=열기 분리 | 실수 완료, 실행 취소 없음 |
