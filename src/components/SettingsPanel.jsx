@@ -71,6 +71,27 @@ const SettingsPanel = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isFontDropdownOpen]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                if (activePicker) {
+                    setActivePicker(null);
+                } else if (isFontDropdownOpen) {
+                    setIsFontDropdownOpen(false);
+                } else if (confirmingCategoryDeleteId) {
+                    setConfirmingCategoryDeleteId(null);
+                } else {
+                    onClose();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose, activePicker, setActivePicker, isFontDropdownOpen, confirmingCategoryDeleteId, setConfirmingCategoryDeleteId]);
+
     if (!isOpen) return null;
 
     return (
