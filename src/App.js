@@ -3716,7 +3716,12 @@ const CodeTiara = () => {
               {/* Task Lists */}
               {/* Task Lists */}
               <DragDropContext onDragEnd={onDragEnd}>
-                <div className={popoutCategoryId ? "flex-1 flex flex-col" : `${isMiniMode ? 'space-y-2' : 'space-y-3'} flex-1`}>
+                <div className={popoutCategoryId
+                  ? "flex-1 flex flex-col"
+                  : (isMiniMode
+                      ? 'space-y-2 flex-1'
+                      // Full mode: cards flow into as many 280px+ columns as fit, wrapping instead of scrolling sideways
+                      : 'grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 items-start flex-1 content-start')}>
                   {(popoutCategoryId ? categories.filter(c => String(c.id) === String(popoutCategoryId)) : categories).map(category => {
                     const isPoppedOut = !popoutCategoryId && poppedOutCategories.includes(category.id);
                     const categoryTasks = tasks.filter(t => t.categoryId === category.id && isTaskMatchingDateFilter(t));
