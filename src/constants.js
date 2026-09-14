@@ -1,3 +1,6 @@
+import ko from './locales/ko.json';
+import en from './locales/en.json';
+
 export const CATEGORY_HUES = {
     red: '#FBCFE8',      // Pastel Pink 200
     princess: '#FBCFE8', // Pastel Pink 200
@@ -43,3 +46,28 @@ export const parseLocalDate = (dateStr) => {
     return new Date(year, month - 1, day);
 };
 
+
+// ---------------------------------------------------------------------------
+// Sample data (the default tasks / categories a new user sees) is STORED as an
+// i18n key ("app.task_plan") and translated when rendered, so it follows the UI
+// language instead of freezing in whatever language was active when it was
+// first saved. See docs/design-system.md §10.
+export const SAMPLE_TEXT_KEYS = [
+    'app.task_doc', 'app.task_grocery', 'app.task_plan',
+    'app.cat_important', 'app.cat_work', 'app.cat_personal'
+];
+const SAMPLE_KEY_SET = new Set(SAMPLE_TEXT_KEYS);
+export const isSampleTextKey = (s) => typeof s === 'string' && SAMPLE_KEY_SET.has(s);
+export const displaySampleText = (t, s) => (isSampleTextKey(s) ? t(s) : s);
+
+// Older builds persisted the *translated* sample text. Map any exact known
+// translation back to its key on load so it keeps following the language.
+const TRANSLATION_TO_KEY = (() => {
+    const m = new Map();
+    for (const key of SAMPLE_TEXT_KEYS) {
+        const [ns, k] = key.split('.');
+        for (const res of [ko, en]) { const v = res && res[ns] && res[ns][k]; if (v) m.set(v, key); }
+    }
+    return m;
+})();
+export const normalizeSampleText = (s) => (typeof s === 'string' && TRANSLATION_TO_KEY.get(s)) || s;

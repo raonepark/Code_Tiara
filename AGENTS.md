@@ -23,7 +23,7 @@
 
 1. **origin 고정** — 패키징 앱은 `http://127.0.0.1:51283`에서 실행된다. 이 값을 바꾸면 모든 사용자의 로컬 데이터가 사라진다.
 2. **렌더러에서 Node 접근 금지** — `window.require`, `process`, `Buffer` 없음. Electron 기능은 `window.electron.*`만. 새 IPC 채널은 `main.js` 핸들러 **와** `preload.js` allow-list 둘 다에 추가.
-3. **문자열은 전부 `t()`** — `ko.json` + `en.json` 동시 추가. 기본 데이터(예시 할 일 등)도 키로.
+3. **문자열은 전부 `t()`** — `ko.json` + `en.json` 동시 추가. 기본 데이터(예시 할 일 등)는 키를 저장하고 `displaySampleText()`로 렌더 시 번역. **`t`는 i18n 전용 이름** — 콜백 파라미터로 `t`를 쓰지 않는다(`task`, `item`…). 알림 코드가 `tasks.map(t => t('…'))`로 가려져 알림이 통째로 죽어 있었다.
 4. **UI 아이콘은 lucide-react만** — 이모지는 카테고리 아이콘과 문장 끝 말투에만.
 5. **Princess가 기본 테마** — fallback은 항상 `'princess'`. 디자인 판단 기준도 Princess.
 6. **카드 표면은 기존 Princess 디자인 유지** — 흰 카드 + `hexToRgba(hue, 0.45)` 헤더 밴드 + 테두리 있는 흰 행. 카드 배경에 투명 `rgba`를 쓰지 않는다(팝아웃 창이 투명이라 바탕화면이 비침). "테두리 대신 톤" 시안은 2026-09-14 사용자 검토 후 기각 — `docs/design-system.md` §16 참고.

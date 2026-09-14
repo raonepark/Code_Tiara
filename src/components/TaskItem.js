@@ -4,7 +4,7 @@ import {
     Trash2, X, Check, Edit2, Clock, CheckCircle2, Circle, Copy, Repeat, ChevronUp, ChevronDown, FileText, Bell
 } from 'lucide-react';
 import CustomDatePicker from './CustomDatePicker';
-import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate } from '../constants';
+import { CATEGORY_HUES, hexToRgba, getLocalDateString, parseLocalDate, displaySampleText } from '../constants';
 import { cmdOrCtrlName } from '../utils/platform';
 
 const getFontScaleMultiplier = (fontFamily, themeId, size) => {
@@ -432,7 +432,7 @@ const TaskItem = memo(({
                                 return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
                         >
-                            {task.text}
+                            {displaySampleText(t, task.text)}
                         </span>
                         {/* 마감 시간 & 반복 정보 */}
                         {(task.dueTime || task.dueDate || (task.recurrence && task.recurrence !== 'none')) && (
