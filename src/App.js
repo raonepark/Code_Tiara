@@ -15,7 +15,7 @@ import OnboardingPanel from './components/OnboardingPanel';
 import AuthScreen from './components/AuthScreen';
 import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, getLocalDateString, parseLocalDate } from './constants';
+import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, getLocalDateString, parseLocalDate, displaySampleText, normalizeSampleText } from './constants';
 import { THEME_CONFIG } from './constants/themeConfig';
 import {
   auth,
@@ -235,27 +235,27 @@ const CodeTiara = () => {
 
   // --- 초기 데이터 정의 (공용 템플릿용 - 한글화) ---
   const defaultCategories = [
-    { id: 'cat_1', label: t('app.cat_important'), colorTheme: 'red', icon: 'star' },
-    { id: 'cat_2', label: t('app.cat_work'), colorTheme: 'cyan', icon: 'briefcase' },
-    { id: 'cat_3', label: t('app.cat_personal'), colorTheme: 'emerald', icon: 'coffee' },
+    // Sample labels are stored as i18n keys and translated at render time (displaySampleText)
+    { id: 'cat_1', label: 'app.cat_important', colorTheme: 'red', icon: 'star' },
+    { id: 'cat_2', label: 'app.cat_work', colorTheme: 'cyan', icon: 'briefcase' },
+    { id: 'cat_3', label: 'app.cat_personal', colorTheme: 'emerald', icon: 'coffee' },
   ];
 
   const defaultTasks = [
-    { id: 1, text: t('app.task_doc'), categoryId: 'cat_2', completed: false, dueTime: '', alerted: false },
-    { id: 2, text: t('app.task_grocery'), categoryId: 'cat_3', completed: false, dueTime: '18:00', alerted: false },
-    { id: 3, text: t('app.task_plan'), categoryId: 'cat_1', completed: false, dueTime: '', alerted: false },
+    { id: 1, text: 'app.task_doc', categoryId: 'cat_2', completed: false, dueTime: '', alerted: false },
+    { id: 2, text: 'app.task_grocery', categoryId: 'cat_3', completed: false, dueTime: '18:00', alerted: false },
+    { id: 3, text: 'app.task_plan', categoryId: 'cat_1', completed: false, dueTime: '', alerted: false },
   ];
 
   const defaultTitle = 'Code Tiara';
 
-  // Builds before 1.7.6 shipped without the app.task_* / app.cat_* strings, so
-  // guests who started then have the raw keys ("app.task_plan") saved as task
-  // text / category labels. Translate those on load; the next save persists it.
-  const LEGACY_I18N_KEY = /^app\.(task_doc|task_grocery|task_plan|cat_important|cat_work|cat_personal)$/;
-  const translateLegacyKeys = (items, field) => (Array.isArray(items) ? items : []).map(item =>
-    (item && typeof item[field] === 'string' && LEGACY_I18N_KEY.test(item[field]))
-      ? { ...item, [field]: t(item[field]) }
-      : item
+  // Sample tasks/categories are stored as i18n keys and translated when shown,
+  // so they follow the UI language. `display` is the one place that does it;
+  // `normalizeSamples` folds data persisted by older builds (translated text)
+  // back to the key on load.
+  const display = (s) => displaySampleText(t, s);
+  const normalizeSamples = (items, field) => (Array.isArray(items) ? items : []).map(item =>
+    (item && typeof item[field] === 'string') ? { ...item, [field]: normalizeSampleText(item[field]) } : item
   );
 
   // --- State 관리 ---
@@ -764,12 +764,12 @@ const CodeTiara = () => {
         if (loadedCategories.length === 0) {
           loadedCategories = defaultCategories;
         }
-        setCategories(translateLegacyKeys(loadedCategories, 'label'));
+        setCategories(normalizeSamples(loadedCategories, 'label'));
 
         if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
           loadedTasks = defaultTasks;
         }
-        setTasks(translateLegacyKeys(loadedTasks, 'text'));
+        setTasks(normalizeSamples(loadedTasks, 'text'));
 
         console.log("Initial load complete for UID:", user.uid);
       } catch (err) {
@@ -777,8 +777,8 @@ const CodeTiara = () => {
         try {
           const savedCats = localStorage.getItem('lumora_categories');
           const savedTasks = localStorage.getItem('lumora_tasks');
-          setCategories(savedCats ? translateLegacyKeys(JSON.parse(savedCats), 'label') : defaultCategories);
-          setTasks(savedTasks ? translateLegacyKeys(JSON.parse(savedTasks), 'text') : defaultTasks);
+          setCategories(savedCats ? normalizeSamples(JSON.parse(savedCats), 'label') : defaultCategories);
+          setTasks(savedTasks ? normalizeSamples(JSON.parse(savedTasks), 'text') : defaultTasks);
         } catch (e) {
           setCategories(defaultCategories);
           setTasks(defaultTasks);
@@ -1292,55 +1292,31 @@ const CodeTiara = () => {
       });
 
       if (tasksToAlert.length > 0) {
-        const newNotifs = tasksToAlert.map(t => {
-          const offset = t.reminder ? Number(t.reminder) : 0;
-          let timeLabel = '';
-          if (offset === 0) {
-            timeLabel = t('app.reminder_at_time') || '정각';
-          } else if (offset === 1440) {
-            timeLabel = '하루 전';
-          } else if (offset === 60) {
-            timeLabel = '1시간 전';
-          } else {
-            timeLabel = `${offset}분 전`;
-          }
-          const alertMsg = offset === 0 
-            ? `"${t.text}" 마감 시간!` 
-            : `"${t.text}" 마감 ${timeLabel}!`;
+        // NB: the callback parameter used to be named `t`, shadowing the i18n `t`
+        // and throwing on `t('app.reminder_title')` — due-time notifications never fired.
+        const dueMessage = (task, offset) => {
+          if (offset === 0) return t('app.notif_due_now', { task: display(task.text) });
+          const when = offset === 1440 ? t('app.reminder_1d')
+            : offset === 60 ? t('app.reminder_1h')
+            : t('app.reminder_minutes_before', { minutes: offset });
+          return t('app.notif_due_in', { task: display(task.text), when });
+        };
+        const reminderOffset = (task) => (task.reminder ? Number(task.reminder) : 0);
 
-          return {
-            id: Date.now() + Math.random(),
-            title: t('app.reminder_title') || '알림',
-            message: alertMsg,
-            time: formatTimeDisplay(currentTimeStr),
-            read: false,
-            taskId: t.id
-          };
-        });
+        const newNotifs = tasksToAlert.map(task => ({
+          id: Date.now() + Math.random(),
+          title: t(currentTheme === 'princess' ? 'app.notif_title_princess' : 'app.notif_title_default'),
+          message: dueMessage(task, reminderOffset(task)),
+          time: formatTimeDisplay(currentTimeStr),
+          read: false,
+          taskId: task.id
+        }));
         setNotifications(prev => [...newNotifs, ...prev]);
 
         // 시스템 알림 발생
-        tasksToAlert.forEach(t => {
+        tasksToAlert.forEach(task => {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            const offset = t.reminder ? Number(t.reminder) : 0;
-            let timeLabel = '';
-            if (offset === 0) {
-              timeLabel = t('app.reminder_at_time') || '정각';
-            } else if (offset === 1440) {
-              timeLabel = '하루 전';
-            } else if (offset === 60) {
-              timeLabel = '1시간 전';
-            } else {
-              timeLabel = `${offset}분 전`;
-            }
-            const bodyMsg = offset === 0 
-              ? `"${t.text}" 마감 시간입니다!` 
-              : `"${t.text}" 마감 ${timeLabel}입니다!`;
-
-            new Notification('Code Tiara', {
-              body: bodyMsg,
-              silent: false
-            });
+            new Notification('Code Tiara', { body: dueMessage(task, reminderOffset(task)), silent: false });
           }
         });
 
@@ -1785,7 +1761,7 @@ const CodeTiara = () => {
     const newTask = {
       ...task,
       id: Date.now() + Math.random(),
-      text: `${task.text} ${t('app.copy_suffix')}`,
+      text: `${display(task.text)} ${t('app.copy_suffix')}`,
       alerted: false
     };
 
@@ -1820,7 +1796,7 @@ const CodeTiara = () => {
   // --- Actions: Edit Task ---
   const startEditing = (task) => {
     setEditingTaskId(task.id);
-    setEditingText(task.text);
+    setEditingText(display(task.text));
     setEditingMemo(task.memo || ''); // ✨ 메모 로드
     setEditingDate(task.dueDate || ''); // ✨ 날짜 로드
     setEditingRecurrence(task.recurrence || 'none');
@@ -3778,7 +3754,7 @@ const CodeTiara = () => {
                               return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
                           >
-                            {category.label}
+                            {display(category.label)}
                           </h3>
                           <div className="flex items-center gap-2 ml-auto">
                             <span className={`${currentTheme === 'princess' ? (isMiniMode ? 'hidden' : 'inline') : (currentTheme === 'developer' || currentTheme === 'excel' ? 'hidden' : 'inline')}`} style={{ opacity: 0.3 }}>
@@ -4156,8 +4132,7 @@ const CodeTiara = () => {
                           currentTheme === 'developer' ? (
                             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-2 text-center bg-[#1E1E1E]/85 backdrop-blur-[2px] border border-[#3E3E42] rounded-md font-mono select-none">
                               <div className="text-[#5C6370] text-[10px] sm:text-xs space-y-0.5 mb-2">
-                                <div>{`// STATUS: DETACHED`}</div>
-                                <div>{`// [${category.label}] active`}</div>
+                                <div>{display(category.label)}</div>
                               </div>
                               <button
                                 onClick={restoreCategory}
@@ -4186,7 +4161,7 @@ const CodeTiara = () => {
                               style={{ borderColor: CATEGORY_HUES[category.colorTheme] || '#FBCFE8' }}
                             >
                               <div className="text-slate-500 font-bold text-xs sm:text-sm mb-0.5">
-                                {category.label} 💭
+                                {display(category.label)} 💭
                               </div>
                               <div className="text-slate-400 text-[10px] sm:text-xs mb-2">
                                 외출 중이에요!
@@ -4262,7 +4237,7 @@ const CodeTiara = () => {
                     {/* Content */}
                     <p className={`text-sm mb-8 break-words whitespace-normal leading-relaxed 
                       ${currentTheme === 'princess' ? 'text-slate-500' : (currentTheme === 'excel' ? 'text-slate-800 px-2' : 'text-[#ABB2BF]')}`}>
-                      {t('app.confirm_delete_task_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{tasks.find(t => t.id === taskToDelete)?.text}'</span>{t('app.confirm_delete_task_msg_2')}
+                      {t('app.confirm_delete_task_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{display(tasks.find(t => t.id === taskToDelete)?.text)}'</span>{t('app.confirm_delete_task_msg_2')}
                     </p>
 
                     {/* Actions */}
@@ -4325,7 +4300,7 @@ const CodeTiara = () => {
                     {/* Content */}
                     <p className={`text-sm mb-8 break-words whitespace-normal leading-relaxed 
                       ${currentTheme === 'princess' ? 'text-slate-500' : (currentTheme === 'excel' ? 'text-slate-800 px-2' : 'text-[#ABB2BF]')}`}>
-                      {t('app.confirm_delete_cat_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{categories.find(c => c.id === categoryToDelete)?.label}'</span>{t('app.confirm_delete_cat_msg_2')}
+                      {t('app.confirm_delete_cat_msg_1')}<span className={`font-bold inline-block max-w-full truncate align-bottom ${currentTheme === 'princess' ? 'text-[#FF6B81] bg-[#FFF0F5] px-2 py-0.5 rounded-lg' : (currentTheme === 'excel' ? 'text-[#107C41] border-b border-[#107C41]' : 'text-[#E06C75]')}`}>'{display(categories.find(c => c.id === categoryToDelete)?.label)}'</span>{t('app.confirm_delete_cat_msg_2')}
                     </p>
 
                     {/* Actions */}

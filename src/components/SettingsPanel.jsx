@@ -4,6 +4,7 @@ import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2
 
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
+import { displaySampleText } from '../constants';
 import packageJson from '../../package.json';
 
 // Theme picker icons (THEME_CONFIG[key].themeIcon holds one of these names)
@@ -417,7 +418,7 @@ const SettingsPanel = ({
                                                     {/* 2. Name Input */}
                                                     <input
                                                         type="text"
-                                                        value={cat.label}
+                                                        value={displaySampleText(t, cat.label)}
                                                         onChange={(e) => updateCategory(cat.id, 'label', e.target.value)}
                                                         className={`flex-1 px-3 py-1.5 text-xs transition-all outline-none min-w-0 ${theme.settings.listRow.input}`}
                                                     />
