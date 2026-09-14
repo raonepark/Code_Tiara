@@ -3741,7 +3741,7 @@ const CodeTiara = () => {
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] rounded-2xl m-0' : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
-                          ...(currentTheme === 'princess' ? { backgroundColor: hexTint(categoryColor, 0.16) } : {}), // opaque tone instead of border
+                          ...(currentTheme === 'princess' ? { backgroundColor: hexTint(categoryColor, 0.65) } : {}), // opaque tone instead of border (0.65: hues are already pastel, lower values read as white)
                           ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),
                           ...(isPoppedOut ? { maxHeight: '160px', minHeight: '110px', overflow: 'hidden' } : {})
                         }}
