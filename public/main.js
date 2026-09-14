@@ -1,5 +1,5 @@
 const electron = require('electron');
-const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session, protocol, net, shell } = electron;
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session, protocol, net, shell, globalShortcut } = electron;
 const path = require('path');
 const { pathToFileURL } = require('url');
 
@@ -35,6 +35,47 @@ const popoutPinnedStates = {};
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
+
+// ✨ Global quick-add shortcut: from any app, Cmd/Ctrl+Shift+Space brings the
+// window up and tells the renderer to open the add-task form. Enabled by
+// default; the setting lives in userData so it applies before the renderer
+// has loaded. Registration can fail if another app owns the combo — the
+// renderer shows that state in Settings.
+const QUICK_ADD_ACCELERATOR = 'CommandOrControl+Shift+Space';
+const quickAddPrefsPath = () => path.join(app.getPath('userData'), 'quick-add-shortcut.json');
+let quickAddEnabled = true;
+let quickAddRegistered = false;
+
+function loadQuickAddPrefs() {
+    try {
+        const prefs = JSON.parse(fs.readFileSync(quickAddPrefsPath(), 'utf8'));
+        if (typeof prefs.enabled === 'boolean') quickAddEnabled = prefs.enabled;
+    } catch (e) { /* first run: keep the default */ }
+}
+
+function saveQuickAddPrefs() {
+    try { fs.writeFileSync(quickAddPrefsPath(), JSON.stringify({ enabled: quickAddEnabled })); }
+    catch (e) { console.error('Failed to save quick-add shortcut setting:', e); }
+}
+
+function triggerQuickAdd() {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+    mainWindow.webContents.send('quick-add');
+}
+
+function applyQuickAddShortcut() {
+    globalShortcut.unregister(QUICK_ADD_ACCELERATOR);
+    quickAddRegistered = false;
+    if (!quickAddEnabled) return;
+    try { quickAddRegistered = globalShortcut.register(QUICK_ADD_ACCELERATOR, triggerQuickAdd); }
+    catch (e) { console.error('Failed to register quick-add shortcut:', e); }
+    if (!quickAddRegistered) console.warn(`Quick-add shortcut ${QUICK_ADD_ACCELERATOR} is already taken by another app`);
+}
+
+const quickAddStatus = () => ({ enabled: quickAddEnabled, registered: quickAddRegistered, accelerator: QUICK_ADD_ACCELERATOR });
 
 // ✨ Crucial for macOS: allow Cmd+Q or menu quit to properly exit
 app.on('before-quit', () => {
@@ -432,6 +473,15 @@ function createWindow() {
         }
     });
 
+    // ✨ Global quick-add shortcut on/off (see top of file)
+    ipcMain.handle('get-quick-add-shortcut', () => quickAddStatus());
+    ipcMain.handle('set-quick-add-shortcut', (event, opts) => {
+        quickAddEnabled = !!(opts && opts.enabled);
+        saveQuickAddPrefs();
+        applyQuickAddShortcut();
+        return quickAddStatus();
+    });
+
     // ✨ Toggle launch at OS startup (Windows & macOS)
     ipcMain.on('set-auto-launch', (event, enabled) => {
         const settings = { openAtLogin: enabled };
@@ -551,8 +601,14 @@ if (!gotTheLock) {
         
         createWindow();
         createTray();
+        loadQuickAddPrefs();
+        applyQuickAddShortcut();
     });
 }
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
 
 app.on('window-all-closed', () => {
     if (!isMac) {

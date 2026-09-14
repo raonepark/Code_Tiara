@@ -1941,6 +1941,24 @@ const CodeTiara = () => {
 
   const [miniModeAdderId, setMiniModeAdderId] = useState(null); // ✨ Quick Add State
   const miniModeFormRef = useRef(null); // ✨ Ref for Quick Add Form
+
+  // ✨ Global shortcut (Cmd/Ctrl+Shift+Space, registered in main.js): main shows the
+  // window and sends 'quick-add' → open the first category's add form and focus it.
+  useEffect(() => {
+    const ipc = window.electron && window.electron.ipcRenderer;
+    if (!ipc || popoutCategoryId) return undefined;
+    return ipc.on('quick-add', () => {
+      if (!categories.length) return;
+      setIsSettingsOpen(false);
+      setIsMenuOpen(false);
+      setIsNotifOpen(false);
+      setMiniModeAdderId(categories[0].id);
+      setTimeout(() => {
+        const input = miniModeFormRef.current && miniModeFormRef.current.querySelector('input');
+        if (input) input.focus();
+      }, 80);
+    });
+  }, [categories, popoutCategoryId]);
   const editFormRef = useRef(null); // ✨ Ref for Edit Task Form
   const notifRef = useRef(null); // ✨ Ref for Notifications
 
