@@ -2758,8 +2758,8 @@ const CodeTiara = () => {
               ${currentTheme === 'princess' 
                 ? 'bg-gradient-to-tr from-[#FFF5F7] to-[#FFF0F3] border-2 border-[#FFC0CB] rounded-3xl shadow-[0_8px_24px_rgba(255,182,193,0.35)]' 
                 : currentTheme === 'excel'
-                  ? 'bg-[#F3F2F1] border-2 border-[#0E6032] rounded-none shadow-md'
-                  : 'bg-[#181A1F] border border-[#282C34] rounded-lg shadow-[0_12px_24px_rgba(0,0,0,0.5)]'
+                  ? 'bg-[#F3F2F1] border-2 border-[#0E6032] rounded-2xl shadow-md'
+                  : 'bg-[#181A1F] border border-[#282C34] rounded-2xl shadow-[0_12px_24px_rgba(0,0,0,0.5)]'
               }`}
             style={{ WebkitAppRegion: 'drag' }}
           >
@@ -3750,8 +3750,8 @@ const CodeTiara = () => {
                                   : `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2`) 
                               : colorStyles.border) 
                           : (currentTheme === 'developer' 
-                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-md m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
-                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] m-0' : '')
+                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-2xl m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
+                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] rounded-2xl m-0' : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
                           ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),

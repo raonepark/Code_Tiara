@@ -19,7 +19,7 @@ export const THEME_CONFIG = {
             border: 'focus:border-[#61AFEF]'
         },
         iconType: 'terminal',
-        radius: 'rounded-none',
+        radius: 'rounded-2xl',
         category: {
             variant: 'list',
             container: 'mb-4',
@@ -269,7 +269,7 @@ export const THEME_CONFIG = {
             border: 'focus:border-[#107C41]'
         },
         iconType: 'table',
-        radius: 'rounded-none',
+        radius: 'rounded-2xl',
         category: {
             variant: 'list',
             container: 'mb-0',
