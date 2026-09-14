@@ -43,6 +43,7 @@ src/firebase/        Firebase 초기화 및 re-export
 src/constants/       테마 설정
 src/locales/         ko.json · en.json
 firestore.rules      Firestore 보안 규칙 (users/{uid} 하위만 본인이 읽기/쓰기)
+scripts/make-tray-icon.js  macOS 메뉴 바 아이콘(템플릿 PNG) 생성
 tiara.setup.js       electron-builder 설정
 ```
 
