@@ -37,6 +37,8 @@ cp .env.example .env            # Firebase 값 (없으면 게스트 모드만 �
 npm run electron:dev            # CRA(3000) + Electron
 ```
 
+개발 모드(`electron .`)는 userData를 `~/Library/Application Support/Code Tiara (dev)`에 따로 두므로 설치된 앱과 **동시에 실행**할 수 있다. 창이 안 뜨고 바로 종료되면 단일 인스턴스 락에 막힌 것 — 터미널의 `Another Code Tiara instance is already running` 로그를 확인.
+
 UI만 볼 때는 `BROWSER=none npx react-scripts start` 후 브라우저 340×600으로. `window.electron`이 없어 IPC 기능(팝아웃·창 제어)은 콘솔 에러 한 줄과 함께 무시된다 — 정상.
 
 머지 전 필수:

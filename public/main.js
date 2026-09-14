@@ -515,9 +515,18 @@ function createTray() {
     });
 }
 
+// Dev builds get their own userData folder. package.json's productName makes
+// `electron .` and the packaged app both call themselves "Code Tiara", so they
+// shared one folder — and the single-instance lock below made the dev instance
+// exit silently (code 0, no window) whenever the installed app was running.
+if (isDev) {
+    app.setPath('userData', path.join(app.getPath('appData'), 'Code Tiara (dev)'));
+}
+
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
+    console.error(`Another Code Tiara instance is already running (userData: ${app.getPath('userData')}). Focusing it and exiting.`);
     app.quit();
 } else {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
