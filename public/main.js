@@ -3,8 +3,10 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session, protocol, net,
 const path = require('path');
 const { pathToFileURL } = require('url');
 
-// ✨ Optimize startup performance (especially for frameless/transparent windows on Windows boot)
+// ✨ Optimize startup and rendering performance (especially for frameless/transparent windows)
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
 const fs = require('fs');
 
 // Never let a broken stdout/stderr pipe (e.g. the terminal or parent process
@@ -129,6 +131,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 340,
         height: 600,
+        minWidth: 280,
+        minHeight: 420,
         useContentSize: true, // This is important for precise sizing
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),

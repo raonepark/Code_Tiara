@@ -56,41 +56,47 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
 
+    // ✨ Calculate Coordinates Synchronously
+    const calculateCoords = () => {
+        if (!containerRef.current) return { top: 0, left: 0, scale: 1, originY: 'top' };
+        const rect = containerRef.current.getBoundingClientRect();
+        const popupHeight = 240;
+        const popupWidth = 180;
+        const spaceBelow = window.innerHeight - rect.bottom;
+
+        let top = rect.bottom + 4;
+        let left = rect.left;
+
+        // Smart Flip: Open Upwards if tight
+        if (spaceBelow < popupHeight) {
+            if (rect.top > spaceBelow) {
+                top = Math.max(10, rect.top - popupHeight - 4);
+            } else {
+                top = Math.max(10, window.innerHeight - popupHeight - 10);
+            }
+        }
+
+        // Horizontal Guard
+        if (left + popupWidth > window.innerWidth - 10) {
+            left = (rect.right - popupWidth) > 0 ? (rect.right - popupWidth) : 10;
+        }
+
+        let scale = 1;
+        let originY = (top < rect.top) ? 'bottom' : 'top';
+        if (window.innerHeight < popupHeight + 20) {
+            scale = Math.max(0.65, (window.innerHeight - 20) / popupHeight);
+        }
+
+        return { top, left, scale, originY };
+    };
+
     // ✨ Dynamic Position Update (Synchronous for speed)
     const updatePosition = () => {
         if (containerRef.current && popupRef.current && isOpen) {
-            const rect = containerRef.current.getBoundingClientRect();
-            const popupHeight = 240; // Reduced from 280
-            const popupWidth = 180; // Reduced from 220
-            const spaceBelow = window.innerHeight - rect.bottom;
-
-            let top = rect.bottom + 4;
-            let left = rect.left;
-
-            // Smart Flip: Open Upwards if tight
-            if (spaceBelow < popupHeight) {
-                if (rect.top > spaceBelow) {
-                    // More space above: flip up, clamp to top of window
-                    top = Math.max(10, rect.top - popupHeight - 4);
-                } else {
-                    // More space below: keep down, clamp to bottom of window
-                    top = Math.max(10, window.innerHeight - popupHeight - 10);
-                }
-            }
-
-            // Horizontal Guard
-            if (left + popupWidth > window.innerWidth - 10) {
-                left = (rect.right - popupWidth) > 0 ? (rect.right - popupWidth) : 10;
-            }
-
-            // Apply directly to DOM to avoid React render lag
+            const { top, left, scale, originY } = calculateCoords();
             popupRef.current.style.top = `${top}px`;
             popupRef.current.style.left = `${left}px`;
-
-            // ✨ Scale if window is too small (e.g., Popout mode)
-            if (window.innerHeight < popupHeight + 20) {
-                const scale = Math.max(0.65, (window.innerHeight - 20) / popupHeight);
-                const originY = (top < rect.top) ? 'bottom' : 'top';
+            if (scale !== 1) {
                 popupRef.current.style.transform = `scale(${scale})`;
                 popupRef.current.style.transformOrigin = `center ${originY}`;
             } else {
@@ -129,7 +135,13 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
     }, [isOpen]);
 
     const toggleOpen = () => {
-        setIsOpen(!isOpen);
+        if (!isOpen) {
+            const initial = calculateCoords();
+            setCoords({ top: initial.top, left: initial.left });
+            setIsOpen(true);
+        } else {
+            setIsOpen(false);
+        }
     };
 
 
@@ -211,9 +223,11 @@ const CustomDatePicker = ({ value, onChange, placeholder = "YYYY-MM-DD", classNa
             style={{
                 position: 'fixed',
                 zIndex: 99999,
-                width: '180px' // Reduced from 208px
+                width: '180px',
+                top: `${coords.top}px`,
+                left: `${coords.left}px`
             }}
-            className={`absolute rounded-[16px] p-2 animate-in fade-in zoom-in-95 duration-75 ${styles.popup}`} // duration-75 for faster appearance
+            className={`absolute rounded-[16px] p-2 animate-in fade-in duration-100 ${styles.popup}`}
         >
             {/* Header */}
             <div className={`flex justify-between items-center mb-3 p-1 rounded ${styles.header}`}>

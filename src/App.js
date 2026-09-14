@@ -67,7 +67,7 @@ const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme })
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full left-0 mt-1 w-full z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${styles.popup}`}>
+        <div className={`absolute top-full left-0 mt-1 w-full z-50 overflow-hidden animate-in fade-in duration-100 ${styles.popup}`}>
           <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
             {options.map((opt) => (
               <button
@@ -2106,6 +2106,16 @@ const CodeTiara = () => {
     return () => document.removeEventListener('mousedown', handleClickOutsideNotif);
   }, [isNotifOpen]);
 
+  // ✨ Close Menu & Notification on Window Blur (e.g. clicking another window/desktop)
+  useEffect(() => {
+    const handleWindowBlur = () => {
+      if (isMenuOpen) setIsMenuOpen(false);
+      if (isNotifOpen) setIsNotifOpen(false);
+    };
+    window.addEventListener('blur', handleWindowBlur);
+    return () => window.removeEventListener('blur', handleWindowBlur);
+  }, [isMenuOpen, isNotifOpen]);
+
   // ✨ Click Outside to Close Delete Confirmation
   useEffect(() => {
     const handleGlobalClick = (e) => {
@@ -2488,6 +2498,7 @@ const CodeTiara = () => {
         <div 
           className="bg-white px-4 h-11 flex items-center justify-between border-b border-gray-100 relative z-[999] shrink-0 select-none" 
           style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}
+          onDoubleClick={() => sendIPC('maximize-window')}
         >
           {/* Left: Window Controls */}
           <div className="flex gap-1.5 z-10" style={{ WebkitAppRegion: 'no-drag' }}>
@@ -2890,7 +2901,11 @@ const CodeTiara = () => {
 
         {/* Terminal Header Bar */}
         {!popoutCategoryId && (
-        <div className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}>
+        <div 
+          className={`${theme.header.bg} px-3 h-10 flex items-center justify-between ${theme.header.border} border-b relative z-[999] shrink-0 select-none`} 
+          style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' }}
+          onDoubleClick={() => sendIPC('maximize-window')}
+        >
           {/* Left: Window Controls */}
           <div className="flex gap-1.5 z-10" style={{ WebkitAppRegion: 'no-drag' }}>
             <button
@@ -2970,7 +2985,7 @@ const CodeTiara = () => {
                 {isMenuOpen && (
                   <>
                     {/* Menu Card */}
-                    <div ref={menuRef} className="absolute right-0 top-8 w-40 bg-white border-2 border-[#FFC0CB] rounded-[15px] shadow-[0_10px_20px_rgba(255,182,193,0.3)] z-50 overflow-hidden text-slate-600 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                    <div ref={menuRef} className="absolute right-0 top-8 w-40 bg-white border-2 border-[#FFC0CB] rounded-[15px] shadow-[0_10px_20px_rgba(255,182,193,0.3)] z-50 overflow-hidden text-slate-600 flex flex-col animate-in fade-in duration-100">
                       {/* 🎀 Princess Arrow */}
                       <div className="absolute -top-1.5 right-2 w-3 h-3 bg-white border-t-2 border-l-2 border-[#FFC0CB] rotate-45"></div>
 
@@ -3045,7 +3060,7 @@ const CodeTiara = () => {
                 {/* ✨ Dropdown Menu (Under Gear) - Non-Princess */}
                 {isMenuOpen && (
                   <>
-                    <div ref={menuRef} className={`absolute right-0 top-8 w-40 z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200
+                    <div ref={menuRef} className={`absolute right-0 top-8 w-40 z-50 overflow-hidden flex flex-col animate-in fade-in duration-100
                       ${currentTheme === 'excel'
                         ? 'bg-white border border-[#217346] rounded-none shadow-xl'
                         : theme.settings.popover
@@ -3099,7 +3114,7 @@ const CodeTiara = () => {
 
             {/* Notification Dropdown (Compact) with Custom Scrollbar */}
             {isNotifOpen && (
-              <div ref={notifRef} className={`absolute z-50 overflow-hidden animate-in slide-in-from-top-2 
+              <div ref={notifRef} className={`absolute z-50 overflow-hidden animate-in fade-in duration-100 
                 ${currentTheme === 'princess' ? 'top-10 right-4 w-64 max-w-[calc(100vw-2rem)]' : (currentTheme === 'developer' ? 'right-2 top-8 w-64 max-w-[calc(100vw-1rem)]' : 'right-2 top-7 w-64 max-w-[calc(100vw-1rem)]')} 
                 ${theme.notification.container}`}>
                 {/* 🎀 Princess Arrow */}

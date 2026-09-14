@@ -21,6 +21,7 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
             <div
                 className="h-[30px] bg-[#FFF0F5] flex items-center justify-between px-3 select-none shrink-0"
                 style={{ WebkitAppRegion: 'drag' }}
+                onDoubleClick={() => sendIPC('maximize-window')}
             >
                 {/* Left: macOS Traffic Lights (Close / Minimize) */}
                 <div className="flex items-center gap-2 group" style={{ WebkitAppRegion: 'no-drag' }}>
@@ -56,6 +57,7 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
         <div
             className="h-[30px] bg-[#FFF0F5] flex items-center justify-between px-3 select-none shrink-0"
             style={{ WebkitAppRegion: 'drag' }}
+            onDoubleClick={() => sendIPC('maximize-window')}
         >
             {/* Left: Branding */}
             <div className="flex items-center gap-1.5 text-[#FF6B81] font-bold text-xs" style={{ WebkitAppRegion: 'no-drag' }}>

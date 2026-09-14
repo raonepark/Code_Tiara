@@ -287,12 +287,12 @@ const SettingsPanel = ({
                             
                             {isFontDropdownOpen && (
                                 <div 
-                                    className={`absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-xl border custom-scrollbar transition-all animate-in fade-in slide-in-from-top-2 duration-200 ${
+                                    className={`absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 shadow-xl border custom-scrollbar transition-all animate-in fade-in duration-100 ${
                                         currentTheme === 'princess' 
-                                            ? 'bg-white/95 backdrop-blur-md border-[#FFD1DC] rounded-[16px] text-slate-800' 
+                                            ? 'bg-white border-2 border-[#FFD1DC] rounded-[16px] text-slate-800' 
                                             : (currentTheme === 'excel' 
-                                                ? 'bg-[#F3F2F1] border-[#D1D1D1] text-slate-800' 
-                                                : 'bg-[#252526] border-[#3E3E42] text-[#D4D4D4] rounded-lg')
+                                                ? 'bg-[#F3F2F1] border border-[#D1D1D1] text-slate-800' 
+                                                : 'bg-[#252526] border border-[#3E3E42] text-[#D4D4D4] rounded-lg')
                                     }`}
                                 >
                                     {FONTS_LIST.map(f => {
