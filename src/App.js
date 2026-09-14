@@ -3145,7 +3145,7 @@ const CodeTiara = () => {
                                 <span className="truncate">{n.title}</span>
                                 <span className="text-[10px] text-pink-400 font-normal shrink-0">{n.time}</span>
                               </p>
-                              <p className="text-slate-500 font-medium text-[11px] leading-snug">{n.message} 🧁</p>
+                              <p className="text-slate-500 font-medium text-[11px] leading-snug">{n.message}</p>
                             </div>
                             <button onClick={() => clearNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-pink-300 hover:text-[#FF6B81]">
                               <X className="w-3.5 h-3.5" />
