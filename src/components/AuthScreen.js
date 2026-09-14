@@ -30,7 +30,6 @@ import {
   User
 } from 'lucide-react';
 
-console.log('AuthScreen lucide imports:', { Crown, AlertCircle, Mail, Lock, RefreshCw, User });
 
 export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange, isModal = false, customAlert }) {
   const { t, i18n } = useTranslation();
@@ -61,7 +60,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
     }
   };
 
-  const theme = THEME_CONFIG[currentTheme] || THEME_CONFIG.developer;
+  const theme = THEME_CONFIG[currentTheme] || THEME_CONFIG.princess;
 
   const isLengthValid = password.length >= 6;
   const isComboValid = /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
@@ -274,7 +273,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
               {/* Success Message */}
               <div className="text-center mb-4">
-                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-2 font-['Inter',sans-serif]">
+                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 font-['Inter',sans-serif]">
                   {t('auth.signup_complete_title')}
                 </h1>
                 <p className="text-xs text-gray-500 font-medium font-sans leading-relaxed whitespace-pre-line">
@@ -289,7 +288,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                     setSignUpSuccess(false);
                     setIsSignUp(false);
                   }}
-                  className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full py-3 bg-gradient-to-r from-[#F48FB1] to-[#FF6B81] text-white rounded-[14px] font-bold text-xs hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                 >
                   {t('auth.go_to_login')}
                 </button>
@@ -309,7 +308,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
               {/* Titles */}
               <div className="text-center mb-4">
-                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-1 font-['Inter',sans-serif]">
+                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-1 font-['Inter',sans-serif]">
                   {t('auth.forgot_pwd')}
                 </h1>
                 <p className="text-xs text-gray-500 font-medium font-sans">
@@ -344,7 +343,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full py-3 bg-gradient-to-r from-[#F48FB1] to-[#FF6B81] text-white rounded-[14px] font-bold text-xs hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                   >
                     {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
                     {t('auth.send_reset_link')}
@@ -357,7 +356,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                 <span>
                   <button 
                     onClick={() => { setIsForgotPassword(false); setError(''); }} 
-                    className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
+                    className="text-[#FF6B81] font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
                   >
                     {t('auth.back_to_login')}
                   </button>
@@ -370,15 +369,25 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
             <>
               {/* Header Icon */}
               <div className="flex flex-col items-center justify-center mb-3 mt-1">
-                <div className="w-12 h-12 bg-gradient-to-tr from-black to-gray-700 rounded-xl flex items-center justify-center shadow-md transform -rotate-6 hover:rotate-0 transition-transform duration-300">
-                  <Crown className="w-6 h-6 text-white" />
+                {/* Same gradient as the app icon (blue → lavender → pink) */}
+                <svg width="0" height="0" className="absolute" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="tiara-brand-gradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#6FB4E6" />
+                      <stop offset="50%" stopColor="#B39DDB" />
+                      <stop offset="100%" stopColor="#F28AB2" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="w-14 h-14 bg-white border border-[#FBCFE8] rounded-[18px] flex items-center justify-center shadow-[0_8px_24px_rgba(244,143,177,0.35)] transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <Crown className="w-7 h-7" stroke="url(#tiara-brand-gradient)" strokeWidth={2.2} />
                 </div>
-                <div className="mt-2 font-extrabold tracking-widest text-xs text-gray-800 uppercase">Code Tiara</div>
+                <div className="mt-2 font-extrabold tracking-widest text-xs uppercase bg-gradient-to-r from-[#6FB4E6] via-[#B39DDB] to-[#F28AB2] bg-clip-text text-transparent">Code Tiara</div>
               </div>
 
               {/* Titles */}
               <div className="text-center mb-4">
-                <h1 className="text-2xl font-extrabold text-black tracking-tight mb-1 font-['Inter',sans-serif]">
+                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-1 font-['Inter',sans-serif]">
                   {isSignUp ? t('auth.signup') : t('auth.login')}
                 </h1>
                 <p className="text-xs text-gray-500 font-medium font-sans">
@@ -427,7 +436,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                         type="button" 
                         onClick={() => { setIsForgotPassword(true); setError(''); }}
                         disabled={loading}
-                        className="text-[11px] text-[#FF4B4B] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
+                        className="text-[11px] text-[#FF6B81] hover:text-[#E03A3A] font-medium bg-transparent border-none cursor-pointer p-0 transition-colors whitespace-nowrap"
                       >
                         {t('auth.forgot_pwd')}
                       </button>
@@ -469,7 +478,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                         type="checkbox" 
                         checked={keepLoggedIn}
                         onChange={handleKeepLoggedInChange}
-                        className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-black focus:ring-black accent-black" 
+                        className="w-3.5 h-3.5 flex-shrink-0 rounded-sm border-gray-300 text-[#FF6B81] focus:ring-[#FF6B81] accent-[#FF6B81]" 
                       />
                       {t('auth.keep_logged_in')}
                     </label>
@@ -480,7 +489,7 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-black text-white rounded-[14px] font-bold text-xs hover:bg-gray-900 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full py-3 bg-gradient-to-r from-[#F48FB1] to-[#FF6B81] text-white rounded-[14px] font-bold text-xs hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0"
                   >
                     {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
                     {isSignUp ? t('auth.signup') : t('auth.login')}
@@ -521,9 +530,9 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
 
               <div className="mt-4 text-center text-xs font-medium text-gray-500">
                 {isSignUp ? (
-                  <span>{t('auth.already_have_account')} <button onClick={() => setIsSignUp(false)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.login')}</button></span>
+                  <span>{t('auth.already_have_account')} <button onClick={() => setIsSignUp(false)} className="text-[#FF6B81] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.login')}</button></span>
                 ) : (
-                  <span>{t('auth.no_account')} <button onClick={() => setIsSignUp(true)} className="text-[#FF4B4B] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.signup')}</button></span>
+                  <span>{t('auth.no_account')} <button onClick={() => setIsSignUp(true)} className="text-[#FF6B81] font-bold hover:underline bg-transparent border-none cursor-pointer p-0 ml-1">{t('auth.signup')}</button></span>
                 )}
               </div>
             </>

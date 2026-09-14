@@ -5,7 +5,8 @@ import {
   Download, Upload, Timer, Pause, Play, ChevronUp, ChevronDown, Clock, Bell,
   Star, Coffee, Music, Home, Briefcase, Heart, Sun, Moon, Hourglass,
   PanelTopClose, PanelTopOpen, Edit2, Check, Grid2X2, Calendar, Minus, GripVertical, Menu, Gift,
-  ChevronLeft, ChevronRight, Repeat, Pin, PinOff, Mail
+  ChevronLeft, ChevronRight, Repeat, Pin, PinOff, Mail,
+  Monitor, Smartphone, ListChecks, Settings2, Table2
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
 import TaskItem from './components/TaskItem';
@@ -33,7 +34,6 @@ import {
 } from './firebase/firebaseConfig';
 
 // ✨ Constants imported from constants.js
-console.log('App.js imports:', { AuthScreen, CustomDatePicker, TaskItem, SettingsPanel, OnboardingPanel });
 
 const StyledDropdown = ({ value, onChange, options, placeholder, currentTheme }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -654,7 +654,7 @@ const CodeTiara = () => {
       try {
         console.log("Loading user data for UID:", user.uid, "isLocalUser:", isLocalUser);
 
-        let savedTheme = localStorage.getItem('lumora_theme') || 'developer';
+        let savedTheme = localStorage.getItem('lumora_theme') || 'princess';
         let savedTitle = localStorage.getItem('lumora_title') || defaultTitle;
         let savedFocus = parseInt(localStorage.getItem('lumora_focus_duration')) || 25;
         let savedBreak = parseInt(localStorage.getItem('lumora_break_duration')) || 5;
@@ -2457,7 +2457,7 @@ const CodeTiara = () => {
   };
 
   if (authLoading) {
-    const loaderTheme = THEME_CONFIG[currentTheme] || THEME_CONFIG.developer;
+    const loaderTheme = THEME_CONFIG[currentTheme] || THEME_CONFIG.princess;
     return (
       <div className={`h-screen w-screen flex flex-col items-center justify-center ${loaderTheme.root} font-mono`}>
         <div className="text-center space-y-4">
@@ -2761,9 +2761,9 @@ const CodeTiara = () => {
                 }`}
               >
                 {currentTheme === 'princess' ? (
-                  <>🎀 {t('app.focus_timer_title')}</>
+                  <><Timer className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />{t('app.focus_timer_title')}</>
                 ) : currentTheme === 'excel' ? (
-                  <>📊 FOCUS TIMER (Sheet1)</>
+                  <><Table2 className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />FOCUS TIMER (Sheet1)</>
                 ) : (
                   <><span className="text-[#98C379]">&gt;_</span> FOCUS_TIMER.sh</>
                 )}
@@ -2974,19 +2974,19 @@ const CodeTiara = () => {
                           onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
+                          <span>{isMiniMode ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
                           onClick={handleMenuTimerClick}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>⏱️</span> {t('app.timer')}
+                          <span><Timer className="w-3.5 h-3.5" /></span> {t('app.timer')}
                         </button>
                         <button
                           onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>🧹</span> {t('app.cleanup_completed')}
+                          <span><ListChecks className="w-3.5 h-3.5" /></span> {t('app.cleanup_completed')}
                         </button>
                         <div className="h-px bg-[#FFC0CB]/30 mx-2 my-0.5"></div>
                         <button
@@ -3000,7 +3000,7 @@ const CodeTiara = () => {
                           }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
-                          <span>🔧</span> {t('app.settings')}
+                          <span><Settings2 className="w-3.5 h-3.5" /></span> {t('app.settings')}
                         </button>
                       </div>
                     </div>
@@ -3055,19 +3055,19 @@ const CodeTiara = () => {
                           onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
                         </button>
                         <button
                           onClick={handleMenuTimerClick}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>⏱️</span> {t('app.timer')}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}><Timer className="w-3.5 h-3.5" /></span> {t('app.timer')}
                         </button>
                         <button
                           onClick={() => { setIsClearConfirmOpen(true); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🧹</span> {t('app.cleanup_completed')}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}><ListChecks className="w-3.5 h-3.5" /></span> {t('app.cleanup_completed')}
                         </button>
                         <div className={`h-px mx-2 my-0.5 ${currentTheme === 'princess' ? 'bg-pink-100' : (currentTheme === 'excel' ? 'bg-[#E1E1E1]' : 'bg-current opacity-10')}`}></div>
                         <button
@@ -3081,7 +3081,7 @@ const CodeTiara = () => {
                           }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
-                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔧</span> {t('app.settings')}
+                          <span className={theme.iconType === 'table' ? "opacity-100" : ""}><Settings2 className="w-3.5 h-3.5" /></span> {t('app.settings')}
                         </button>
                       </div>
                     </div>
@@ -3241,7 +3241,7 @@ const CodeTiara = () => {
                   }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">📧</span>
+                  <Mail className="w-4 h-4 shrink-0" />
                   <span>
                     {t('auth.verification_banner_text') || '이메일 인증을 완료하고 계정을 더 안전하게 보호하세요.'}
                   </span>
@@ -3616,11 +3616,11 @@ const CodeTiara = () => {
                             className={`outline-none bg-transparent cursor-pointer text-xs ${currentTheme === 'princess' ? 'text-[#FF6B81] font-bold' : (currentTheme === 'excel' ? 'bg-white border border-[#D1D5DB] h-8 px-1' : 'text-slate-400')}`}
                             title={t('app.tooltip_recurrence')}
                           >
-                            <option value="none">🔁 반복 안함</option>
-                            <option value="daily">🔁 매일</option>
-                            <option value="weekly">🔁 매주</option>
-                            <option value="monthly">🔁 매월</option>
-                            <option value="custom">🔁 N일마다</option>
+                            <option value="none">{t('app.recurrence_none')}</option>
+                            <option value="daily">{t('app.recurrence_daily')}</option>
+                            <option value="weekly">{t('app.recurrence_weekly')}</option>
+                            <option value="monthly">{t('app.recurrence_monthly')}</option>
+                            <option value="custom">{t('app.recurrence_custom')}</option>
                           </select>
                           {taskRecurrence === 'custom' && (
                             <div className="flex items-center gap-1">

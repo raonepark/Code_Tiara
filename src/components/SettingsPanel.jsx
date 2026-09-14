@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen } from 'lucide-react';
+import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen, Crown, Code2, Table2, LogIn, LogOut } from 'lucide-react';
+
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
 import packageJson from '../../package.json';
+
+// Theme picker icons (THEME_CONFIG[key].themeIcon holds one of these names)
+const THEME_ICONS = { crown: Crown, code: Code2, table: Table2 };
+const ThemeIcon = ({ name, className }) => { const Icon = THEME_ICONS[name] || Crown; return <Icon className={className} />; };
 
 const ipcRenderer = window.electron ? window.electron.ipcRenderer : null;
 
@@ -128,7 +133,7 @@ const SettingsPanel = ({
                             <span>{t('settings.themeSettings')}</span>
                             {!isThemeSettingsExpanded && (
                                 <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${theme.themeBadge}`}>
-                                    {theme.themeIcon} {theme.label}
+                                    <ThemeIcon name={theme.themeIcon} className="w-3 h-3 inline -mt-0.5 mr-1" />{theme.label}
                                 </span>
                             )}
                         </div>
@@ -143,7 +148,7 @@ const SettingsPanel = ({
                                     onClick={() => setCurrentTheme(key)}
                                     className={`flex-1 flex flex-col items-center justify-center p-3 transition-all duration-300 ease-in-out border focus:outline-none text-[10px] sm:text-xs ${currentTheme === key ? theme.themeSelectorActive : theme.themeSelectorInactive}`}
                                 >
-                                    <span className="text-xl mb-1">{THEME_CONFIG[key].themeIcon}</span>
+                                    <ThemeIcon name={THEME_CONFIG[key].themeIcon} className="w-5 h-5 mb-1.5" />
                                     <span className="text-[10px] font-bold">{THEME_CONFIG[key].label}</span>
                                 </button>
                             ))}
@@ -540,7 +545,7 @@ const SettingsPanel = ({
                         onClick={onLoginClick}
                         className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                     >
-                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🔑</span> {t('settings.login')}
+                        <span className={theme.iconType === 'table' ? "opacity-100" : ""}><LogIn className="w-3.5 h-3.5" /></span> {t('settings.login')}
                     </button>
                 ) : (
                     <>
@@ -548,7 +553,7 @@ const SettingsPanel = ({
                             onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
                             className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
                         >
-                            <span className={theme.iconType === 'table' ? "opacity-100" : ""}>🚪</span> {t('settings.logout')}
+                            <span className={theme.iconType === 'table' ? "opacity-100" : ""}><LogOut className="w-3.5 h-3.5" /></span> {t('settings.logout')}
                         </button>
                         <button
                             onClick={onDeleteAccount}
