@@ -595,10 +595,10 @@ const SettingsPanel = ({
             </div>
 
             {/* Actions Footer */}
-            <div className={`flex flex-col sm:flex-row items-center justify-center gap-3 pt-6 border-t ${theme.divider} mt-6 max-w-md mx-auto`}>
+            <div className={`flex flex-wrap items-center justify-center gap-3 pt-6 border-t ${theme.divider} mt-6`}>
                 <button
                     onClick={openOnboardingGuide}
-                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} whitespace-nowrap`}
                 >
                     <BookOpen className="w-3.5 h-3.5" />
                     {t('settings.userGuide')}
@@ -606,7 +606,7 @@ const SettingsPanel = ({
                 {user && user.uid === "guest_user" ? (
                     <button
                         onClick={onLoginClick}
-                        className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                        className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} whitespace-nowrap`}
                     >
                         <span className={theme.iconType === 'table' ? "opacity-100" : ""}><LogIn className="w-3.5 h-3.5" /></span> {t('settings.login')}
                     </button>
@@ -614,13 +614,13 @@ const SettingsPanel = ({
                     <>
                         <button
                             onClick={() => { if(onSignOut) onSignOut(); onClose(); }}
-                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} w-full sm:w-auto`}
+                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.outlineBtn} whitespace-nowrap`}
                         >
                             <span className={theme.iconType === 'table' ? "opacity-100" : ""}><LogOut className="w-3.5 h-3.5" /></span> {t('settings.logout')}
                         </button>
                         <button
                             onClick={onDeleteAccount}
-                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.dangerBtn} w-full sm:w-auto`}
+                            className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${theme.buttons.dangerBtn} whitespace-nowrap`}
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                             {t('settings.deleteAccount')}
@@ -629,7 +629,7 @@ const SettingsPanel = ({
                 )}
                 <button
                     onClick={handleResetRequest}
-                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn} w-full sm:w-auto`}
+                    className={`text-xs px-4 py-2 transition-all font-bold flex items-center justify-center gap-2 ${isResetConfirming ? 'bg-red-600 text-white animate-pulse shadow-lg scale-105 ' + theme.radius : theme.buttons.dangerBtn} whitespace-nowrap`}
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
                     {isResetConfirming ? t('settings.areYouSure') : t('settings.reset')}
