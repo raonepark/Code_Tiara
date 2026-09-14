@@ -12,7 +12,7 @@
 | `src/App.js` | 메인 React 컴포넌트 (보드·메뉴·타이머·팝아웃 렌더). 4,500줄 — 분리 예정 |
 | `src/components/` | `TaskItem` `SettingsPanel` `AuthScreen` `OnboardingPanel` `CustomTitleBar` `CustomDatePicker` |
 | `src/constants/themeConfig.js` | 테마별 Tailwind 토큰. 스타일은 여기서, 컴포넌트는 `theme.*`로 참조 |
-| `src/constants.js` | 카테고리 색표, `hexToRgba`, `hexTint`, 날짜 유틸 |
+| `src/constants.js` | 카테고리 색표, `hexToRgba`, 날짜 유틸 |
 | `src/locales/ko.json` `en.json` | 모든 문자열. 두 파일 동시 수정 |
 | `assets/` | 아이콘. macOS는 `icon_mac.png`(여백 패딩) → `icons/icon.icns` |
 | `firestore.rules` | `users/{uid}` 본인만 읽기/쓰기 |
@@ -25,7 +25,7 @@
 3. **문자열은 전부 `t()`** — `ko.json` + `en.json` 동시 추가. 기본 데이터(예시 할 일 등)도 키로.
 4. **UI 아이콘은 lucide-react만** — 이모지는 카테고리 아이콘과 문장 끝 말투에만.
 5. **Princess가 기본 테마** — fallback은 항상 `'princess'`. 디자인 판단 기준도 Princess.
-6. **카드/행 표면은 테두리 대신 톤** — `hexTint(hue, 0.16)` 불투명 카드 + 흰 행. 투명 `rgba` 배경은 팝아웃 창에서 바탕화면이 비치므로 금지.
+6. **카드 표면은 기존 Princess 디자인 유지** — 흰 카드 + `hexToRgba(hue, 0.45)` 헤더 밴드 + 테두리 있는 흰 행. 카드 배경에 투명 `rgba`를 쓰지 않는다(팝아웃 창이 투명이라 바탕화면이 비침). "테두리 대신 톤" 시안은 2026-09-14 사용자 검토 후 기각 — `docs/design-system.md` §16 참고.
 7. **디자인 변경은 사용자 확인 후** — 실제 앱 위에 CSS로 2안 이상 얹어 비교하고, 고른 뒤 구현.
 
 ## 로컬 실행 · 검증
