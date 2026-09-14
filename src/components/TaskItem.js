@@ -234,7 +234,7 @@ const TaskItem = memo(({
                 } : {})
             }}
             onClick={() => { if (editingTaskId !== task.id) toggleTask(task.id) }}
-            className={`${theme.category.taskItem} ${isMiniMode ? '!mx-0 !mb-1 !p-1.5 last:!mb-0' : ''} cursor-pointer active:cursor-grabbing relative ${task.completed ? 'opacity-60' : ''} ${snapshot.isDragging ? 'shadow-lg z-50 ' + theme.task.dragShadow : ''}`}
+            className={`${theme.category.taskItem} ${isMiniMode ? (currentTheme === 'princess' ? '!mx-0 !mb-1 !px-2.5 !py-2 last:!mb-0' : '!mx-0 !mb-1 !p-1.5 last:!mb-0') : ''} cursor-pointer active:cursor-grabbing relative ${task.completed ? 'opacity-60' : ''} ${snapshot.isDragging ? 'shadow-lg z-50 ' + theme.task.dragShadow : ''}`}
         >
             {currentTheme === 'excel' ? (
                 <div className={theme.task.checkboxExcel}

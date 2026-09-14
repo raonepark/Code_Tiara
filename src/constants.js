@@ -30,6 +30,16 @@ export const hexToRgba = (hex, alpha) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+// Opaque pastel: mix a hex colour with white (amount = how much colour). Used for
+// Princess category surfaces so they look identical on white and on the
+// transparent popout windows (an rgba() tint would show the desktop through).
+export const hexTint = (hex, amount) => {
+  const h = (hex || '#FFC0CB').replace('#', '');
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+  const mix = ch => Math.round(255 - (255 - ch) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+};
+
 export const getLocalDateString = (date = new Date()) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');

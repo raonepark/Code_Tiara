@@ -145,10 +145,10 @@ export const THEME_CONFIG = {
         radius: 'rounded-2xl',
         category: {
             variant: 'card',
-            container: 'w-full mb-4 bg-white border-[2px] rounded-[20px] overflow-hidden shadow-sm',
-            header: 'flex items-center gap-2 p-3 border-b-2 border-dashed border-inherit bg-white',
+            container: 'w-full mb-4 rounded-[20px] overflow-hidden p-1.5', // tinted per category inline (hexToRgba(categoryColor, 0.16)); no border/shadow
+            header: 'flex items-center gap-2 p-3 bg-transparent',
             title: 'text-lg font-bold truncate',
-            taskItem: 'group flex items-center gap-3 p-3 mb-2 bg-white border border-[var(--border-idle)] rounded-[16px] hover:border-[var(--border-hover)] transition-colors shadow-sm mx-3 first:mt-3 last:mb-0',
+            taskItem: 'group flex items-center gap-3 p-3 mb-1.5 bg-white rounded-[12px] shadow-[0_1px_3px_rgba(255,150,170,0.18)] hover:shadow-[0_2px_6px_rgba(255,150,170,0.28)] transition-shadow last:mb-0',
             actionButton: {
                 wrapper: 'gap-2',
                 button: 'p-1.5 text-[var(--icon-color)] hover:text-white bg-[var(--c-bg)] hover:bg-[var(--icon-color)] hover:border-[var(--icon-color)] rounded-[10px] backdrop-blur-md border border-[var(--c-light)] shadow-sm transition-all duration-200 ease-in-out',
@@ -216,7 +216,7 @@ export const THEME_CONFIG = {
             textDefault: 'text-slate-600 font-medium',
             textDone: 'text-slate-600 font-medium opacity-50 line-through',
             timeDefault: 'text-slate-500 font-medium',
-            editContainer: 'bg-gradient-to-br from-[var(--c-bg)] to-white p-2 sm:p-3 rounded-[16px] border-[1.5px] border-[var(--c-light)] shadow-sm mb-2 mt-1',
+            editContainer: 'bg-white p-2 sm:p-3 rounded-[12px] shadow-[0_1px_3px_rgba(255,150,170,0.18)] mb-1.5 mt-1',
             editInputBgWrapper: '',
             editInputBg: 'text-sm text-slate-700 font-bold bg-white border border-[var(--c-light)] focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] rounded-[12px] px-3 py-2',
             editActionRow: 'mt-2',

@@ -15,7 +15,7 @@ import OnboardingPanel from './components/OnboardingPanel';
 import AuthScreen from './components/AuthScreen';
 import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, getLocalDateString, parseLocalDate } from './constants';
+import { CATEGORY_HUES, CATEGORY_ICON_HUES, hexToRgba, hexTint, getLocalDateString, parseLocalDate } from './constants';
 import { THEME_CONFIG } from './constants/themeConfig';
 import {
   auth,
@@ -3717,8 +3717,8 @@ const CodeTiara = () => {
                     const borderIdle = hexToRgba(categoryColor, 0.6); // Weak border (60% opacity)
                     const borderHover = categoryColor; // Full color on hover
 
-                    const headerBg = currentTheme === 'princess'
-                      ? hexToRgba(categoryColor, 0.45)
+                    const headerBg = currentTheme === 'princess' && popoutCategoryId
+                      ? hexToRgba(categoryColor, 0.45) // sticky-note popouts keep a coloured header
                       : undefined;
 
                     const restoreCategory = () => {
@@ -3734,13 +3734,14 @@ const CodeTiara = () => {
                           ? (isMiniMode 
                               ? (popoutCategoryId 
                                   ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-[2px] ${colorStyles.border} m-0` 
-                                  : `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2`) 
+                                  : `rounded-[18px] border-none !w-auto mb-3 mx-2 mt-2 p-1.5`) 
                               : colorStyles.border) 
                           : (currentTheme === 'developer' 
                               ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-2xl m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
                               : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] rounded-2xl m-0' : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
+                          ...(currentTheme === 'princess' ? { backgroundColor: hexTint(categoryColor, 0.16) } : {}), // opaque tone instead of border
                           ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),
                           ...(isPoppedOut ? { maxHeight: '160px', minHeight: '110px', overflow: 'hidden' } : {})
                         }}
@@ -3748,7 +3749,7 @@ const CodeTiara = () => {
                         <div
                           className={`${theme.category.header} ${popoutCategoryId ? 'pt-2 pb-1.5 shrink-0' : ''}
                             ${currentTheme === 'princess'
-                              ? (isMiniMode ? 'bg-transparent border-none px-3 py-1.5 rounded-t-[15px]' : colorStyles.border + ' border-b-2 border-dashed mx-[6px] mt-[6px] rounded-t-[15px]') // ✨ Mini Mode: Compact Header with Rounded Top
+                              ? (isMiniMode ? 'bg-transparent border-none px-3 py-1.5 rounded-t-[15px]' : 'bg-transparent border-none px-3 py-2 rounded-t-[15px]')
                               : (currentTheme === 'developer' ? 'bg-black/10 border-inherit' : '')}`}
                           style={{
                             ...(currentTheme === 'princess' ? { backgroundColor: headerBg } : {}),
@@ -3987,7 +3988,7 @@ const CodeTiara = () => {
                               } : {}}
                               className={`transition-all duration-300 w-full z-10 relative
                                    ${currentTheme === 'princess'
-                                ? `bg-gradient-to-br from-[var(--c-bg)] to-white border border-[var(--c-light-rgb)] shadow-[0_8px_25px_var(--c-bg)] flex flex-col backdrop-blur-sm ${isMiniMode ? 'p-2.5 gap-2 rounded-[18px]' : 'p-3.5 gap-3 rounded-[24px]'}`
+                                ? `bg-white shadow-[0_1px_3px_rgba(255,150,170,0.18)] flex flex-col ${isMiniMode ? 'p-2.5 gap-2 rounded-[12px]' : 'p-3.5 gap-3 rounded-[16px]'}`
                                 : (currentTheme === 'excel'
                                   ? 'bg-white border border-[#107C41] shadow-md p-0 grid gap-0'
                                   : 'bg-[#252526] border border-[#007ACC] shadow-2xl p-4 rounded-md font-mono')}`}
