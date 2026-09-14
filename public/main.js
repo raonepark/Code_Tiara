@@ -7,6 +7,15 @@ const { pathToFileURL } = require('url');
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const fs = require('fs');
 
+// Never let a broken stdout/stderr pipe (e.g. the terminal or parent process
+// that launched us went away) turn a console.log into an "Uncaught Exception:
+// write EPIPE" dialog. Logging is best-effort; the app must keep running.
+for (const stream of [process.stdout, process.stderr]) {
+    if (stream && typeof stream.on === 'function') {
+        stream.on('error', () => {});
+    }
+}
+
 // Basic dev detection.
 // Set CODE_TIARA_ENV=production to exercise the packaged-app code path
 // (build/ folder + http interception) from `electron .` without packaging.
