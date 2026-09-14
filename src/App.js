@@ -248,6 +248,16 @@ const CodeTiara = () => {
 
   const defaultTitle = 'Code Tiara';
 
+  // Builds before 1.7.6 shipped without the app.task_* / app.cat_* strings, so
+  // guests who started then have the raw keys ("app.task_plan") saved as task
+  // text / category labels. Translate those on load; the next save persists it.
+  const LEGACY_I18N_KEY = /^app\.(task_doc|task_grocery|task_plan|cat_important|cat_work|cat_personal)$/;
+  const translateLegacyKeys = (items, field) => (Array.isArray(items) ? items : []).map(item =>
+    (item && typeof item[field] === 'string' && LEGACY_I18N_KEY.test(item[field]))
+      ? { ...item, [field]: t(item[field]) }
+      : item
+  );
+
   // --- State 관리 ---
   const [categories, setCategories] = useState(() => {
     try {
@@ -754,12 +764,12 @@ const CodeTiara = () => {
         if (loadedCategories.length === 0) {
           loadedCategories = defaultCategories;
         }
-        setCategories(loadedCategories);
+        setCategories(translateLegacyKeys(loadedCategories, 'label'));
 
         if (loadedTasks.length === 0 && loadedCategories.length === defaultCategories.length) {
           loadedTasks = defaultTasks;
         }
-        setTasks(loadedTasks);
+        setTasks(translateLegacyKeys(loadedTasks, 'text'));
 
         console.log("Initial load complete for UID:", user.uid);
       } catch (err) {
@@ -767,8 +777,8 @@ const CodeTiara = () => {
         try {
           const savedCats = localStorage.getItem('lumora_categories');
           const savedTasks = localStorage.getItem('lumora_tasks');
-          setCategories(savedCats ? JSON.parse(savedCats) : defaultCategories);
-          setTasks(savedTasks ? JSON.parse(savedTasks) : defaultTasks);
+          setCategories(savedCats ? translateLegacyKeys(JSON.parse(savedCats), 'label') : defaultCategories);
+          setTasks(savedTasks ? translateLegacyKeys(JSON.parse(savedTasks), 'text') : defaultTasks);
         } catch (e) {
           setCategories(defaultCategories);
           setTasks(defaultTasks);
