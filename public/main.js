@@ -1,17 +1,25 @@
 const electron = require('electron');
-console.log('Electron require type:', typeof electron);
-console.log('Electron require value:', electron);
-console.log('Versions:', process.versions);
-const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session } = electron;
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session, protocol, net, shell } = electron;
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 // ✨ Optimize startup performance (especially for frameless/transparent windows on Windows boot)
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
-const http = require('http');
 const fs = require('fs');
 
-// Basic dev detection
-const isDev = !app.isPackaged;
+// Never let a broken stdout/stderr pipe (e.g. the terminal or parent process
+// that launched us went away) turn a console.log into an "Uncaught Exception:
+// write EPIPE" dialog. Logging is best-effort; the app must keep running.
+for (const stream of [process.stdout, process.stderr]) {
+    if (stream && typeof stream.on === 'function') {
+        stream.on('error', () => {});
+    }
+}
+
+// Basic dev detection.
+// Set CODE_TIARA_ENV=production to exercise the packaged-app code path
+// (build/ folder + http interception) from `electron .` without packaging.
+const isDev = !app.isPackaged && process.env.CODE_TIARA_ENV !== 'production';
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 
@@ -33,100 +41,46 @@ app.on('before-quit', () => {
     isQuitting = true;
 });
 
-// App icon for window headers/taskbar
+// App icon for window headers/taskbar.
+// macOS uses icon_mac.png: same artwork, but padded to Apple's template
+// (artwork = 824/1024 of the canvas). Without the ~10% transparent margin the
+// Dock icon renders noticeably larger than every other app's.
 const appIconPath = isWin
     ? path.join(__dirname, '../assets/icons/icon.ico')
-    : path.join(__dirname, '../assets/icon.png');
+    : path.join(__dirname, '../assets/icon_mac.png');
 
-let localServerPort = null;
-let localServer = null;
+// ✨ Production loader
+// Firebase Auth (signInWithPopup) refuses to run on file:// or custom-scheme
+// origins, so the packaged app must be served from an http(s) origin. Rather
+// than opening a real TCP port (which could already be taken → fallback port →
+// different origin → every localStorage/IndexedDB entry "disappears"), we
+// intercept the http scheme inside Electron and answer requests for APP_HOST
+// straight from the build/ folder. No socket is opened and the origin never
+// changes.
+const APP_HOST = '127.0.0.1:51283'; // must stay stable: localStorage/IndexedDB are keyed by origin
+const APP_ORIGIN = `http://${APP_HOST}`;
+const BUILD_DIR = path.join(__dirname, '..', 'build');
 
-function startLocalServer() {
-    return new Promise((resolve, reject) => {
-        const tryListen = (port) => {
-            localServer = http.createServer((req, res) => {
-                const parsedUrl = new URL(req.url, `http://localhost`);
-                let filePath = parsedUrl.pathname;
-                
-                if (filePath === '/') {
-                    filePath = '/index.html';
-                }
-                
-                const absolutePath = path.join(__dirname, '..', 'build', filePath);
-                
-                fs.access(absolutePath, fs.constants.F_OK, (err) => {
-                    if (err) {
-                        const indexPath = path.join(__dirname, '..', 'build', 'index.html');
-                        fs.readFile(indexPath, (readErr, content) => {
-                            if (readErr) {
-                                res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-                                res.end('Not Found');
-                            } else {
-                                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-                                res.end(content, 'utf-8');
-                            }
-                        });
-                        return;
-                    }
-                    
-                    fs.readFile(absolutePath, (readErr, content) => {
-                        if (readErr) {
-                            res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-                            res.end(`Internal Server Error: ${readErr.code}`);
-                            return;
-                        }
-                        
-                        const ext = path.extname(absolutePath).toLowerCase();
-                        let contentType = 'text/html';
-                        const mimeTypes = {
-                            '.html': 'text/html',
-                            '.js': 'text/javascript',
-                            '.css': 'text/css',
-                            '.json': 'application/json',
-                            '.png': 'image/png',
-                            '.jpg': 'image/jpeg',
-                            '.jpeg': 'image/jpeg',
-                            '.gif': 'image/gif',
-                            '.svg': 'image/svg+xml',
-                            '.wav': 'audio/wav',
-                            '.mp4': 'video/mp4',
-                            '.woff': 'font/woff',
-                            '.woff2': 'font/woff2',
-                            '.ttf': 'font/ttf',
-                            '.eot': 'application/vnd.ms-fontobject',
-                            '.otf': 'font/otf',
-                            '.wasm': 'application/wasm',
-                            '.ico': 'image/x-icon'
-                        };
-                        
-                        if (mimeTypes[ext]) {
-                            contentType = mimeTypes[ext];
-                        }
-                        
-                        res.writeHead(200, { 'Content-Type': contentType });
-                        res.end(content);
-                    });
-                });
-            });
-            
-            localServer.listen(port, '127.0.0.1', () => {
-                localServerPort = port;
-                console.log(`Production local server listening on http://127.0.0.1:${localServerPort}`);
-                resolve(localServerPort);
-            });
-            
-            localServer.on('error', (err) => {
-                if (err.code === 'EADDRINUSE' && port !== 0) {
-                    console.warn(`Port ${port} is in use, trying next port...`);
-                    tryListen(port + 1);
-                } else {
-                    console.error('Local server error:', err);
-                    reject(err);
-                }
-            });
-        };
-        
-        tryListen(51283); // Use a persistent high port (origin remains consistent)
+function registerAppProtocol() {
+    protocol.handle('http', (request) => {
+        const url = new URL(request.url);
+        if (url.host !== APP_HOST) {
+            // Not ours — let Chromium perform the request normally.
+            return net.fetch(request, { bypassCustomProtocolHandlers: true });
+        }
+
+        let filePath;
+        try {
+            filePath = path.normalize(path.join(BUILD_DIR, decodeURIComponent(url.pathname)));
+        } catch (e) {
+            filePath = '';
+        }
+        // Stay inside build/ and fall back to index.html for SPA routes / unknown paths.
+        const insideBuild = filePath.startsWith(BUILD_DIR + path.sep);
+        if (!insideBuild || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+            filePath = path.join(BUILD_DIR, 'index.html');
+        }
+        return net.fetch(pathToFileURL(filePath).toString());
     });
 }
 
@@ -136,8 +90,9 @@ function createWindow() {
         height: 600,
         useContentSize: true, // This is important for precise sizing
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true,
             backgroundThrottling: false // Prevent Chromium from throttling background timers when minimized/hidden
         },
         autoHideMenuBar: true,
@@ -156,7 +111,7 @@ function createWindow() {
 
     const startUrl = isDev
         ? 'http://localhost:3000'
-        : `http://127.0.0.1:${localServerPort}`;
+        : APP_ORIGIN;
 
     console.log('Loading URL:', startUrl);
     mainWindow.loadURL(startUrl);
@@ -362,8 +317,9 @@ function createWindow() {
             y: spawnY,
             useContentSize: true,
             webPreferences: {
-                nodeIntegration: true,
-                contextIsolation: false,
+                preload: path.join(__dirname, 'preload.js'),
+                nodeIntegration: false,
+                contextIsolation: true,
                 backgroundThrottling: false // Prevent Chromium from throttling background timers
             },
             autoHideMenuBar: true,
@@ -391,7 +347,7 @@ function createWindow() {
 
         const popoutUrl = isDev
             ? `http://localhost:3000/?popout=${categoryId}`
-            : `http://127.0.0.1:${localServerPort}/?popout=${categoryId}`;
+            : `${APP_ORIGIN}/?popout=${categoryId}`;
 
         console.log(`[Main Process] Loading URL for popout category ${categoryId}: ${popoutUrl}`);
         
@@ -466,6 +422,13 @@ function createWindow() {
                 popoutWindows[categoryId].setAlwaysOnTop(false);
             }
             console.log(`[Main Process] Enforced alwaysOnTop: ${shouldBeOnTop} for categoryId: ${categoryId} post-show`);
+        }
+    });
+
+    // ✨ Open http(s) links in the system browser (the renderer has no direct shell access)
+    ipcMain.on('open-external', (event, url) => {
+        if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+            shell.openExternal(url);
         }
     });
 
@@ -569,7 +532,7 @@ if (!gotTheLock) {
     app.whenReady().then(async () => {
         // Set macOS Dock Icon if available
         if (isMac && app.dock) {
-            const dockIconPath = path.join(__dirname, '../assets/icon.png');
+            const dockIconPath = path.join(__dirname, '../assets/icon_mac.png');
             if (fs.existsSync(dockIconPath)) {
                 app.dock.setIcon(dockIconPath);
             }
@@ -583,11 +546,7 @@ if (!gotTheLock) {
         }
         
         if (!isDev) {
-            try {
-                await startLocalServer();
-            } catch (err) {
-                console.error('Failed to start local production server:', err);
-            }
+            registerAppProtocol();
         }
         
         createWindow();
@@ -596,9 +555,6 @@ if (!gotTheLock) {
 }
 
 app.on('window-all-closed', () => {
-    if (localServer) {
-        localServer.close();
-    }
     if (!isMac) {
         app.quit();
     }

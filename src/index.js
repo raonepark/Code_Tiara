@@ -7,10 +7,8 @@ import './i18n';
 
 // Sync localStorage across Electron windows
 try {
-  const hasRequire = typeof window !== 'undefined' && typeof window.require === 'function';
-  const isElectron = hasRequire || (window.electron && window.electron.ipcRenderer);
-  if (isElectron) {
-    const ipc = hasRequire ? window.require('electron').ipcRenderer : window.electron.ipcRenderer;
+  const ipc = typeof window !== 'undefined' && window.electron ? window.electron.ipcRenderer : null;
+  if (ipc) {
 
     const originalSetItem = localStorage.setItem;
     const originalRemoveItem = localStorage.removeItem;

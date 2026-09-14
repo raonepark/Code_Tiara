@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, X, Sparkles, Layers, Clock, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Sparkles, Layers, Clock, BookOpen, Crown, Pin, Table2, Code2, Cloud } from 'lucide-react';
 
 const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
   const { t } = useTranslation();
@@ -13,7 +13,7 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
           <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF6B81] to-[#FFE4E1] shadow-md animate-float-slow will-change-transform">
-            <span className="text-4xl">👑</span>
+            <Crown className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.2} />
             <Sparkles className="absolute -top-1 -right-1 w-6 h-6 text-[#FFD700] animate-pulse" />
           </div>
           <p className="text-sm leading-relaxed px-4 opacity-90">
@@ -35,7 +35,7 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
               <div className="h-1.5 w-20 bg-amber-300 rounded-full"></div>
             </div>
             <div className="flex justify-between items-center text-[8px] text-amber-600 font-mono">
-              <span>📍 ALWAYS ON TOP</span>
+              <span className="flex items-center gap-0.5"><Pin className="w-2 h-2" />ALWAYS ON TOP</span>
               <Layers className="w-2.5 h-2.5" />
             </div>
           </div>
@@ -67,13 +67,13 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
         <div className="flex flex-col items-center justify-center text-center space-y-3">
           <div className="flex flex-nowrap justify-center gap-1.5 w-full px-2">
             <div className="py-1.5 px-2.5 rounded border border-[#FFC0CB] bg-[#FFF0F5] text-[10px] font-bold text-[#FF6B81] flex items-center justify-center gap-1 whitespace-nowrap">
-              <span>👑</span><span>Princess</span>
+              <Crown className="w-3 h-3" /><span>Princess</span>
             </div>
             <div className="py-1.5 px-2.5 rounded border border-[#D1D5DB] bg-[#F3F2F1] text-[10px] font-bold text-[#217346] flex items-center justify-center gap-1 whitespace-nowrap">
-              <span>📊</span><span>Excel</span>
+              <Table2 className="w-3 h-3" /><span>Excel</span>
             </div>
             <div className="py-1.5 px-2.5 rounded border border-[#3E3E42] bg-[#282C34] text-[10px] font-bold text-[#61AFEF] flex items-center justify-center gap-1 whitespace-nowrap">
-              <span>💻</span><span>Developer</span>
+              <Code2 className="w-3 h-3" /><span>Developer</span>
             </div>
           </div>
           <p className="text-sm leading-relaxed px-3 opacity-90">
@@ -88,7 +88,7 @@ const OnboardingPanel = ({ currentTheme, theme, user, onClose }) => {
       content: (
         <div className="flex flex-col items-center justify-center text-center space-y-4">
           <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#3E8BFF] to-[#DCEBFF] shadow-md animate-pulse will-change-transform">
-            <span className="text-4xl">☁️</span>
+            <Cloud className="w-10 h-10 text-white" strokeWidth={2.2} />
           </div>
           <p className="text-sm leading-relaxed px-3 opacity-90">
             {t('onboarding.desc5_1')}<strong>{t('onboarding.desc5_bold')}</strong>{t('onboarding.desc5_2')}

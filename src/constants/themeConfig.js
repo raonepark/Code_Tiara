@@ -2,7 +2,7 @@ export const THEME_CONFIG = {
     developer: {
         label: 'Developer',
         titleText: 'text-[#61AFEF]',
-        themeIcon: '💻',
+        themeIcon: 'code',
         themeBadge: 'bg-[#282C34] text-[#61AFEF] border border-[#3E3E42] !rounded-none',
         themeSelectorActive: 'bg-[#3E4451] border-2 border-[#61AFEF] text-white rounded-none shadow-lg scale-105',
         themeSelectorInactive: 'bg-[#282C34] border border-[#3E4451] text-[#ABB2BF] hover:border-[#61AFEF] rounded-none shadow-sm',
@@ -125,7 +125,7 @@ export const THEME_CONFIG = {
     princess: {
         label: 'Princess',
         titleText: 'text-[#FF6B81] font-[Gaegu]',
-        themeIcon: '👑',
+        themeIcon: 'crown',
         themeBadge: 'bg-pink-100 text-pink-500',
         themeSelectorActive: 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105',
         themeSelectorInactive: 'bg-white border border-[#FFC0CB] text-[#FF6B81] hover:border-[#F472B6] hover:bg-[#FFF0F5]/50 rounded-xl shadow-sm',
@@ -248,7 +248,7 @@ export const THEME_CONFIG = {
     excel: {
         label: 'Excel',
         titleText: 'text-[#217346]',
-        themeIcon: '📊',
+        themeIcon: 'table',
         themeBadge: 'bg-slate-100 text-slate-500',
         themeSelectorActive: 'bg-[#E6F2EA] border-2 border-[#107C41] text-[#107C41] rounded-none shadow-sm scale-105',
         themeSelectorInactive: 'bg-white border border-[#D1D5DB] text-[#217346] hover:border-[#107C41] hover:bg-[#F3F2F1] rounded-none shadow-sm',
