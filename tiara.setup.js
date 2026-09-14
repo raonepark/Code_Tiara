@@ -60,6 +60,6 @@ module.exports = {
                 path: "/Applications"
             }
         ],
-        artifactName: "${productName} ${version}.${ext}"
+        artifactName: "${productName}-${version}-${arch}.${ext}" // x64 and arm64 DMGs used to share one name and overwrite each other
     }
 };
