@@ -1294,18 +1294,20 @@ const CodeTiara = () => {
       if (tasksToAlert.length > 0) {
         // NB: the callback parameter used to be named `t`, shadowing the i18n `t`
         // and throwing on `t('app.reminder_title')` — due-time notifications never fired.
+        // Notification = task name as the title + a short due phrase as the message
+        // (the task name used to be quoted inside one long sentence that wrapped badly at 340px)
         const dueMessage = (task, offset) => {
-          if (offset === 0) return t('app.notif_due_now', { task: display(task.text) });
+          if (offset === 0) return t('app.notif_due_now');
           const when = offset === 1440 ? t('app.reminder_1d')
             : offset === 60 ? t('app.reminder_1h')
             : t('app.reminder_minutes_before', { minutes: offset });
-          return t('app.notif_due_in', { task: display(task.text), when });
+          return t('app.notif_due_in', { when });
         };
         const reminderOffset = (task) => (task.reminder ? Number(task.reminder) : 0);
 
         const newNotifs = tasksToAlert.map(task => ({
           id: Date.now() + Math.random(),
-          title: t(currentTheme === 'princess' ? 'app.notif_title_princess' : 'app.notif_title_default'),
+          title: display(task.text),
           message: dueMessage(task, reminderOffset(task)),
           time: formatTimeDisplay(currentTimeStr),
           read: false,
@@ -1316,7 +1318,7 @@ const CodeTiara = () => {
         // 시스템 알림 발생
         tasksToAlert.forEach(task => {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            new Notification('Code Tiara', { body: dueMessage(task, reminderOffset(task)), silent: false });
+            new Notification(display(task.text), { body: dueMessage(task, reminderOffset(task)), silent: false });
           }
         });
 
@@ -3105,10 +3107,10 @@ const CodeTiara = () => {
 
                 <div className={`px-3 py-2 flex justify-between items-center ${theme.notification.header}`}>
                   <span className={`font-bold opacity-70 ${currentTheme === 'excel' ? 'text-xs font-sans' : (currentTheme === 'developer' ? 'text-[10px] font-mono tracking-wider' : 'text-xs font-gamja')}`}>
-                    {currentTheme === 'princess' ? t('app.notif_title_princess') : t('app.notif_title_default')} ({unreadCount})
+                    <Bell className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />{currentTheme === 'princess' ? t('app.notif_title_princess') : t('app.notif_title_default')} ({unreadCount})
                   </span>
                   {unreadCount > 0 && (
-                    <button onClick={clearAllNotifications} className={`text-xs font-medium underline underline-offset-2 px-2 py-0.5 rounded transition-colors ${theme.notification.clearBtn}`}>
+                    <button onClick={clearAllNotifications} className={`text-xs font-medium px-2 py-0.5 rounded-md transition-colors ${theme.notification.clearBtn}`}>
                       {currentTheme === 'princess' ? t('app.clear_all_princess') : t('app.clear_all_default')}
                     </button>
                   )}
@@ -3136,14 +3138,14 @@ const CodeTiara = () => {
                         const isBreakNotif = n.title.includes('휴식') || n.title.includes('Break');
                         return (
                           <div key={n.id} className="p-3 border-b border-[#FFC0CB]/30 border-dashed hover:bg-[#FFF5F8]/50 flex gap-2.5 items-start group transition-colors">
-                            <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ring-4 shadow-sm animate-pulse
+                            <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ring-4 shadow-sm
                               ${isBreakNotif ? 'bg-[#FF8DA1] ring-[#FFD1DC]' : 'bg-[#FF6B81] ring-[#FFD1DC]'}`}></div>
-                            <div className="flex-1 font-gamja text-sm space-y-0.5">
-                              <p className={`font-black tracking-wide flex items-center gap-1.5 ${isBreakNotif ? 'text-[#FF8DA1]' : 'text-[#FF6B81]'}`}>
-                                {n.title}
-                                <span className="text-[10px] text-pink-400 font-normal">{n.time}</span>
+                            <div className="flex-1 min-w-0 font-gamja text-sm space-y-0.5">
+                              <p className={`font-black tracking-wide flex items-center justify-between gap-2 ${isBreakNotif ? 'text-[#FF8DA1]' : 'text-[#FF6B81]'}`}>
+                                <span className="truncate">{n.title}</span>
+                                <span className="text-[10px] text-pink-400 font-normal shrink-0">{n.time}</span>
                               </p>
-                              <p className="text-slate-600 font-bold text-xs">{n.message} 🧁</p>
+                              <p className="text-slate-500 font-medium text-[11px] leading-snug">{n.message}</p>
                             </div>
                             <button onClick={() => clearNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-pink-300 hover:text-[#FF6B81]">
                               <X className="w-3.5 h-3.5" />
