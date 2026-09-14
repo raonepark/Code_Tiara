@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { THEME_CONFIG } from '../constants/themeConfig';
 import packageJson from '../../package.json';
 
-const { ipcRenderer } = window.require ? window.require('electron') : {};
+const ipcRenderer = window.electron ? window.electron.ipcRenderer : null;
 
 const FONTS_LIST = [
     { id: 'default', labelKey: 'settings.font_default' },

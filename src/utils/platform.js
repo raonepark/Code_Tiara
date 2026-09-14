@@ -1,12 +1,12 @@
 /**
  * Platform Utilities for Code Tiara
- * Safe detection for both Electron Renderer (Node integration/IPC) and Browser/Web modes
+ * Safe detection for both Electron Renderer (via the preload bridge) and Browser/Web modes
  */
 
 export const isMac = (() => {
     if (typeof window !== 'undefined') {
-        if (window.process && window.process.platform) {
-            return window.process.platform === 'darwin';
+        if (window.electron && window.electron.platform) {
+            return window.electron.platform === 'darwin';
         }
         if (navigator && (navigator.platform || navigator.userAgent)) {
             const platform = navigator.platform || '';
@@ -19,8 +19,8 @@ export const isMac = (() => {
 
 export const isWin = (() => {
     if (typeof window !== 'undefined') {
-        if (window.process && window.process.platform) {
-            return window.process.platform === 'win32';
+        if (window.electron && window.electron.platform) {
+            return window.electron.platform === 'win32';
         }
         if (navigator && (navigator.platform || navigator.userAgent)) {
             const platform = navigator.platform || '';

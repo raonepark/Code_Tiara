@@ -6,22 +6,13 @@ const CustomTitleBar = ({ theme = 'princess' }) => {
     // Safe IPC Call wrapper
     const sendIPC = (channel) => {
         try {
-            // Attempt to load electron via window.require (Node Integration)
-            if (window.require) {
-                const { ipcRenderer } = window.require('electron');
-                ipcRenderer.send(channel);
-            }
-            // Fallback: Check if exposed via preload (future proofing)
-            else if (window.electron && window.electron.ipcRenderer) {
+            if (window.electron && window.electron.ipcRenderer) {
                 window.electron.ipcRenderer.send(channel);
-            }
-            else {
-                console.error('Code Tiara Error: Electron IPC is not available. window.require is undefined.');
-                alert('Electron IPC 연결 실패: 개발 모드에서는 window.require가 필요합니다.');
+            } else {
+                console.error('Code Tiara Error: Electron IPC is not available (preload bridge missing).');
             }
         } catch (error) {
             console.error('Code Tiara Error: Failed to send IPC message', error);
-            alert(`오류: ${error.message}`);
         }
     };
 

@@ -1027,14 +1027,7 @@ const CodeTiara = () => {
     window.addEventListener('storage', handleStorageChange);
 
     // ✨ Register IPC popout-closed listener
-    let ipc = null;
-    try {
-      if (window.require) {
-        ipc = window.require('electron').ipcRenderer;
-      } else if (window.electron && window.electron.ipcRenderer) {
-        ipc = window.electron.ipcRenderer;
-      }
-    } catch (e) {}
+    const ipc = window.electron && window.electron.ipcRenderer;
 
     const handlePopoutClosed = (event, closedId) => {
       setPoppedOutCategories(prev => {
@@ -1044,15 +1037,12 @@ const CodeTiara = () => {
       });
     };
 
-    if (ipc) {
-      ipc.on('popout-closed', handlePopoutClosed);
-    }
+    // ipc.on returns its own unsubscribe function
+    const unsubscribePopoutClosed = ipc ? ipc.on('popout-closed', handlePopoutClosed) : null;
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      if (ipc) {
-        ipc.removeListener('popout-closed', handlePopoutClosed);
-      }
+      if (unsubscribePopoutClosed) unsubscribePopoutClosed();
     };
   }, []);
 
@@ -2458,10 +2448,7 @@ const CodeTiara = () => {
   // ✨ Safe IPC Call wrapper
   const sendIPC = (channel, ...args) => {
     try {
-      if (window.require) {
-        const { ipcRenderer } = window.require('electron');
-        ipcRenderer.send(channel, ...args);
-      } else if (window.electron && window.electron.ipcRenderer) {
+      if (window.electron && window.electron.ipcRenderer) {
         window.electron.ipcRenderer.send(channel, ...args);
       } else {
         console.error('Electron IPC not available');
@@ -2984,7 +2971,7 @@ const CodeTiara = () => {
                       {/* Menu Items */}
                       <div className="flex flex-col py-1 relative z-10 bg-white">
                         <button
-                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
                           <span>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
@@ -3065,7 +3052,7 @@ const CodeTiara = () => {
 
                       <div className={`flex flex-col py-1 relative z-10 ${currentTheme === 'princess' ? 'bg-white' : ''}`}>
                         <button
-                          onClick={() => { sendIPC('toggle-mini-mode'); setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
                           <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? '🖥️' : '📱'}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}

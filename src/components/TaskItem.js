@@ -67,7 +67,7 @@ const getFontScaleMultiplier = (fontFamily, themeId, size) => {
 
 const openExternalLink = (url) => {
     try {
-        const { shell } = window.require ? window.require('electron') : {};
+        const shell = window.electron && window.electron.shell;
         if (shell) {
             shell.openExternal(url);
         } else {

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Code Tiara — Firestore security rules
+// All user data lives under users/{uid}. A signed-in user may only read or
+// write their own subtree. Everything else is denied.
+//
+// Deploy with:  firebase deploy --only firestore:rules
+// (or paste into Firebase Console → Firestore Database → Rules)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

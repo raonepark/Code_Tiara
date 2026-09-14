@@ -67,23 +67,14 @@ export default function AuthScreen({ currentTheme, onAuthSuccess, onThemeChange,
   const isComboValid = /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
 
   React.useEffect(() => {
-    let ipc = null;
-    try {
-      if (window.require) {
-        ipc = window.require('electron').ipcRenderer;
-      } else if (window.electron && window.electron.ipcRenderer) {
-        ipc = window.electron.ipcRenderer;
-      }
-    } catch (e) {}
+    const ipc = window.electron && window.electron.ipcRenderer;
 
     if (ipc) {
       const handlePopupClosed = () => {
         setLoading(false);
       };
-      ipc.on('auth-popup-closed', handlePopupClosed);
-      return () => {
-        ipc.removeListener('auth-popup-closed', handlePopupClosed);
-      };
+      // ipc.on returns its own unsubscribe function
+      return ipc.on('auth-popup-closed', handlePopupClosed);
     }
   }, []);
 

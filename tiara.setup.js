@@ -10,6 +10,7 @@ module.exports = {
     files: [
         "build/**/*",
         "public/main.js",
+        "public/preload.js",
         "package.json",
         "assets/**/*"
     ],
