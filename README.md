@@ -32,6 +32,16 @@ npm run build
 CODE_TIARA_ENV=production npx electron .
 ```
 
+## 단축키
+
+| 동작 | macOS | Windows |
+|---|---|---|
+| 어디서든 할 일 빠른 추가 (창 열기 + 입력창 포커스) | `⌘ ⇧ Space` | `Ctrl + Shift + Space` |
+| 추가/수정 폼 저장 · 취소 | `Enter` · `Esc` | `Enter` · `Esc` |
+| 설정 패널 닫기 | `Esc` | `Esc` |
+
+전역 단축키는 설정 → "빠른 추가 단축키"에서 끌 수 있습니다.
+
 ## 구조
 
 ```

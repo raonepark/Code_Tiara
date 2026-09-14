@@ -11,6 +11,34 @@ import packageJson from '../../package.json';
 const THEME_ICONS = { crown: Crown, code: Code2, table: Table2 };
 const ThemeIcon = ({ name, className }) => { const Icon = THEME_ICONS[name] || Crown; return <Icon className={className} />; };
 
+// Theme-aware on/off switch (same look as the auto-launch toggle)
+const ToggleSwitch = ({ on, onChange, currentTheme, label }) => (
+    <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
+        onClick={() => onChange(!on)}
+        className={`relative inline-flex items-center flex-shrink-0 cursor-pointer transition-all duration-200 ease-in-out focus:outline-none ${
+            currentTheme === 'princess'
+                ? `h-5 w-9 rounded-full border border-transparent ${on ? 'bg-[#FF6B81] shadow-[0_2px_6px_rgba(255,107,129,0.3)]' : 'bg-pink-100/80 border-pink-200'}`
+                : currentTheme === 'excel'
+                ? `h-5 w-9 rounded-none border ${on ? 'bg-[#107C41] border-[#107C41]' : 'bg-white border-[#A19F9D] hover:border-[#605E5C]'}`
+                : `h-5.5 w-10 rounded-sm border ${on ? 'bg-[#E5C07B] border-[#E5C07B]' : 'bg-[#1E1E1E] border-[#3E3E42] hover:border-[#5C6370]'}`
+        }`}
+    >
+        <span
+            className={`pointer-events-none inline-block transform transition duration-200 ease-in-out ${
+                currentTheme === 'princess'
+                    ? `h-4 w-4 rounded-full bg-white shadow-[0_1px_3px_rgba(255,107,129,0.2)] ${on ? 'translate-x-[16px]' : 'translate-x-0.5'}`
+                    : currentTheme === 'excel'
+                    ? `h-3.5 w-3.5 rounded-none ${on ? 'bg-white translate-x-[18px]' : 'bg-[#605E5C] translate-x-0.5'}`
+                    : `h-3.5 w-3.5 rounded-sm ${on ? 'bg-[#282C34] translate-x-[22px]' : 'bg-[#ABB2BF] translate-x-0.5'}`
+            }`}
+        />
+    </button>
+);
+
 const ipcRenderer = window.electron ? window.electron.ipcRenderer : null;
 
 const FONTS_LIST = [
@@ -44,6 +72,23 @@ const SettingsPanel = ({
     const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const nameInputRef = useRef(null);
     const [isAutoLaunch, setIsAutoLaunch] = useState(false);
+    const [quickAdd, setQuickAdd] = useState(null); // { enabled, registered, accelerator } from the main process
+
+    useEffect(() => {
+        if (ipcRenderer && isOpen) {
+            ipcRenderer.invoke('get-quick-add-shortcut')
+                .then(setQuickAdd)
+                .catch((err) => console.error("Failed to load quick-add shortcut setting:", err));
+        }
+    }, [isOpen]);
+
+    const handleQuickAddChange = (enabled) => {
+        if (!ipcRenderer) return;
+        ipcRenderer.invoke('set-quick-add-shortcut', { enabled })
+            .then(setQuickAdd)
+            .catch((err) => console.error("Failed to update quick-add shortcut:", err));
+    };
+    const quickAddKeys = (window.electron && window.electron.platform === 'darwin') ? '⌘ ⇧ Space' : 'Ctrl + Shift + Space';
 
     useEffect(() => {
         if (ipcRenderer && isOpen) {
@@ -285,6 +330,23 @@ const SettingsPanel = ({
                             )}
                         </div>
                     </div>
+                    {/* Global quick-add shortcut */}
+                    {ipcRenderer && quickAdd && (
+                        <div className={`pt-3 border-t ${theme.divider} mt-4`}>
+                            <div className="flex justify-between items-center ml-1 gap-3">
+                                <div className="min-w-0">
+                                    <span className={`text-xs font-bold ${theme.settings.sectionTitle} !mb-0 flex items-center`}>
+                                        {t('settings.quickAdd')}
+                                    </span>
+                                    <p className="text-[11px] opacity-70 mt-0.5">{t('settings.quickAdd_desc', { keys: quickAddKeys })}</p>
+                                    {quickAdd.enabled && !quickAdd.registered && (
+                                        <p className="text-[11px] mt-0.5 text-red-400">{t('settings.quickAdd_conflict')}</p>
+                                    )}
+                                </div>
+                                <ToggleSwitch on={quickAdd.enabled} onChange={handleQuickAddChange} currentTheme={currentTheme} label={t('settings.quickAdd')} />
+                            </div>
+                        </div>
+                    )}
                     {/* Auto Launch Setting */}
                     {ipcRenderer && (
                         <div className={`pt-3 border-t ${theme.divider} mt-4`}>

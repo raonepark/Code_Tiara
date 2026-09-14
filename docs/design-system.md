@@ -176,6 +176,12 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 - 접혀 있을 때 `inert` — 보이지 않는 인풋에 Tab 포커스가 가면 안 된다.
 - 단축키: Enter 저장, Esc 취소. 버튼 라벨은 테마별(Princess 아이콘 / Developer `[ENTER]` `[ESC]` / Excel 텍스트) — 텍스트는 반드시 `t()`.
 
+### 전역 단축키 빠른 추가
+- `⌘⇧Space`(macOS) / `Ctrl+Shift+Space`(Windows) — 어떤 앱에 있든 창을 앞으로 가져와 **첫 번째 카테고리의 추가 폼**을 열고 인풋에 포커스. 메인 프로세스 `globalShortcut` → IPC `quick-add`.
+- 기본 켜짐. 설정 → "빠른 추가 단축키" 토글로 끔. 설정값은 메인 프로세스가 `userData/quick-add-shortcut.json`에 보관해 렌더러 로드 전에도 적용된다.
+- 다른 앱이 같은 조합을 쓰면 등록이 실패한다 → 설정에 빨간 안내 문구. 조합 변경(레코딩) UI는 아직 없음.
+- 모바일 대응: 홈 화면 위젯 / 앱 아이콘 롱프레스 퀵 액션 "할 일 추가".
+
 ### 메뉴 (톱니 → 드롭다운)
 - 항목: 전체/미니 모드 · 타이머 · 완료 항목 정리 · 전체 설정. lucide 아이콘 + 라벨.
 - 설정 패널은 Esc로 닫힌다. 새 오버레이도 모두 Esc 닫기 지원.
@@ -241,7 +247,7 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 
 ## 14. 엔지니어링 규칙 (요약 — 상세는 `AGENTS.md`, `README.md`)
 
-- 렌더러는 `contextIsolation: true`, `nodeIntegration: false`. Electron API는 `public/preload.js`의 `window.electron`만. **채널 allow-list**에 없는 IPC는 차단된다 — 채널 추가 시 `main.js` 핸들러 + `preload.js` 목록 둘 다 갱신.
+- 렌더러는 `contextIsolation: true`, `nodeIntegration: false`. 채널 목록(2026-09-14): send — 창 제어 3, 저장소 동기화 2, 팝아웃 6, `set-auto-launch`, `open-external` · invoke — `get-auto-launch`, `get/set-quick-add-shortcut` · receive — `auth-popup-closed`, `storage-changed`, `storage-clear`, `popout-closed`, `quick-add`. Electron API는 `public/preload.js`의 `window.electron`만. **채널 allow-list**에 없는 IPC는 차단된다 — 채널 추가 시 `main.js` 핸들러 + `preload.js` 목록 둘 다 갱신.
 - 프로덕션 origin `http://127.0.0.1:51283`은 **절대 바꾸지 않는다** (localStorage/IndexedDB가 묶여 있음).
 - 테마 스타일은 `src/constants/themeConfig.js`에 모으고, 컴포넌트에서는 `theme.*` 토큰을 쓴다. 새 테마 = 이 파일에 객체 추가 + `themeIcon`(lucide 이름) + 온보딩 칩.
 - 카테고리 색은 §3-2의 표와 `hexToRgba`로만 파생. 카드 배경은 항상 불투명.
@@ -273,5 +279,6 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-14 | 예시 데이터는 **키로 저장, 렌더 시 번역** (`displaySampleText`), 옛 데이터는 로드 시 키로 정규화 | 처음엔 로드 시 번역해 저장했더니 감지된 언어(영어)로 굳어 한국어 UI에 영어 예시가 남음. 렌더 시 번역이면 언어를 바꿀 때 예시도 따라감 — 사용자 요청 |
 | 2026-09-14 | 테마 폰트 3종(Pretendard·Gamja Flower·Gaegu) 로컬 번들, 슬라이스 방식 | 오프라인 첫 실행 시 폰트 누락·CDN 의존 제거. TTF 원본은 12MB(Gamja)라 Google Fonts 슬라이스(합 2.1MB)를 그대로 호스팅. 총 +4.8MB |
 | 2026-09-14 | Developer 테마의 터미널 흉내 장식 제거 (`#`, `>_`, `>`, 대괄호 라벨, `// version`, `FOCUS_TIMER.sh`, Console Active) | 2019~21년 "개발자 다크모드" 트렌드의 장식이 기능을 방해하고 오래된 인상을 줌. 대괄호 라벨은 i18n도 우회했음. 팔레트·모노스페이스·직각은 테마 정체성이라 유지 |
+| 2026-09-14 | 전역 단축키 `Cmd/Ctrl+Shift+Space` 빠른 추가 (기본 켜짐, 설정에서 끄기) | "항상 옆에 있는 앱"인데 할 일을 넣으려면 창을 찾아 클릭해야 했음. 사용자 요청. `Cmd+Space`(Spotlight)·`Ctrl+Cmd+Space`(이모지)와 겹치지 않는 조합 |
 | 2026-09-14 | 마감 알림 문구 i18n 키로 이동 + `t` 가림 버그 수정 | `tasksToAlert.map(t => …)` 안에서 `t('app.reminder_title')`이 할 일 객체를 호출해 예외 → 알림이 전혀 생성되지 않았음. 문구(`마감 시간입니다`, `하루 전` 등)도 하드코딩이었음 |
 | 2026-09-14 | 행 클릭=완료 토글은 유지 | 다시 클릭하면 복귀하므로 실행 취소가 이미 있는 셈. 모바일만 체크 전용 권장 |
