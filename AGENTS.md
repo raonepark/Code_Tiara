@@ -15,6 +15,7 @@
 | `src/constants.js` | 카테고리 색표, `hexToRgba`, 날짜 유틸 |
 | `src/locales/ko.json` `en.json` | 모든 문자열. 두 파일 동시 수정 |
 | `assets/` | 아이콘. macOS는 `icon_mac.png`(여백 패딩) → `icons/icon.icns` |
+| `public/fonts/` | 번들 웹폰트(Pretendard, Gamja Flower, Gaegu) + `fonts.css` + 라이선스. 규칙은 design-system §4 |
 | `firestore.rules` | `users/{uid}` 본인만 읽기/쓰기 |
 | `docs/design-system.md` | 디자인 시스템 · 결정 로그 |
 
@@ -58,4 +59,4 @@ CODE_TIARA_ENV=production npx electron . --user-data-dir=/tmp/ct-smoke   # 실�
 
 ## 알려진 후속 과제
 
-Electron 33→44 · CRA→Vite · `App.js` 분리 · CSP · Pretendard 로컬 번들 · macOS 서명/공증 · 행 클릭=완료 UX 재검토.
+Electron 33→44 · CRA→Vite · `App.js` 분리 · CSP · macOS 서명/공증 · 행 클릭=완료 UX 재검토.
