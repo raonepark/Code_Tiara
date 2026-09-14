@@ -113,8 +113,8 @@ const SettingsPanel = ({
                             onClick={onClose}
                             className={`flex items-center gap-1 text-xs px-3 py-1.5 transition-all shadow-sm font-bold ${theme.buttons.closeBtn}`}
                         >
-                            {currentTheme === 'developer' ? '[ESC]' : <X className="w-3.5 h-3.5" />}
-                            {currentTheme === 'developer' ? '' : t('settings.close')}
+                            <X className="w-3.5 h-3.5" />
+                            {t('settings.close')}
                         </button>
 
                     </div>
@@ -493,7 +493,7 @@ const SettingsPanel = ({
                                                             onClick={() => setConfirmingCategoryDeleteId(cat.id)}
                                                             className={`w-6 h-6 flex items-center justify-center transition-all shadow-sm ${theme.settings.listRow.deleteBtn} ${currentTheme === 'developer' ? 'w-auto px-2 text-[10px] font-bold hover:text-[#E06C75]' : (currentTheme === 'excel' ? 'rounded-none' : 'rounded-full')}`}
                                                         >
-                                                            {currentTheme === 'developer' ? '[DEL]' : <Trash2 className="w-3.5 h-3.5" />}
+                                                            {<Trash2 className="w-3.5 h-3.5" />}
                                                         </button>
                                                     )}
                                                 </div>
@@ -577,7 +577,7 @@ const SettingsPanel = ({
             <div className={`text-center mt-5 text-[10px] opacity-40 select-none ${
                 currentTheme === 'developer' ? 'font-mono' : currentTheme === 'princess' ? 'font-gamja font-bold' : 'font-sans'
             }`}>
-                {currentTheme === 'developer' ? `// version ${packageJson.version}` : `${t('settings.version')} ${packageJson.version}`}
+                {`${t('settings.version')} ${packageJson.version}`}
             </div>
 
 
