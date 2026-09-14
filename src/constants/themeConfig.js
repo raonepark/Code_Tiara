@@ -24,7 +24,7 @@ export const THEME_CONFIG = {
             variant: 'list',
             container: 'mb-4',
             header: 'flex items-center gap-2 mb-2 px-2 py-1 border-b border-[#3E3E42]',
-            title: 'text-sm font-bold capitalize before:content-[">_"] before:mr-2 before:text-[#61AFEF]',
+            title: 'text-sm font-bold capitalize',
             taskItem: 'group flex items-center gap-3 p-3 text-sm bg-[#2D2D2D] hover:bg-[#32363D] transition-colors mb-1 border-l-4',
             actionButton: {
                 wrapper: 'flex items-center gap-1',
@@ -35,7 +35,7 @@ export const THEME_CONFIG = {
         settings: {
             bg: 'bg-[#282C34]',
             wrapper: 'rounded border border-[#3E3E42] bg-[#21252B] p-4 text-[#ABB2BF] font-mono',
-            header: 'border-b border-[#3E3E42] pb-2 mb-3 text-[#61AFEF] font-bold uppercase text-xs tracking-wider flex items-center gap-2 before:content-["#"]',
+            header: 'border-b border-[#3E3E42] pb-2 mb-3 text-[#61AFEF] font-bold uppercase text-xs tracking-wider flex items-center gap-2',
             input: 'bg-[#1E1E1E] border border-[#3E3E42] text-[#ABB2BF] focus:outline-none focus:border-[#61AFEF] placeholder-[#5C6370] rounded-none px-3 py-2 text-sm',
             sectionTitle: 'text-[#E06C75] text-xs font-bold uppercase tracking-wider',
             button: { default: 'bg-[#404E67] border border-[#3E3E42] hover:bg-[#4B5E7B] text-white rounded-none px-4 py-2 text-xs font-bold transition-colors' },

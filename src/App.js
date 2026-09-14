@@ -2642,7 +2642,7 @@ const CodeTiara = () => {
                             ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
                             : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded'))}`}
                   >
-                    {isAuthTheme ? t('app.confirm') : (currentTheme === 'developer' ? '[OK]' : t('app.confirm'))}
+                    {t('app.confirm')}
                   </button>
                 </div>
               </div>
@@ -2775,7 +2775,7 @@ const CodeTiara = () => {
                 ) : currentTheme === 'excel' ? (
                   <><Table2 className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />FOCUS TIMER (Sheet1)</>
                 ) : (
-                  <><span className="text-[#98C379]">&gt;_</span> FOCUS_TIMER.sh</>
+                  <><Timer className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />{t('app.focus_timer_title')}</>
                 )}
               </span>
               <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' }}>
@@ -3127,7 +3127,6 @@ const CodeTiara = () => {
                       if (currentTheme === 'developer') {
                         return (
                           <div key={n.id} className="p-2.5 border-b border-[#3E3E42] hover:bg-[#2C313C]/35 flex gap-2 items-start group transition-colors">
-                            <span className="text-[#98C379] mt-0.5 text-xs select-none">{'>'}</span>
                             <div className="flex-1 font-mono text-[11px] leading-relaxed">
                               <span className="text-[#5C6370]">{n.time}</span>{' '}
                               <span className="text-[#61AFEF] font-bold">{n.title}</span>
@@ -4009,7 +4008,6 @@ const CodeTiara = () => {
                           >
                             {/* Input Area */}
                             <div className={`flex w-full ${currentTheme === 'excel' ? 'bg-[#F3F2F1] p-2' : 'relative'}`}>
-                              {currentTheme === 'developer' && <span className="absolute left-2 top-1.5 text-[#569CD6] mr-2 text-xs">{'>'}</span>}
                               <input
                                 type="text"
                                 value={newTaskText}
@@ -4020,7 +4018,7 @@ const CodeTiara = () => {
                                     ? `bg-white border border-[var(--c-light)] text-slate-700 placeholder-[var(--c-dark)] focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-bold ${isMiniMode ? 'text-[12px] p-1.5 px-2.5 rounded-[12px]' : 'text-[13px] p-2 px-3.5 rounded-[16px]'}`
                                     : (currentTheme === 'excel'
                                       ? 'text-sm p-2 font-sans text-slate-800 border border-[#D1D1D1] bg-white focus:border-[#217346]'
-                                      : 'text-sm p-1.5 pl-4 bg-[#3C3C3C] text-[#D4D4D4] placeholder-[#5C6370] font-mono border border-[#3E3E42] focus:border-[#007ACC]')}`}
+                                      : 'text-sm p-1.5 px-2 bg-[#3C3C3C] text-[#D4D4D4] placeholder-[#5C6370] font-mono border border-[#3E3E42] focus:border-[#007ACC]')}`}
                                 autoFocus
                               />
                             </div>
@@ -4134,7 +4132,7 @@ const CodeTiara = () => {
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-white border border-[#D1D1D1] hover:bg-slate-100 text-xs text-slate-700' : 'w-full sm:w-auto text-[#ABB2BF] text-xs hover:bg-[#3E3E42] px-3 py-1 rounded')}`}
                                   title={t('app.cancel')}
                                 >
-                                  {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? '[ESC]' : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
+                                  {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? t('app.cancel') : <X className={`w-4 h-4 ${currentTheme === 'princess' ? 'stroke-[3px]' : ''}`} />)}
                                 </button>
                                 {/* Submit */}
                                 <button
@@ -4145,7 +4143,7 @@ const CodeTiara = () => {
                                       : (currentTheme === 'excel' ? 'w-full sm:w-auto px-4 py-1 bg-[#107C41] text-white hover:bg-[#0E6032] text-xs font-bold border border-[#107C41]' : 'w-full sm:w-auto bg-[#007ACC] text-white text-xs hover:bg-[#0062A3] px-3 py-1 rounded')}`}
                                   title={t('app.tooltip_add')}
                                 >
-                                  {currentTheme === 'excel' ? t('app.add') : (currentTheme === 'developer' ? '[ENTER]' : <Check className="w-4 h-4 stroke-[2.5px]" />)}
+                                  {currentTheme === 'excel' ? t('app.add') : (currentTheme === 'developer' ? t('app.add') : <Check className="w-4 h-4 stroke-[2.5px]" />)}
                                 </button>
                               </div>
                             </div>
@@ -4228,7 +4226,7 @@ const CodeTiara = () => {
                     : (currentTheme === 'excel' ? 'bg-[#217346] text-white border-t-4 border-[#107C41]' : 'border-slate-800 bg-slate-900/50') // ✨ Excel Status Bar
                   )} text-center shrink-0`}>
                   <p className={`text-[9px] font-mono ${currentTheme === 'princess' ? 'text-[#F472B6] font-bold tracking-widest' : (currentTheme === 'excel' ? 'text-white font-sans text-left px-2 font-bold' : 'text-slate-600')}`}>
-                    {currentTheme === 'princess' ? 'Code Tiara 💖 (Created by Lumora)' : (currentTheme === 'excel' ? 'Ready' : 'Code Tiara (Console Active)')}
+                    {currentTheme === 'princess' ? 'Code Tiara 💖 (Created by Lumora)' : (currentTheme === 'excel' ? 'Ready' : 'Code Tiara')}
                   </p>
                 </div>
               )
@@ -4559,7 +4557,7 @@ const CodeTiara = () => {
                             ? 'px-6 py-1 bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] text-xs shadow-sm'
                             : 'px-4 py-2 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/50 hover:bg-[#E06C75]/20 text-xs rounded'))}`}
                   >
-                    {isAuthTheme ? t('app.confirm') : (currentTheme === 'developer' ? '[OK]' : t('app.confirm'))}
+                    {t('app.confirm')}
                   </button>
                 </div>
               </div>
