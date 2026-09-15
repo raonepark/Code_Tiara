@@ -455,7 +455,6 @@ const CodeTiara = () => {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [wasMiniModeBeforeSettings, setWasMiniModeBeforeSettings] = useState(false);
 
   // UI 상태 관리
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -2301,10 +2300,6 @@ const CodeTiara = () => {
 
   const closeSettings = () => {
     setIsSettingsOpen(false);
-    if (wasMiniModeBeforeSettings) {
-      setIsMiniMode(true);
-      setWasMiniModeBeforeSettings(false);
-    }
   };
 
   const handleMenuTimerClick = () => {
@@ -3027,10 +3022,6 @@ const CodeTiara = () => {
                         <div className="h-px bg-[#FFC0CB]/30 mx-2 my-0.5"></div>
                         <button
                           onClick={() => {
-                            setWasMiniModeBeforeSettings(isMiniMode);
-                            if (isMiniMode) {
-                              setIsMiniMode(false);
-                            }
                             setIsSettingsOpen(true);
                             setIsMenuOpen(false);
                           }}
@@ -3108,10 +3099,6 @@ const CodeTiara = () => {
                         <div className={`h-px mx-2 my-0.5 ${currentTheme === 'princess' ? 'bg-pink-100' : (currentTheme === 'excel' ? 'bg-[#E1E1E1]' : 'bg-current opacity-10')}`}></div>
                         <button
                           onClick={() => {
-                            setWasMiniModeBeforeSettings(isMiniMode);
-                            if (isMiniMode) {
-                              setIsMiniMode(false);
-                            }
                             setIsSettingsOpen(true);
                             setIsMenuOpen(false);
                           }}
@@ -3211,9 +3198,9 @@ const CodeTiara = () => {
 
 
         {/* --- SETTINGS MODE (Compact) with Custom Scrollbar --- */}
-        {isSettingsOpen && !isMiniMode ? (
+        {isSettingsOpen ? (
           <SettingsPanel
-            isOpen={isSettingsOpen && !isMiniMode}
+            isOpen={isSettingsOpen}
             onClose={closeSettings}
             currentTheme={currentTheme}
             setCurrentTheme={setCurrentTheme}

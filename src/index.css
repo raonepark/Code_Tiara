@@ -37,23 +37,57 @@ code {
     -webkit-text-stroke: 0.25px currentColor;
 }
 
-/* 🌟 Premium Custom Scrollbar */
+/* 🌟 Custom Scrollbar - Option A: Pink Jelly Capsule (5px, fully rounded, theme-responsive) */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
 }
+
 ::-webkit-scrollbar-track {
     background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-    background: rgba(150, 150, 150, 0.3);
-    border-radius: 10px;
+    background: rgba(255, 107, 129, 0.35);
+    border-radius: 9999px;
+    transition: background 0.2s ease-in-out;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(150, 150, 150, 0.5);
+    background: rgba(255, 107, 129, 0.7);
 }
-/* For Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(150, 150, 150, 0.3) transparent;
+
+::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 107, 129, 0.9);
+}
+
+/* Theme-specific scrollbar thumb colors */
+.theme-princess ::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 129, 0.35);
+}
+.theme-princess ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 129, 0.7);
+}
+.theme-princess ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 107, 129, 0.9);
+}
+
+.theme-developer ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+.theme-developer ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.45);
+}
+.theme-developer ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.theme-excel ::-webkit-scrollbar-thumb {
+    background: rgba(16, 124, 65, 0.35);
+}
+.theme-excel ::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 124, 65, 0.65);
+}
+.theme-excel ::-webkit-scrollbar-thumb:active {
+    background: rgba(16, 124, 65, 0.85);
 }

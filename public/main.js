@@ -310,6 +310,11 @@ function createWindow() {
             if (mainWindow.isMaximized()) {
                 mainWindow.unmaximize();
             } else {
+                const b = mainWindow.getBounds();
+                const d = screen.getDisplayMatching(b);
+                if (d && (b.width < d.workArea.width - 20 || b.height < d.workArea.height - 20)) {
+                    normalBounds = { width: Math.max(280, b.width), height: Math.max(420, b.height) };
+                }
                 mainWindow.maximize();
             }
         }
