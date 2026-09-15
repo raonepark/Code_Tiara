@@ -198,15 +198,16 @@ function createWindow() {
         }
     });
 
-    // ✨ Fix: Track normal bounds to restore correctly when dragged from maximized state
-    let normalBounds = { width: 320, height: 560 };
+    // ✨ Fix: Track normal bounds accurately across dual monitors to restore correctly from maximized state
+    let normalBounds = { width: 340, height: 600 };
 
     mainWindow.on('resize', () => {
         if (mainWindow && !mainWindow.isMaximized() && !mainWindow.isMinimized()) {
             const bounds = mainWindow.getBounds();
-            // Only save if it's a normal size (not fullscreen/snapped bounds which are huge)
-            if (bounds.width < screen.getPrimaryDisplay().workAreaSize.width) {
-                normalBounds = { width: bounds.width, height: bounds.height };
+            const currentDisplay = screen.getDisplayMatching(bounds);
+            // Only save if it's a normal size (not fullscreen/snapped bounds which take whole work area)
+            if (currentDisplay && (bounds.width < currentDisplay.workArea.width - 20 || bounds.height < currentDisplay.workArea.height - 20)) {
+                normalBounds = { width: Math.max(280, bounds.width), height: Math.max(420, bounds.height) };
             }
         }
     });
@@ -214,12 +215,29 @@ function createWindow() {
     mainWindow.on('unmaximize', () => {
         if (mainWindow) {
             const currentBounds = mainWindow.getBounds();
-            mainWindow.setBounds({
-                x: currentBounds.x,
-                y: currentBounds.y,
-                width: normalBounds.width,
-                height: normalBounds.height
-            });
+            const currentDisplay = screen.getDisplayMatching(currentBounds);
+            if (currentDisplay) {
+                const restoreW = Math.min(normalBounds.width, currentDisplay.workArea.width);
+                const restoreH = Math.min(normalBounds.height, currentDisplay.workArea.height);
+
+                let restoreX = currentBounds.x;
+                let restoreY = currentBounds.y;
+                if (restoreX + restoreW > currentDisplay.workArea.x + currentDisplay.workArea.width) {
+                    restoreX = currentDisplay.workArea.x + currentDisplay.workArea.width - restoreW;
+                }
+                if (restoreY + restoreH > currentDisplay.workArea.y + currentDisplay.workArea.height) {
+                    restoreY = currentDisplay.workArea.y + currentDisplay.workArea.height - restoreH;
+                }
+                restoreX = Math.max(restoreX, currentDisplay.workArea.x);
+                restoreY = Math.max(restoreY, currentDisplay.workArea.y);
+
+                mainWindow.setBounds({
+                    x: restoreX,
+                    y: restoreY,
+                    width: restoreW,
+                    height: restoreH
+                });
+            }
         }
         
         // Restore always-on-top when unmaximized
@@ -293,6 +311,35 @@ function createWindow() {
                 mainWindow.unmaximize();
             } else {
                 mainWindow.maximize();
+            }
+        }
+    });
+
+    // ✨ IPC Handler to set main window size (e.g. toggle full mode / mini mode)
+    ipcMain.on('set-window-size', (event, { width, height }) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            if (mainWindow.isMaximized()) {
+                mainWindow.unmaximize();
+            }
+            const currentBounds = mainWindow.getBounds();
+            const currentDisplay = screen.getDisplayMatching(currentBounds);
+            if (currentDisplay) {
+                const targetW = Math.max(280, Math.min(width, currentDisplay.workArea.width));
+                const targetH = Math.max(420, Math.min(height, currentDisplay.workArea.height));
+
+                let newX = currentBounds.x;
+                let newY = currentBounds.y;
+                if (newX + targetW > currentDisplay.workArea.x + currentDisplay.workArea.width) {
+                    newX = currentDisplay.workArea.x + currentDisplay.workArea.width - targetW;
+                }
+                if (newY + targetH > currentDisplay.workArea.y + currentDisplay.workArea.height) {
+                    newY = currentDisplay.workArea.y + currentDisplay.workArea.height - targetH;
+                }
+                newX = Math.max(newX, currentDisplay.workArea.x);
+                newY = Math.max(newY, currentDisplay.workArea.y);
+
+                normalBounds = { width: targetW, height: targetH };
+                mainWindow.setBounds({ x: newX, y: newY, width: targetW, height: targetH }, true);
             }
         }
     });

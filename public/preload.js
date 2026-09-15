@@ -5,7 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Renderer → main, fire-and-forget. Must match the ipcMain.on handlers in main.js.
 const SEND_CHANNELS = new Set([
-    'minimize-window', 'maximize-window', 'close-window',
+    'minimize-window', 'maximize-window', 'close-window', 'set-window-size',
     'storage-changed', 'storage-clear',
     'open-popout', 'close-popout', 'close-popout-by-id',
     'set-always-on-top', 'resize-popout-window', 'show-popout-window',

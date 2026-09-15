@@ -2165,15 +2165,30 @@ const CodeTiara = () => {
     }
   }, [taskToDelete, categoryToDelete, confirmingDeleteId, confirmingCategoryDeleteId, editingTaskId]);
 
-  // ✨ Sync isMiniMode state with window size in real-time
+  // ✨ Sync isMiniMode state with window size with debouncing (prevents DPI flicker when moving across monitors)
   useEffect(() => {
+    let resizeTimer = null;
     const handleResize = () => {
-      setIsMiniMode(window.innerWidth < 450);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setIsMiniMode(window.innerWidth < 450);
+      }, 100);
     };
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initialize immediately
-    return () => window.removeEventListener('resize', handleResize);
+    setIsMiniMode(window.innerWidth < 450);
+    return () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
+
+  const handleToggleMiniMode = () => {
+    const nextMiniMode = !isMiniMode;
+    setIsMiniMode(nextMiniMode);
+    sendIPC('set-window-size', nextMiniMode ? { width: 340, height: 600 } : { width: 900, height: 650 });
+    setIsMenuOpen(false);
+    setIsSettingsOpen(false);
+  };
 
 
 
@@ -2992,7 +3007,7 @@ const CodeTiara = () => {
                       {/* Menu Items */}
                       <div className="flex flex-col py-1 relative z-10 bg-white">
                         <button
-                          onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={handleToggleMiniMode}
                           className="px-3 py-2 text-xs font-bold hover:bg-[#FFF0F5] hover:text-[#FF6B81] text-left flex items-center gap-2 transition-colors"
                         >
                           <span>{isMiniMode ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
@@ -3073,7 +3088,7 @@ const CodeTiara = () => {
 
                       <div className={`flex flex-col py-1 relative z-10 ${currentTheme === 'princess' ? 'bg-white' : ''}`}>
                         <button
-                          onClick={() => { setIsMiniMode(!isMiniMode); setIsMenuOpen(false); setIsSettingsOpen(false); }}
+                          onClick={handleToggleMiniMode}
                           className={`px-3 py-2 text-xs font-bold text-left flex items-center gap-2 transition-colors ${theme.dropdown.itemInactive}`}
                         >
                           <span className={theme.iconType === 'table' ? "opacity-100" : ""}>{isMiniMode ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}</span> {isMiniMode ? t('app.full_mode') : t('app.mini_mode')}
