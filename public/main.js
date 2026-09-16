@@ -25,6 +25,14 @@ const isDev = !app.isPackaged && process.env.CODE_TIARA_ENV !== 'production';
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 
+// ✨ Transparent inset around every window's visible card. The renderer draws a
+// soft CSS shadow into this margin, which is how the card gets depth now that the
+// OS shadow is off (its 1px dark rim showed around the rounded card). Every
+// window size in this file is CONTENT size + 2 * WINDOW_INSET. The renderer
+// reads the same value through preload (window.electron.windowInset).
+const WINDOW_INSET = 16;
+const withInset = (size) => size + 2 * WINDOW_INSET;
+
 // ✨ Set App ID for Windows Notifications to show "Code Tiara"
 if (isWin) {
     app.setAppUserModelId("Code Tiara");
@@ -180,11 +188,11 @@ function registerAppProtocol() {
 function createWindow() {
     const savedMain = isOnScreen(windowState.main) ? windowState.main : null;
     mainWindow = new BrowserWindow({
-        width: savedMain ? savedMain.width : 340,
-        height: savedMain ? savedMain.height : 600,
+        width: savedMain ? savedMain.width : withInset(340),
+        height: savedMain ? savedMain.height : withInset(600),
         ...(savedMain ? { x: savedMain.x, y: savedMain.y } : {}),
-        minWidth: 280,
-        minHeight: 420,
+        minWidth: withInset(280),
+        minHeight: withInset(420),
         useContentSize: true, // This is important for precise sizing
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -268,7 +276,7 @@ function createWindow() {
             const currentDisplay = screen.getDisplayMatching(bounds);
             // Only save if it's a normal size (not fullscreen/snapped bounds which take whole work area)
             if (currentDisplay && (bounds.width < currentDisplay.workArea.width - 20 || bounds.height < currentDisplay.workArea.height - 20)) {
-                normalBounds = { width: Math.max(280, bounds.width), height: Math.max(420, bounds.height) };
+                normalBounds = { width: Math.max(withInset(280), bounds.width), height: Math.max(withInset(420), bounds.height) };
             }
         }
     });
@@ -374,7 +382,7 @@ function createWindow() {
                 const b = mainWindow.getBounds();
                 const d = screen.getDisplayMatching(b);
                 if (d && (b.width < d.workArea.width - 20 || b.height < d.workArea.height - 20)) {
-                    normalBounds = { width: Math.max(280, b.width), height: Math.max(420, b.height) };
+                    normalBounds = { width: Math.max(withInset(280), b.width), height: Math.max(withInset(420), b.height) };
                 }
                 mainWindow.maximize();
             }
@@ -390,8 +398,9 @@ function createWindow() {
             const currentBounds = mainWindow.getBounds();
             const currentDisplay = screen.getDisplayMatching(currentBounds);
             if (currentDisplay) {
-                const targetW = Math.max(280, Math.min(width, currentDisplay.workArea.width));
-                const targetH = Math.max(420, Math.min(height, currentDisplay.workArea.height));
+                // renderer sends CONTENT size; the window adds the transparent inset
+                const targetW = Math.max(withInset(280), Math.min(withInset(width), currentDisplay.workArea.width));
+                const targetH = Math.max(withInset(420), Math.min(withInset(height), currentDisplay.workArea.height));
 
                 let newX = currentBounds.x;
                 let newY = currentBounds.y;
@@ -457,17 +466,17 @@ function createWindow() {
         if (mainWindow && !mainWindow.isMinimized()) {
             const bounds = mainWindow.getBounds();
             const currentDisplay = screen.getDisplayMatching(bounds);
-            spawnX = bounds.x + bounds.width + 15; // 15px to the right
+            spawnX = bounds.x + bounds.width + 15 - 2 * WINDOW_INSET; // 15px visible gap to the right
             spawnY = bounds.y;
             
             // Prevent spawning off-screen on the right
-            if (spawnX + 320 > currentDisplay.workArea.x + currentDisplay.workArea.width) {
+            if (spawnX + withInset(320) > currentDisplay.workArea.x + currentDisplay.workArea.width) {
                 spawnX = bounds.x - 320 - 15; // spawn on the left instead
             }
         }
 
         const rememberedPopout = windowState.popouts[categoryId];
-        if (isOnScreen({ ...rememberedPopout, width: 320, height: 200 })) {
+        if (isOnScreen({ ...rememberedPopout, width: withInset(320), height: withInset(200) })) {
             spawnX = rememberedPopout.x;
             spawnY = rememberedPopout.y;
         }
@@ -476,8 +485,8 @@ function createWindow() {
         const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
 
         const popoutWin = new BrowserWindow({
-            width: 320,
-            height: 400,
+            width: withInset(320),
+            height: withInset(400),
             x: spawnX,
             y: spawnY,
             useContentSize: true,
@@ -575,8 +584,8 @@ function createWindow() {
     ipcMain.on('resize-popout-window', (event, { categoryId, width, height }) => {
         console.log(`[Main Process] resize-popout-window received for categoryId: ${categoryId}, width: ${width}, height: ${height}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
-            const w = Math.round(width) || 350;
-            const h = Math.round(height) || 450;
+            const w = withInset(Math.round(width) || 350); // renderer sends CONTENT size
+            const h = withInset(Math.round(height) || 450);
             popoutWindows[categoryId].setSize(w, h, true);
             refreshWindowShadow(popoutWindows[categoryId], 300); // after the resize animation
         }

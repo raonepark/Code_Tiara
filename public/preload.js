@@ -22,6 +22,9 @@ const RECEIVE_CHANNELS = new Set([
 
 contextBridge.exposeInMainWorld('electron', {
     platform: process.platform,
+    // transparent margin (px) the main process adds around every window; the
+    // renderer keeps its card inside it and paints the shadow there (main.js WINDOW_INSET)
+    windowInset: 16,
 
     ipcRenderer: {
         send(channel, ...args) {

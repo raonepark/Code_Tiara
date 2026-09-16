@@ -1,6 +1,7 @@
 export const THEME_CONFIG = {
     developer: {
         label: 'Developer',
+        windowShadow: 'shadow-[0_12px_32px_rgba(0,0,0,0.45)]',
         titleText: 'text-[#61AFEF]',
         themeIcon: 'code',
         themeBadge: 'bg-[#282C34] text-[#61AFEF] border border-[#3E3E42] !rounded-none',
@@ -125,6 +126,7 @@ export const THEME_CONFIG = {
     princess: {
         label: 'Princess',
         titleText: 'text-[#FF6B81] font-[Gaegu]',
+        windowShadow: 'shadow-[0_12px_32px_rgba(244,143,177,0.35),0_2px_6px_rgba(0,0,0,0.06)]',
         themeIcon: 'crown',
         themeBadge: 'bg-pink-100 text-pink-500',
         themeSelectorActive: 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105',
@@ -247,6 +249,7 @@ export const THEME_CONFIG = {
     },
     excel: {
         label: 'Excel',
+        windowShadow: 'shadow-[0_8px_24px_rgba(0,0,0,0.18)]',
         titleText: 'text-[#217346]',
         themeIcon: 'table',
         themeBadge: 'bg-slate-100 text-slate-500',
