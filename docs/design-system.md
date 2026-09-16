@@ -355,7 +355,7 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 4. 창: 최대화 → 복원 시 원래 bounds 그대로. 팝아웃 열기/닫기, 팝아웃 ↔ 본 창 localStorage 동기화, `window-state.json` 저장.
 5. 전역 단축키 등록(`globalShortcut.isRegistered`), 로그인 항목 읽기, 트레이 생성 로그.
 6. 폰트: `document.fonts.check('16px "Gamja Flower"')`, Pretendard 로드.
-7. 알림: `Notification.permission` 상태와 실제 마감 알림 1회(macOS는 42부터 새 알림 API — 첫 실행 시 권한 팝업).
+7. 알림: `Notification.permission` 상태와 실제 알림 1회. **macOS는 42부터 UNNotification API로, 코드 서명된 번들에서만 표시된다** — `npx electron .`/`npm run electron:dev` 같은 서명 없는 개발 실행에서는 `failed`(UNErrorDomain 1)가 나고 아무것도 안 뜬다. 정상. 알림은 반드시 패키징된 앱(`dist/mac-arm64/Code Tiara.app`, ad-hoc 서명이면 충분)에서 확인한다. 2026-09-17 실측: 개발 바이너리 실패, 패키징 앱은 메인·렌더러 모두 표시.
 8. 트레이 아이콘 스크립트 재실행(오프스크린 렌더 배율이 42부터 1.0) — 결과 PNG 크기 18/36 확인.
 9. `webContents.on('console-message')` 등 콜백 시그니처 변경 여부 — 공식 breaking-changes 페이지를 대상 버전까지 훑는다.
 10. macOS DMG(x64·arm64)와 Windows NSIS 빌드가 모두 성공. 이전 버전 DMG는 롤백용으로 보관.
