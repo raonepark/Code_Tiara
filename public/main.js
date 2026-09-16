@@ -79,6 +79,46 @@ function applyQuickAddShortcut() {
 
 const quickAddStatus = () => ({ enabled: quickAddEnabled, registered: quickAddRegistered, accelerator: QUICK_ADD_ACCELERATOR });
 
+// ✨ Per-machine window state: main window bounds + where each popout sticky
+// note was left. Lives in userData (never in Firestore) — where a note sits on
+// this desk has nothing to do with another PC. Bounds that no longer fall on a
+// connected display (monitor unplugged) are ignored and the default spawn is used.
+const windowStatePath = () => path.join(app.getPath('userData'), 'window-state.json');
+let windowState = { main: null, popouts: {} };
+let windowStateSaveTimer = null;
+
+function loadWindowState() {
+    try {
+        const saved = JSON.parse(fs.readFileSync(windowStatePath(), 'utf8'));
+        if (saved && typeof saved === 'object') {
+            windowState = { main: saved.main || null, popouts: saved.popouts || {} };
+        }
+    } catch (e) { /* first run */ }
+}
+
+function saveWindowState() {
+    clearTimeout(windowStateSaveTimer);
+    windowStateSaveTimer = setTimeout(() => {
+        try { fs.writeFileSync(windowStatePath(), JSON.stringify(windowState)); }
+        catch (e) { console.error('Failed to save window state:', e); }
+    }, 300);
+}
+
+// True when at least a usable part of the rectangle is inside some display's work area.
+function isOnScreen(bounds) {
+    if (!bounds || typeof bounds.x !== 'number' || typeof bounds.y !== 'number') return false;
+    const w = bounds.width || 320, h = bounds.height || 200;
+    return screen.getAllDisplays().some(({ workArea: a }) =>
+        bounds.x + w > a.x + 40 && bounds.x < a.x + a.width - 40 &&
+        bounds.y >= a.y - 10 && bounds.y < a.y + a.height - 40);
+}
+
+function rememberMainWindowBounds() {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || mainWindow.isMinimized() || mainWindow.isFullScreen()) return;
+    windowState.main = mainWindow.getBounds();
+    saveWindowState();
+}
+
 // ✨ Crucial for macOS: allow Cmd+Q or menu quit to properly exit
 app.on('before-quit', () => {
     isQuitting = true;
@@ -128,9 +168,11 @@ function registerAppProtocol() {
 }
 
 function createWindow() {
+    const savedMain = isOnScreen(windowState.main) ? windowState.main : null;
     mainWindow = new BrowserWindow({
-        width: 340,
-        height: 600,
+        width: savedMain ? savedMain.width : 340,
+        height: savedMain ? savedMain.height : 600,
+        ...(savedMain ? { x: savedMain.x, y: savedMain.y } : {}),
         minWidth: 280,
         minHeight: 420,
         useContentSize: true, // This is important for precise sizing
@@ -189,6 +231,9 @@ function createWindow() {
             }
         });
     });
+
+    mainWindow.on('move', rememberMainWindowBounds);
+    mainWindow.on('resize', rememberMainWindowBounds);
 
     // ✨ Prevent window from closing, hide it instead
     mainWindow.on('close', (event) => {
@@ -404,6 +449,12 @@ function createWindow() {
             }
         }
 
+        const rememberedPopout = windowState.popouts[categoryId];
+        if (isOnScreen({ ...rememberedPopout, width: 320, height: 200 })) {
+            spawnX = rememberedPopout.x;
+            spawnY = rememberedPopout.y;
+        }
+
         const isTimer = categoryId === 'timer';
         const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
 
@@ -433,6 +484,13 @@ function createWindow() {
         if (isMac) {
             popoutWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
         }
+
+        popoutWin.on('move', () => {
+            if (popoutWin.isDestroyed()) return;
+            const [x, y] = popoutWin.getPosition();
+            windowState.popouts[categoryId] = { x, y };
+            saveWindowState();
+        });
 
         popoutWin.on('closed', () => {
             delete popoutWindows[categoryId];
@@ -661,6 +719,7 @@ if (!gotTheLock) {
             registerAppProtocol();
         }
         
+        loadWindowState();
         createWindow();
         createTray();
         loadQuickAddPrefs();
