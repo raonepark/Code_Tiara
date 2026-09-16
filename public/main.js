@@ -205,6 +205,10 @@ function createWindow() {
         autoHideMenuBar: true,
         frame: false, // ✨ Frameless Window
         transparent: true, // ✨ Rounded Corners Support
+        // macOS wraps every frameless window in its own ~10px corner mask (roundedCorners defaults to
+        // true), which clips the card even when the theme draws square corners (Excel/Developer).
+        // Let the CSS card define the shape — the window itself is invisible anyway.
+        roundedCorners: false,
         // macOS draws a 1px dark rim along a transparent window's alpha edge as part of
         // its shadow. Our rounded card IS the window edge, so the rim showed as a black
         // outline around the pink border. No OS shadow → no rim; the theme border does the separating.
@@ -501,6 +505,7 @@ function createWindow() {
             autoHideMenuBar: true,
             frame: false, // Frameless for sticky note look
             transparent: true,
+            roundedCorners: false, // see main window: the card's CSS decides the corners, not macOS
             backgroundColor: '#00000000',
             hasShadow: false, // see main window: avoids macOS's dark rim on transparent windows
             alwaysOnTop: shouldBeOnTop, // Dynamic always on top
