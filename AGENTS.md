@@ -30,7 +30,7 @@
 6. **카드 표면은 기존 Princess 디자인 유지** — 흰 카드 + `hexToRgba(hue, 0.45)` 헤더 밴드 + 테두리 있는 흰 행. 카드 배경에 투명 `rgba`를 쓰지 않는다(팝아웃 창이 투명이라 바탕화면이 비침). "테두리 대신 톤" 시안은 2026-09-14 사용자 검토 후 기각 — `docs/design-system.md` §16 참고.
 7. **카드 안에서는 `sm:`/`md:` 같은 창 폭 변형을 쓰지 않는다** — 카테고리 카드가 컨테이너이므로 `[@container(min-width:560px)]:`를 쓴다 (design-system §8).
 8. **기기별 상태는 클라우드에 올리지 않는다** — 팝아웃/핀 여부, 창 위치·크기는 `localStorage` / `userData/window-state.json`. Firestore `users/{uid}` 문서에는 데이터와 취향 설정만 (design-system §8).
-9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(16px)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12).
+9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(현재 0)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12).
 10. **디자인 변경은 사용자 확인 후** — 실제 앱 위에 CSS로 2안 이상 얹어 비교하고, 고른 뒤 구현.
 
 ## 로컬 실행 · 검증

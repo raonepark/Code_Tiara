@@ -30,7 +30,9 @@ const isWin = process.platform === 'win32';
 // OS shadow is off (its 1px dark rim showed around the rounded card). Every
 // window size in this file is CONTENT size + 2 * WINDOW_INSET. The renderer
 // reads the same value through preload (window.electron.windowInset).
-const WINDOW_INSET = 16;
+// 2026-09-16: tried 16 with a pink CSS shadow; the user found the glow too loud and
+// chose a flat card. Keep the mechanism, set to 0. (preload.js windowInset must match.)
+const WINDOW_INSET = 0;
 const withInset = (size) => size + 2 * WINDOW_INSET;
 
 // ✨ Set App ID for Windows Notifications to show "Code Tiara"
