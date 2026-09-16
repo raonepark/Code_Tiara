@@ -119,7 +119,7 @@ function isOnScreen(bounds) {
 // content loads, so the stale rectangular shadow showed as a dark rim outside
 // the rounded card. Ask for a recompute after anything that changes the shape.
 function refreshWindowShadow(win, delayMs = 0) {
-    if (!isMac || !win || win.isDestroyed() || typeof win.invalidateShadow !== 'function') return;
+    if (!isMac || !win || win.isDestroyed() || typeof win.invalidateShadow !== 'function' || !win.hasShadow()) return;
     setTimeout(() => { if (!win.isDestroyed()) win.invalidateShadow(); }, delayMs);
 }
 
@@ -195,6 +195,10 @@ function createWindow() {
         autoHideMenuBar: true,
         frame: false, // ✨ Frameless Window
         transparent: true, // ✨ Rounded Corners Support
+        // macOS draws a 1px dark rim along a transparent window's alpha edge as part of
+        // its shadow. Our rounded card IS the window edge, so the rim showed as a black
+        // outline around the pink border. No OS shadow → no rim; the theme border does the separating.
+        hasShadow: false,
         backgroundColor: '#00000000', // ✨ Transparent Background
         icon: appIconPath
     });
@@ -487,6 +491,7 @@ function createWindow() {
             frame: false, // Frameless for sticky note look
             transparent: true,
             backgroundColor: '#00000000',
+            hasShadow: false, // see main window: avoids macOS's dark rim on transparent windows
             alwaysOnTop: shouldBeOnTop, // Dynamic always on top
             icon: appIconPath,
             show: false // ✨ Hide initially to prevent size flashing
