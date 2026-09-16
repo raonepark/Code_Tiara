@@ -2734,8 +2734,8 @@ const CodeTiara = () => {
 
         /* 스크롤바 전체 너비/높이 */
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
         }
         /* 스크롤바 트랙 (배경) */
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -2748,9 +2748,9 @@ const CodeTiara = () => {
               ? hexToRgba(poppedCategoryColor, 0.65)
               : theme.scrollbar.thumb
           } !important;
-          border-radius: 10px !important;
+          border-radius: ${currentTheme === 'excel' ? '0px' : '9999px'} !important;
         }
-        /* 스크롤바 버튼 숨김 (네모 방지) */
+        /* 스크롤바 버튼 숨김 */
         .custom-scrollbar::-webkit-scrollbar-button {
           display: none;
         }
@@ -2766,15 +2766,6 @@ const CodeTiara = () => {
               : theme.scrollbar.thumbHover
           } !important;
         }
-        /* Firefox 지원 */
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: ${
-            popoutCategoryId && currentTheme === 'princess' && poppedCategoryColor
-              ? hexToRgba(poppedCategoryColor, 0.65)
-              : theme.scrollbar.thumb
-          } transparent;
-        }
       `}</style>
 
       {/* ✨ Custom Title Bar (Fixed at Top) */}
@@ -2788,8 +2779,8 @@ const CodeTiara = () => {
               ${currentTheme === 'princess' 
                 ? 'bg-gradient-to-tr from-[#FFF5F7] to-[#FFF0F3] border-2 border-[#FFC0CB] rounded-3xl shadow-[0_8px_24px_rgba(255,182,193,0.35)]' 
                 : currentTheme === 'excel'
-                  ? 'bg-[#F3F2F1] border-2 border-[#0E6032] rounded-2xl shadow-md'
-                  : 'bg-[#181A1F] border border-[#282C34] rounded-2xl shadow-[0_12px_24px_rgba(0,0,0,0.5)]'
+                  ? 'bg-[#F3F2F1] border-2 border-[#0E6032] rounded-none shadow-md'
+                  : 'bg-[#181A1F] border border-[#282C34] rounded-none shadow-[0_12px_24px_rgba(0,0,0,0.5)]'
               }`}
             style={{ WebkitAppRegion: 'drag' }}
           >
@@ -3773,15 +3764,19 @@ const CodeTiara = () => {
 
                     return (
                       <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`[container-type:inline-size] ${popoutCategoryId ? '' : theme.category.container} 
-                        ${currentTheme === 'princess'
-                          ? (isMiniMode 
-                              ? (popoutCategoryId 
-                                  ? `bg-white rounded-[15px] ${theme.windowShadow} border-[2px] ${colorStyles.border} m-0` 
-                                  : `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2`) 
-                              : colorStyles.border) 
-                          : (currentTheme === 'developer' 
-                              ? (popoutCategoryId ? `bg-[#1E1E1E] border border-[#3E3E42] rounded-2xl m-0 ${theme.windowShadow}` : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
-                              : (popoutCategoryId && currentTheme === 'excel' ? `bg-white border border-[#D1D1D1] rounded-2xl m-0 ${theme.windowShadow}` : '')
+                        ${popoutCategoryId
+                          ? (currentTheme === 'princess'
+                              ? `bg-white rounded-[15px] ${theme.windowShadow} border-[2px] ${colorStyles.border} m-0`
+                              : currentTheme === 'excel'
+                                ? `bg-white border border-[#D1D1D1] rounded-none m-0 ${theme.windowShadow}`
+                                : `bg-[#1E1E1E] border border-[#3E3E42] rounded-none m-0 ${theme.windowShadow}`)
+                          : (currentTheme === 'princess'
+                              ? (isMiniMode 
+                                  ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2` 
+                                  : colorStyles.border)
+                              : (currentTheme === 'developer' 
+                                  ? colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5'
+                                  : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
                           ...(popoutCategoryId ? { maxHeight: '100%', height: '100%' } : {}),
