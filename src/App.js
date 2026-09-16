@@ -331,6 +331,13 @@ const CodeTiara = () => {
 
   const rootClassName = `h-screen w-screen theme-${currentTheme} ${theme.root} flex overflow-hidden`;
   const cardClassName = `w-full h-full ${theme.card} overflow-hidden flex flex-col relative transition-all`;
+  // ✨ Windows are content + 2×inset (main.js WINDOW_INSET); keep the card inside the
+  // transparent margin and paint the theme's shadow there. 0 in the browser.
+  const windowInset = (window.electron && window.electron.windowInset) || 0;
+  const insetStyle = windowInset
+    ? { margin: windowInset, width: `calc(100vw - ${2 * windowInset}px)`, height: `calc(100vh - ${2 * windowInset}px)` }
+    : {};
+
 
   const getFontScaleMultiplier = (fontFamily, themeId, size) => {
     let baseScale = 1.0;
@@ -1196,7 +1203,7 @@ const CodeTiara = () => {
       
       const naturalHeight = Math.round(headerHeight + trueListHeight + buffer);
       const targetHeight = Math.min(naturalHeight, 640);
-      const targetWidth = Math.round(window.innerWidth);
+      const targetWidth = Math.round(window.innerWidth) - 2 * windowInset; // content width, not window width
       
       // Mark that we have set the size once!
       lastCalculatedHeightRef.current = targetHeight;
@@ -2027,7 +2034,7 @@ const CodeTiara = () => {
 
     const naturalHeight = Math.round(headerHeight + trueListHeight + buffer);
     const targetHeight = Math.min(naturalHeight, isFormActive ? 680 : 640);
-    const targetWidth = Math.round(window.innerWidth);
+    const targetWidth = Math.round(window.innerWidth) - 2 * windowInset; // content width, not window width
 
     if (lastCalculatedHeightRef.current === targetHeight) return;
     lastCalculatedHeightRef.current = targetHeight;
@@ -2506,8 +2513,9 @@ const CodeTiara = () => {
   if ((!user || isSigningUp) && !popoutCategoryId) {
     return (
       <div 
-        className={`h-screen w-screen flex flex-col overflow-hidden ${theme.radius} ${theme.root}`}
+        className={`h-screen w-screen flex flex-col overflow-hidden ${theme.radius} ${theme.root} ${theme.windowShadow || ''}`}
         style={{
+          ...insetStyle,
           border: `2px solid ${theme.windowBorder || 'transparent'}`
         }}
       >
@@ -2679,8 +2687,9 @@ const CodeTiara = () => {
 
   return (
       <div
-        className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root}`}`}
+        className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root} ${theme.windowShadow || ''}`}`}
         style={{
+          ...insetStyle,
           border: popoutCategoryId ? 'none' : `2px solid ${theme.windowBorder || 'transparent'}`,
           backgroundColor: popoutCategoryId ? 'transparent' : undefined
         }}
@@ -3767,15 +3776,15 @@ const CodeTiara = () => {
                         ${currentTheme === 'princess'
                           ? (isMiniMode 
                               ? (popoutCategoryId 
-                                  ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-[2px] ${colorStyles.border} m-0` 
+                                  ? `bg-white rounded-[15px] ${theme.windowShadow} border-[2px] ${colorStyles.border} m-0` 
                                   : `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2`) 
                               : colorStyles.border) 
                           : (currentTheme === 'developer' 
-                              ? (popoutCategoryId ? 'bg-[#1E1E1E] border border-[#3E3E42] rounded-2xl m-0 shadow-sm' : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
-                              : (popoutCategoryId && currentTheme === 'excel' ? 'bg-white border border-[#D1D1D1] rounded-2xl m-0' : '')
+                              ? (popoutCategoryId ? `bg-[#1E1E1E] border border-[#3E3E42] rounded-2xl m-0 ${theme.windowShadow}` : colorStyles.border + ' ' + colorStyles.bg + ' bg-opacity-5') 
+                              : (popoutCategoryId && currentTheme === 'excel' ? `bg-white border border-[#D1D1D1] rounded-2xl m-0 ${theme.windowShadow}` : '')
                             )} ${popoutCategoryId ? 'flex-1 flex flex-col overflow-hidden transition-none' : 'transition-all duration-300'} relative`}
                         style={{
-                          ...(popoutCategoryId ? { maxHeight: '100vh', height: '100vh' } : {}),
+                          ...(popoutCategoryId ? { maxHeight: '100%', height: '100%' } : {}),
                           ...(isPoppedOut ? { maxHeight: '160px', minHeight: '110px', overflow: 'hidden' } : {})
                         }}
                       >
@@ -3928,7 +3937,7 @@ const CodeTiara = () => {
                         {/* 💡 공동 스크롤 컨테이너 시작 (Droppable과 Quick Add Form을 함께 스크롤되게 묶음) */}
                         <div 
                           className={popoutCategoryId ? "flex-1 overflow-y-auto custom-scrollbar relative flex flex-col min-h-0" : "contents"}
-                          style={popoutCategoryId ? { maxHeight: 'calc(100vh - 48px)' } : {}}
+                          style={popoutCategoryId ? { maxHeight: `calc(100vh - ${48 + 2 * windowInset}px)` } : {}}
                         >
                           <Droppable droppableId={String(category.id)}>
                             {(provided, snapshot) => {
