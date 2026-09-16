@@ -2687,7 +2687,7 @@ const CodeTiara = () => {
 
   return (
       <div
-        className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? 'bg-transparent' : `${theme.radius} ${theme.root} ${theme.windowShadow || ''}`}`}
+        className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-500 ${popoutCategoryId ? `bg-transparent ${currentTheme === 'princess' ? 'font-gamja text-slate-800' : (currentTheme === 'developer' ? 'font-mono text-[#ABB2BF]' : 'font-sans text-slate-800')}` : `${theme.radius} ${theme.root} ${theme.windowShadow || ''}`}`}
         style={{
           ...insetStyle,
           border: popoutCategoryId ? 'none' : `2px solid ${theme.windowBorder || 'transparent'}`,
@@ -3766,10 +3766,10 @@ const CodeTiara = () => {
                       <div id={popoutCategoryId ? "popout-content-wrapper" : undefined} key={category.id} className={`[container-type:inline-size] ${popoutCategoryId ? '' : theme.category.container} 
                         ${popoutCategoryId
                           ? (currentTheme === 'princess'
-                              ? `bg-white rounded-[15px] ${theme.windowShadow} border-[2px] ${colorStyles.border} m-0`
+                              ? `bg-white rounded-[15px] ${theme.windowShadow} border-[2px] ${colorStyles.border} m-0 font-gamja text-slate-800`
                               : currentTheme === 'excel'
-                                ? `bg-white border border-[#D1D1D1] rounded-none m-0 ${theme.windowShadow}`
-                                : `bg-[#1E1E1E] border border-[#3E3E42] rounded-none m-0 ${theme.windowShadow}`)
+                                ? `bg-white border border-[#D1D1D1] rounded-none m-0 ${theme.windowShadow} font-sans text-[#333333]`
+                                : `bg-[#1E1E1E] border border-[#3E3E42] rounded-none m-0 ${theme.windowShadow} font-mono text-[#ABB2BF]`)
                           : (currentTheme === 'princess'
                               ? (isMiniMode 
                                   ? `bg-white rounded-[15px] shadow-[0_4px_10px_rgba(255,182,193,0.4)] border-none !w-auto mb-3 mx-2 mt-2` 
@@ -3795,9 +3795,11 @@ const CodeTiara = () => {
                         >
                           {getIcon(category.icon, `${isMiniMode ? 'w-3 h-3' : 'w-4 h-4'} ${colorStyles.icon}`)}
                           <h3 
-                            className={`${theme.category.title} ${colorStyles.text} truncate ${isMiniMode ? 'text-xs' : getTextSizeClass(fontSize)}`}
+                            className={`${theme.category.title} ${colorStyles.text} truncate ${popoutCategoryId ? 'text-sm' : (isMiniMode ? 'text-xs' : getTextSizeClass(fontSize))}`}
                             style={typeof fontSize === 'number' ? (() => {
-                              const base = isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : (currentTheme === 'princess' ? fontSize + 1 : fontSize);
+                              const base = popoutCategoryId
+                                ? Math.min(13, Math.max(11, fontSize - 2))
+                                : (isMiniMode ? Math.min(16, Math.max(11, fontSize - 2), fontSize) : (currentTheme === 'princess' ? fontSize + 1 : fontSize));
                               const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                               return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
@@ -3965,6 +3967,7 @@ const CodeTiara = () => {
                                         currentTheme={currentTheme}
                                         theme={theme}
                                         isMiniMode={isMiniMode}
+                                        isPopout={!!popoutCategoryId}
                                         fontSize={fontSize}
                                         fontFamily={fontFamily}
                                         getTextSizeClass={getTextSizeClass}

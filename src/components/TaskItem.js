@@ -109,7 +109,7 @@ const renderMemoWithLinks = (text) => {
 
 const TaskItem = memo(({
     task, index, provided, snapshot,
-    currentTheme, theme, isMiniMode,
+    currentTheme, theme, isMiniMode, isPopout = false,
     fontSize, fontFamily,
     getTextSizeClass, getSubTextSizeClass, formatTimeDisplay,
     category, borderIdle, borderHover, CATEGORY_ICON_HUES,
@@ -234,7 +234,7 @@ const TaskItem = memo(({
                 } : {})
             }}
             onClick={() => { if (editingTaskId !== task.id) toggleTask(task.id) }}
-            className={`${theme.category.taskItem} ${isMiniMode ? '!mx-0 !mb-1 !p-1.5 last:!mb-0' : ''} cursor-pointer active:cursor-grabbing relative ${task.completed ? 'opacity-60' : ''} ${snapshot.isDragging ? 'shadow-lg z-50 ' + theme.task.dragShadow : ''}`}
+            className={`${theme.category.taskItem} ${(isPopout || isMiniMode) ? '!mx-0 !mb-1 !p-1.5 last:!mb-0' : ''} cursor-pointer active:cursor-grabbing relative ${task.completed ? 'opacity-60' : ''} ${snapshot.isDragging ? 'shadow-lg z-50 ' + theme.task.dragShadow : ''}`}
         >
             {currentTheme === 'excel' ? (
                 <div className={theme.task.checkboxExcel}
@@ -267,7 +267,10 @@ const TaskItem = memo(({
                                 }}
                                 autoFocus
                                 className={`w-full bg-transparent focus:outline-none transition-all ${theme.task.editInputBg}`}
-                                style={typeof fontSize === 'number' ? { fontSize: `${Math.round(fontSize * getFontScaleMultiplier(fontFamily, currentTheme, fontSize))}px` } : {}}
+                                style={typeof fontSize === 'number' ? (() => {
+                                    const editBase = isPopout ? Math.min(13, Math.max(11, fontSize - 2)) : fontSize;
+                                    return { fontSize: `${Math.round(editBase * getFontScaleMultiplier(fontFamily, currentTheme, editBase))}px` };
+                                })() : {}}
                                 placeholder={t('app.edit_placeholder')}
                             />
                         </div>
@@ -407,13 +410,13 @@ const TaskItem = memo(({
                                     onClick={cancelEditing}
                                     className={`transition-all flex items-center justify-center flex-1 [@container(min-width:560px)]:flex-none ${theme.task.editCancelBtn}`}
                                 >
-                                    {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? t('app.cancel') : (isMiniMode ? '취소' : <X className="w-4 h-4" />))}
+                                    {currentTheme === 'excel' ? t('app.cancel') : (currentTheme === 'developer' ? t('app.cancel') : ((isPopout || isMiniMode) ? t('app.cancel') : <X className="w-4 h-4" />))}
                                 </button>
                                 <button
                                     onClick={() => saveEditing(task.id)}
                                     className={`transition-all flex items-center justify-center flex-1 [@container(min-width:560px)]:flex-none ${theme.task.editSaveBtn}`}
                                 >
-                                    {currentTheme === 'excel' ? t('app.save') : (currentTheme === 'developer' ? t('app.save') : (isMiniMode ? '저장' : <Check className="w-4 h-4 stroke-[2.5px]" />))}
+                                    {currentTheme === 'excel' ? t('app.save') : (currentTheme === 'developer' ? t('app.save') : ((isPopout || isMiniMode) ? t('app.save') : <Check className="w-4 h-4 stroke-[2.5px]" />))}
                                 </button>
                             </div>
                         </div>
@@ -422,12 +425,14 @@ const TaskItem = memo(({
                     <>
                         <span
                             className={`break-words leading-snug 
-                            ${(isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel'))
+                            ${(isPopout || (isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel')))
                                     ? 'text-xs'
                                     : getTextSizeClass(fontSize)}
                             ${task.completed ? theme.task.textDone : theme.task.textDefault}`}
                             style={typeof fontSize === 'number' ? (() => {
-                                const base = isMiniMode ? Math.min(17, Math.max(11, fontSize - 2), fontSize) : fontSize;
+                                const base = isPopout
+                                    ? Math.min(12, Math.max(10, fontSize - 3))
+                                    : (isMiniMode ? Math.min(17, Math.max(11, fontSize - 2), fontSize) : fontSize);
                                 const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                                 return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
@@ -440,11 +445,13 @@ const TaskItem = memo(({
                                 (task.alerted && notifications.some(n => n.taskId === task.id)) ? 'text-red-400 font-bold animate-pulse' :
                                     theme.task.timeDefault
                                 } 
-                                ${(isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel'))
+                                ${(isPopout || (isMiniMode && (currentTheme === 'developer' || currentTheme === 'excel')))
                                     ? 'text-[10px]'
                                     : getSubTextSizeClass(fontSize)}`}
                             style={typeof fontSize === 'number' ? (() => {
-                                const base = isMiniMode ? Math.min(14, Math.max(9, fontSize - 5), fontSize - 3) : Math.max(10, fontSize - 3);
+                                const base = isPopout
+                                    ? Math.min(10, Math.max(8, fontSize - 5))
+                                    : (isMiniMode ? Math.min(14, Math.max(9, fontSize - 5), fontSize - 3) : Math.max(10, fontSize - 3));
                                 const mult = getFontScaleMultiplier(fontFamily, currentTheme, base);
                                 return { fontSize: `${Math.round(base * mult)}px` };
                             })() : {}}
