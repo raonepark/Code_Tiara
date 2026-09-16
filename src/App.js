@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { LANGUAGE_KEY } from './i18n';
 import {
   Trash2, Plus, CheckCircle2, Circle, Zap, Code, BookOpen, Laptop,
   Terminal, Command, Settings, X, Save, RotateCcw, AlertTriangle,
@@ -223,7 +224,7 @@ const CodeTiara = () => {
   // --- Sync Language across Tabs & Windows ---
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'i18nextLng' && e.newValue) {
+      if (e.key === LANGUAGE_KEY && e.newValue) {
         if (i18n.language !== e.newValue) {
           i18n.changeLanguage(e.newValue);
         }

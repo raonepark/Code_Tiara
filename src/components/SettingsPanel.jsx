@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { setUserLanguage } from '../i18n';
 import { useTranslation } from 'react-i18next';
 import { Settings, ChevronDown, Download, Upload, GripVertical, Check, X, Trash2, Plus, RotateCcw, Edit2, BookOpen, Crown, Code2, Table2, LogIn, LogOut } from 'lucide-react';
 
@@ -583,7 +584,7 @@ const SettingsPanel = ({
                     <div className="relative font-select-dropdown">
                         <select
                             value={i18n.language?.startsWith('en') ? 'en' : 'ko'}
-                            onChange={(e) => i18n.changeLanguage(e.target.value)}
+                            onChange={(e) => setUserLanguage(e.target.value)}
                             className={`w-full ${theme.settings.input} text-sm transition-all focus:outline-none py-2 px-3 appearance-none cursor-pointer`}
                         >
                             <option value="ko">{t('settings.langKo')} (Korean)</option>
