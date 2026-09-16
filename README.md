@@ -6,7 +6,7 @@ Windows · macOS 데스크톱 앱(Electron)이며, Firebase 로그인으로 기�
 ## 기술 스택
 
 - **UI**: React 19, Tailwind CSS, lucide-react, @hello-pangea/dnd, i18next (한국어/English)
-- **데스크톱**: Electron 33 (frameless / transparent 창, 트레이 아이콘, 팝아웃 창)
+- **데스크톱**: Electron 44 (frameless / transparent 창, 트레이 아이콘, 팝아웃 창)
 - **백엔드**: Firebase Auth (Google · 이메일), Cloud Firestore
 - **빌드**: react-scripts(CRA) + electron-builder
 

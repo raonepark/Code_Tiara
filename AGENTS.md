@@ -30,13 +30,13 @@
 6. **카드 표면은 기존 Princess 디자인 유지** — 흰 카드 + `hexToRgba(hue, 0.45)` 헤더 밴드 + 테두리 있는 흰 행. 카드 배경에 투명 `rgba`를 쓰지 않는다(팝아웃 창이 투명이라 바탕화면이 비침). "테두리 대신 톤" 시안은 2026-09-14 사용자 검토 후 기각 — `docs/design-system.md` §16 참고.
 7. **카드 안에서는 `sm:`/`md:` 같은 창 폭 변형을 쓰지 않는다** — 카테고리 카드가 컨테이너이므로 `[@container(min-width:560px)]:`를 쓴다 (design-system §8).
 8. **기기별 상태는 클라우드에 올리지 않는다** — 팝아웃/핀 여부, 창 위치·크기는 `localStorage` / `userData/window-state.json`. Firestore `users/{uid}` 문서에는 데이터와 취향 설정만 (design-system §8).
-9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(현재 0)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12). 창은 `roundedCorners: false` — OS 둥근 마스크가 카드를 잘라내므로 모서리는 항상 테마 CSS가 정한다. Windows 11에서는 Electron 34+부터 효과가 있다 (§7-2). 테마별 토큰 표는 design-system §3-3.
+9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(현재 0)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12). 창은 `roundedCorners: false` — OS 둥근 마스크가 카드를 잘라내므로 모서리는 항상 테마 CSS가 정한다. Electron 44부터 macOS·Windows 11·Linux 모두에서 동작한다 (§7-2). 테마별 토큰 표는 design-system §3-3.
 10. **디자인 변경은 사용자 확인 후** — 실제 앱 위에 CSS로 2안 이상 얹어 비교하고, 고른 뒤 구현.
 
 ## 로컬 실행 · 검증
 
 ```bash
-npm install
+npm install                     # .npmrc의 legacy-peer-deps=true 적용 (react-scripts 5 ↔ typescript 6 피어 충돌 회피)
 cp .env.example .env            # Firebase 값 (없으면 게스트 모드만 동작)
 npm run electron:dev            # CRA(3000) + Electron
 ```
@@ -65,4 +65,4 @@ CODE_TIARA_ENV=production npx electron . --user-data-dir=/tmp/ct-smoke   # 실�
 
 ## 알려진 후속 과제
 
-Electron 33→44 · CRA→Vite · `App.js` 분리 · CSP · macOS 서명/공증 · 행 클릭=완료 UX 재검토.
+CRA→Vite · `App.js` 분리 · CSP · macOS 서명/공증 · 행 클릭=완료 UX 재검토. (Electron은 2026-09-17에 44로 올림 — 다음 메이저 업그레이드 때는 design-system §14의 리그레션 체크리스트를 다시 돈다.)

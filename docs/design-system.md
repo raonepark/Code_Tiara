@@ -207,12 +207,12 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 - **Developer 테마**: 터미널/코드 에디터 특성에 맞춰 버튼, 팝아웃 및 패널 모서리를 직각(`rounded-none`)으로 통일합니다.
 - **Electron 창은 모서리를 그리지 않는다**: OS가 프레임 없는 창에 씌우는 둥근 마스크 때문에 카드가 `rounded-none`이어도 창 모서리가 둥글게 잘려 보인다. `main.js`의 메인/팝아웃 `BrowserWindow`는 `roundedCorners: false`로 두고, 모서리는 **항상 위 표의 CSS 값**이 결정한다. 새 창을 만들 때도 같은 옵션을 준다. 플랫폼별 동작:
 
-  | 플랫폼 | OS 둥근 마스크 | `roundedCorners: false` 효과 (Electron 33 기준) |
+  | 플랫폼 | OS 둥근 마스크 | `roundedCorners: false` 효과 (Electron 44 기준) |
   |---|---|---|
   | macOS | 약 10px, 프레임 없는 창 전부 | **적용됨** — 2026-09-16 수정으로 Excel/Developer 창이 직각 |
-  | Windows 11 (빌드 22000+) | DWM이 약 8px 둥글게 | **무시됨** — Windows 지원은 Electron 34부터(electron/electron#45594). 33에서는 OS가 둥글게 남을 수 있음 → Electron 업그레이드 시 자동 해결. Windows PC에서 확인 필요 |
+  | Windows 11 (빌드 22000+) | DWM이 약 8px 둥글게 | **적용됨** (Electron 34+, electron/electron#45594). 33에서는 무시돼 OS 라운드가 남았음 — 2026-09-17 44로 올려 해결 |
   | Windows 10 | 없음 | 해당 없음 — CSS 그대로 보임 |
-  | Linux | 데스크톱 환경에 따라 | Electron 44부터 옵션 지원 |
+  | Linux | 데스크톱 환경에 따라 | 적용됨 (Electron 44+) |
 
 ## 8. 레이아웃 모드
 
@@ -345,6 +345,21 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 
 ---
 
+### 14-1. Electron/Chromium 메이저 업그레이드 리그레션 체크리스트
+
+이 앱은 Electron API를 얕게 쓴다(창·IPC·트레이·전역 단축키·http 인터셉트·로그인 항목). 메이저 업그레이드 때 전체 리그레션 대신 아래만 돈다. 2026-09-17 33→44 때 실제로 돈 목록.
+
+1. `npm run build` 후 프로덕션 로더(`CODE_TIARA_ENV=production`, 별도 `--user-data-dir`)로 실행 — 창이 뜨고 `location.origin === http://127.0.0.1:51283`.
+2. **데이터 보존**: localStorage에 값을 쓰고 재실행해서 남아 있는지. origin이 바뀌면 여기서 걸린다.
+3. 렌더러 격리: `window.electron` 있음, `window.require`/`process` 없음.
+4. 창: 최대화 → 복원 시 원래 bounds 그대로. 팝아웃 열기/닫기, 팝아웃 ↔ 본 창 localStorage 동기화, `window-state.json` 저장.
+5. 전역 단축키 등록(`globalShortcut.isRegistered`), 로그인 항목 읽기, 트레이 생성 로그.
+6. 폰트: `document.fonts.check('16px "Gamja Flower"')`, Pretendard 로드.
+7. 알림: `Notification.permission` 상태와 실제 마감 알림 1회(macOS는 42부터 새 알림 API — 첫 실행 시 권한 팝업).
+8. 트레이 아이콘 스크립트 재실행(오프스크린 렌더 배율이 42부터 1.0) — 결과 PNG 크기 18/36 확인.
+9. `webContents.on('console-message')` 등 콜백 시그니처 변경 여부 — 공식 breaking-changes 페이지를 대상 버전까지 훑는다.
+10. macOS DMG(x64·arm64)와 Windows NSIS 빌드가 모두 성공. 이전 버전 DMG는 롤백용으로 보관.
+
 ## 15. 프로세스 규칙
 
 1. **항목 하나 = 브랜치 하나 = PR 하나.** 디자인 변경과 버그 수정을 한 PR에 섞지 않는다.
@@ -389,3 +404,4 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-16 | 공주 테마 팝아웃 창 폰트 누락 방지(`font-gamja`) 및 팝아웃 모드 컴팩트 텍스트 스케일 적용 | 팝아웃 창 루트에서 `theme.root`가 제외되면서 감자꽃체 대신 OS 기본 폰트(Segoe UI)로 풀려 글자가 거대해지고, 좁은 팝아웃 창에서 본문이 지나치게 커 보이던 문제 해결. 팝아웃 모드 전용 스케일(제목 14px, 본문 13px, 보조 11px) 적용 (§4) |
 | 2026-09-16 | macOS 창 `roundedCorners: false` — 모서리는 CSS만 결정 | 엑셀 테마를 `rounded-none`으로 바꿔 배포했는데 팝아웃 창이 여전히 둥글게 보임(사용자 스크린샷). Electron이 프레임 없는 창을 `NSWindowStyleMaskTitled`로 만들어 OS 코너 마스크가 카드 위에 남아 있었음. Princess는 카드 반경(15px)이 마스크보다 커서 티가 안 났던 것 |
 | 2026-09-16 | 테마별 규칙을 §3-3 한 표로 정리, 창 모서리의 플랫폼별 동작 명시 | 사용자 요청("테마별로 규칙 잘 정리"). Windows용 `roundedCorners`는 Electron 34+에서만 동작 — 현재 33이라 Windows 11에서는 OS 라운드가 남을 수 있음을 기록 |
+| 2026-09-17 | Electron 33 → 44 업그레이드 + 버전 1.8.0 | Windows 11에서 Excel/Developer 창 모서리를 직각으로 만들 유일한 방법(`roundedCorners`의 Windows 지원이 34부터). 앱이 Electron API를 얕게 써서 breaking changes 중 실제 영향은 console-message 시그니처·알림 API·오프스크린 배율·로그인 항목 속성 4건. §14-1 체크리스트로 표적 리그레션 |
