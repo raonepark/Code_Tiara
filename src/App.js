@@ -691,8 +691,7 @@ const CodeTiara = () => {
               savedFontFamily = data.fontFamily || savedFontFamily;
               savedFilterMode = data.filterMode || savedFilterMode;
               savedFilterDate = data.filterDate || savedFilterDate;
-              savedPoppedOut = data.poppedOutCategories || savedPoppedOut;
-              savedPinned = data.pinnedCategories || savedPinned;
+              // popped-out / pinned state is per machine: keep the localStorage values, ignore the cloud copy
             }
           } catch (fsErr) {
             console.warn("Firestore config load warning:", fsErr);
@@ -887,8 +886,8 @@ const CodeTiara = () => {
           fontSize,
           fontFamily,
           currentTheme,
-          poppedOutCategories,
-          pinnedCategories,
+          // poppedOutCategories / pinnedCategories are deliberately NOT synced: which
+          // sticky notes are detached is per machine (localStorage), see design-system §8.
           filterMode,
           filterDate
         }, { merge: true });
