@@ -1066,9 +1066,17 @@ const CodeTiara = () => {
     // 팝아웃 창이거나, 유저 미로그인이거나, 초기 데이터 로드 미완료 시 실행 안 함
     if (popoutCategoryId || !user || !isInitialLoadComplete) return;
 
-    const onboardingCompleted = localStorage.getItem(`lumora_onboarding_completed_${user.uid}`) === 'true';
-    if (!onboardingCompleted) {
+    // Auto-show once PER MACHINE, not per account: the machine-wide flag covers
+    // guest → login (different uid, same PC). It is set the moment we open the
+    // guide, so a window closed via the OS can't bring it back on the next
+    // launch. The guide stays available from Settings → 사용 가이드.
+    const shownOnThisMachine =
+      localStorage.getItem('lumora_onboarding_completed') === 'true' ||
+      localStorage.getItem(`lumora_onboarding_completed_${user.uid}`) === 'true';
+    if (!shownOnThisMachine) {
       const timer = setTimeout(() => {
+        localStorage.setItem('lumora_onboarding_completed', 'true');
+        localStorage.setItem(`lumora_onboarding_completed_${user.uid}`, 'true');
         sendIPC('open-popout', 'onboarding');
       }, 1200);
       return () => clearTimeout(timer);
