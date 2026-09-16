@@ -1,4 +1,16 @@
 const path = require('path');
+const { execFileSync } = require('child_process');
+
+// Electron 42+ shows macOS notifications only from a code-signed bundle (UNNotification).
+// Without a Developer ID, electron-builder ad-hoc signs arm64 (macOS refuses to run
+// unsigned arm64 apps) but leaves x64 unsigned — so Intel users would silently lose
+// notifications. Ad-hoc sign every mac build ourselves; a real identity still wins later.
+async function adHocSignMac(context) {
+    if (context.electronPlatformName !== 'darwin') return;
+    const appPath = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
+    execFileSync('codesign', ['--force', '--deep', '--sign', '-', appPath], { stdio: 'inherit' });
+    console.log(`  • ad-hoc signed ${appPath}`);
+}
 
 module.exports = {
     appId: "com.lumora.codetiara",
@@ -15,6 +27,7 @@ module.exports = {
         "assets/**/*"
     ],
     asar: true,
+    afterPack: adHocSignMac,
     win: {
         target: [
             {

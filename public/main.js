@@ -540,8 +540,13 @@ function createWindow() {
 
         console.log(`[Main Process] Loading URL for popout category ${categoryId}: ${popoutUrl}`);
         
-        popoutWin.webContents.on('console-message', (event, level, message, line, sourceId) => {
-            console.log(`[Popout Console] [Level ${level}] ${message} (${sourceId}:${line})`);
+        // Electron 35+ passes a single details object ({ level, message, lineNumber, sourceId });
+        // the positional arguments are deprecated. Read whichever form we get.
+        // (A listener with more than one declared parameter triggers the deprecation warning.)
+        popoutWin.webContents.on('console-message', (event, ...legacy) => {
+            const [level, message, line, sourceId] = legacy;
+            const d = event && typeof event.message === 'string' ? event : { level, message, lineNumber: line, sourceId };
+            console.log(`[Popout Console] [${d.level}] ${d.message} (${d.sourceId}:${d.lineNumber})`);
         });
 
         popoutWin.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
