@@ -113,6 +113,16 @@ function isOnScreen(bounds) {
         bounds.y >= a.y - 10 && bounds.y < a.y + a.height - 40);
 }
 
+// ✨ macOS computes a transparent window's shadow from its alpha shape and does
+// not recompute it on its own when the content changes. Our windows are
+// frameless + transparent with rounded corners and get resized after their
+// content loads, so the stale rectangular shadow showed as a dark rim outside
+// the rounded card. Ask for a recompute after anything that changes the shape.
+function refreshWindowShadow(win, delayMs = 0) {
+    if (!isMac || !win || win.isDestroyed() || typeof win.invalidateShadow !== 'function') return;
+    setTimeout(() => { if (!win.isDestroyed()) win.invalidateShadow(); }, delayMs);
+}
+
 function rememberMainWindowBounds() {
     if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || mainWindow.isMinimized() || mainWindow.isFullScreen()) return;
     windowState.main = mainWindow.getBounds();
@@ -234,6 +244,8 @@ function createWindow() {
 
     mainWindow.on('move', rememberMainWindowBounds);
     mainWindow.on('resize', rememberMainWindowBounds);
+    mainWindow.on('resize', () => refreshWindowShadow(mainWindow, 50));
+    mainWindow.webContents.on('did-finish-load', () => refreshWindowShadow(mainWindow, 100));
 
     // ✨ Prevent window from closing, hide it instead
     mainWindow.on('close', (event) => {
@@ -390,6 +402,7 @@ function createWindow() {
 
                 normalBounds = { width: targetW, height: targetH };
                 mainWindow.setBounds({ x: newX, y: newY, width: targetW, height: targetH }, true);
+                refreshWindowShadow(mainWindow, 300); // after the resize animation
             }
         }
     });
@@ -518,6 +531,7 @@ function createWindow() {
 
         // Debug log
         popoutWin.webContents.on('did-finish-load', () => {
+            refreshWindowShadow(popoutWin, 100);
             console.log(`Popout window loaded for category: ${categoryId}`);
         });
     });
@@ -559,6 +573,7 @@ function createWindow() {
             const w = Math.round(width) || 350;
             const h = Math.round(height) || 450;
             popoutWindows[categoryId].setSize(w, h, true);
+            refreshWindowShadow(popoutWindows[categoryId], 300); // after the resize animation
         }
     });
 
@@ -567,6 +582,7 @@ function createWindow() {
         console.log(`[Main Process] show-popout-window received for categoryId: ${categoryId}. Window exists: ${!!popoutWindows[categoryId]}`);
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].show();
+            refreshWindowShadow(popoutWindows[categoryId], 50);
             // Re-enforce always-on-top state after showing, to prevent OS z-order losses
             const isPinned = popoutPinnedStates[categoryId];
             const isTimer = categoryId === 'timer';
