@@ -10,6 +10,7 @@ import {
   Monitor, Smartphone, ListChecks, Settings2, Table2
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
+import { convertTo24Hour } from './utils/time';
 import TaskItem from './components/TaskItem';
 import SettingsPanel from './components/SettingsPanel';
 import OnboardingPanel from './components/OnboardingPanel';
@@ -1242,15 +1243,6 @@ const CodeTiara = () => {
     }
     prevDurationsRef.current = { focus: focusDuration, break: breakDuration };
   }, [focusDuration, breakDuration, isTimerRunning, timerMode]);
-
-  // --- ⏰ 시간 변환 헬퍼 함수 ---
-  const convertTo24Hour = (h, m, ampm) => {
-    if (!h || !m) return '';
-    let hour = parseInt(h, 10);
-    if (ampm === '오후' && hour < 12) hour += 12;
-    if (ampm === '오전' && hour === 12) hour = 0;
-    return `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  };
 
   const formatTimeDisplay = (time24) => {
     if (!time24) return '';
