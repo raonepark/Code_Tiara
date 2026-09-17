@@ -315,58 +315,19 @@ function createWindow() {
             }
         }
         
-        // Restore always-on-top when unmaximized
-        Object.keys(popoutWindows).forEach((id) => {
-            const win = popoutWindows[id];
-            if (win && !win.isDestroyed()) {
-                const isPinned = popoutPinnedStates[id];
-                if (isPinned) {
-                    win.setAlwaysOnTop(true, 'pop-up-menu');
-                }
-            }
-        });
+        applyAllPopoutPinBehaviors();
     });
 
     mainWindow.on('focus', () => {
-        Object.keys(popoutWindows).forEach((id) => {
-            const win = popoutWindows[id];
-            if (win && !win.isDestroyed()) {
-                const isPinned = popoutPinnedStates[id];
-                const isTimer = id === 'timer';
-                if (isTimer || isPinned) {
-                    win.setAlwaysOnTop(true, 'pop-up-menu');
-                } else if (mainWindow.isMaximized()) {
-                    win.setAlwaysOnTop(false);
-                }
-            }
-        });
+        applyAllPopoutPinBehaviors();
     });
 
     mainWindow.on('blur', () => {
-        Object.keys(popoutWindows).forEach((id) => {
-            const win = popoutWindows[id];
-            if (win && !win.isDestroyed()) {
-                const isPinned = popoutPinnedStates[id];
-                if (isPinned) {
-                    win.setAlwaysOnTop(true, 'pop-up-menu');
-                }
-            }
-        });
+        applyAllPopoutPinBehaviors();
     });
 
     mainWindow.on('maximize', () => {
-        Object.keys(popoutWindows).forEach((id) => {
-            const win = popoutWindows[id];
-            if (win && !win.isDestroyed()) {
-                const isPinned = popoutPinnedStates[id];
-                const isTimer = id === 'timer';
-                if (isTimer || isPinned) {
-                    win.setAlwaysOnTop(true, 'pop-up-menu');
-                } else if (mainWindow.isFocused()) {
-                    win.setAlwaysOnTop(false);
-                }
-            }
-        });
+        applyAllPopoutPinBehaviors();
     });
 
     // ✨ IPC Handlers for Custom Title Bar
@@ -451,6 +412,27 @@ function createWindow() {
         });
     });
 
+    // Pin semantics (design-system §8): pinned = sticky note that floats above everything and
+    // follows the user to every Space / fullscreen app; unpinned = ordinary window that stays on
+    // its own Space and can go behind other windows. Both properties come from this one place —
+    // the all-Spaces flag used to be applied unconditionally at creation, so an unpinned popout
+    // still followed Space switches and floated over fullscreen apps (user report, dual monitor).
+    // Exception kept from before: a pinned popout yields while the main window is maximized AND focused.
+    function applyPopoutPinBehavior(categoryId) {
+        const win = popoutWindows[categoryId];
+        if (!win || win.isDestroyed()) return;
+        const isPinned = !!popoutPinnedStates[categoryId];
+        const isTimer = categoryId === 'timer';
+        const mainCovers = !!(mainWindow && !mainWindow.isDestroyed() && mainWindow.isMaximized() && mainWindow.isFocused());
+        const onTop = isPinned && (isTimer || !mainCovers);
+        if (onTop) win.setAlwaysOnTop(true, 'pop-up-menu');
+        else win.setAlwaysOnTop(false);
+        if (isMac) win.setVisibleOnAllWorkspaces(isPinned, { visibleOnFullScreen: isPinned });
+    }
+    function applyAllPopoutPinBehaviors() {
+        Object.keys(popoutWindows).forEach(applyPopoutPinBehavior);
+    }
+
     // ✨ IPC Handler for Pop-out Windows
     ipcMain.on('open-popout', (event, arg) => {
         let categoryId;
@@ -515,9 +497,7 @@ function createWindow() {
 
         popoutWindows[categoryId] = popoutWin;
 
-        if (isMac) {
-            popoutWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-        }
+        applyPopoutPinBehavior(categoryId); // alwaysOnTop + all-Spaces from the pin state
 
         popoutWin.on('move', () => {
             if (popoutWin.isDestroyed()) return;
@@ -581,15 +561,7 @@ function createWindow() {
      ipcMain.on('set-always-on-top', (event, { categoryId, isPinned }) => {
          console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
          popoutPinnedStates[categoryId] = isPinned;
-         if (popoutWindows[categoryId]) {
-             const isTimer = categoryId === 'timer';
-             const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
-             if (shouldBeOnTop) {
-                 popoutWindows[categoryId].setAlwaysOnTop(true, 'pop-up-menu');
-             } else {
-                 popoutWindows[categoryId].setAlwaysOnTop(false);
-             }
-         }
+         applyPopoutPinBehavior(categoryId);
      });
 
     // ✨ Auto-resize popout window based on content
@@ -609,16 +581,7 @@ function createWindow() {
         if (popoutWindows[categoryId]) {
             popoutWindows[categoryId].show();
             refreshWindowShadow(popoutWindows[categoryId], 50);
-            // Re-enforce always-on-top state after showing, to prevent OS z-order losses
-            const isPinned = popoutPinnedStates[categoryId];
-            const isTimer = categoryId === 'timer';
-            const shouldBeOnTop = isPinned && (isTimer || !(mainWindow && mainWindow.isMaximized() && mainWindow.isFocused()));
-            if (shouldBeOnTop) {
-                popoutWindows[categoryId].setAlwaysOnTop(true, 'pop-up-menu');
-            } else {
-                popoutWindows[categoryId].setAlwaysOnTop(false);
-            }
-            console.log(`[Main Process] Enforced alwaysOnTop: ${shouldBeOnTop} for categoryId: ${categoryId} post-show`);
+            applyPopoutPinBehavior(categoryId); // re-enforce after show: macOS can drop z-order
         }
     });
 
