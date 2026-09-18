@@ -32,6 +32,7 @@
 8. **기기별 상태는 클라우드에 올리지 않는다** — 팝아웃/핀 여부, 창 위치·크기는 `localStorage` / `userData/window-state.json`. Firestore `users/{uid}` 문서에는 데이터와 취향 설정만 (design-system §8).
 9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(현재 0)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12). 창은 `roundedCorners: false` — OS 둥근 마스크가 카드를 잘라내므로 모서리는 항상 테마 CSS가 정한다. Electron 44부터 macOS·Windows 11·Linux 모두에서 동작한다 (§7-2). 테마별 토큰 표는 design-system §3-3.
 10. **디자인 변경은 사용자 확인 후** — 실제 앱 위에 CSS로 2안 이상 얹어 비교하고, 고른 뒤 구현.
+11. **macOS 배포는 Universal DMG 하나** (`tiara.setup.js` `arch: ["universal"]`) — 다운로드 페이지 버튼이 하나이고 Safari는 칩 종류를 숨기므로 칩별 파일로 나누지 않는다. 빌드 후 `lipo -info`로 x64·arm64 두 슬라이스, `codesign -dv`로 ad-hoc 서명(알림에 필요)을 확인하고, `arch -x86_64`로 Intel 슬라이스를 한 번 실행해 본다. 배포 위치는 roparkinfiniq/lumora.tools 릴리스(태그 `Code_Tiara`), 사이트 링크는 그 저장소 `src/data/codeTiaraRelease.ts`.
 
 ## 로컬 실행 · 검증
 

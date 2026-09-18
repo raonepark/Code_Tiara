@@ -7,6 +7,11 @@ const { execFileSync } = require('child_process');
 // notifications. Ad-hoc sign every mac build ourselves; a real identity still wins later.
 async function adHocSignMac(context) {
     if (context.electronPlatformName !== 'darwin') return;
+    // A universal build first packs x64 and arm64 into "*-x64-temp" / "*-arm64-temp" and then
+    // merges them. Signing those intermediates (--deep rewrites each framework's CodeResources)
+    // makes the non-binary files differ per arch and @electron/universal refuses to merge.
+    // Sign only the final merged app.
+    if (/-(x64|arm64)-temp$/.test(context.appOutDir)) return;
     const appPath = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
     execFileSync('codesign', ['--force', '--deep', '--sign', '-', appPath], { stdio: 'inherit' });
     console.log(`  • ad-hoc signed ${appPath}`);
@@ -49,10 +54,13 @@ module.exports = {
         shortcutName: "Code Tiara"
     },
     mac: {
+        // One Universal DMG (x64 + arm64 slices) instead of two per-chip files: the download page
+        // has a single Mac button and Safari hides the CPU type, so users cannot be routed by chip.
+        // No native modules → both slices share one app.asar; @electron/universal merges them.
         target: [
             {
                 target: "default",
-                arch: ["x64", "arm64"]
+                arch: ["universal"]
             }
         ],
         icon: "assets/icons/icon.icns",
