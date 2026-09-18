@@ -562,6 +562,13 @@ function createWindow() {
          console.log(`[Main Process] set-always-on-top received for categoryId: ${categoryId}, isPinned: ${isPinned}. Window exists: ${!!popoutWindows[categoryId]}`);
          popoutPinnedStates[categoryId] = isPinned;
          applyPopoutPinBehavior(categoryId);
+         // Unpinning from a maximized board: the popout still has focus, so it would sit in front
+         // until the user clicks the board. Put the board back on top right away (no focus change)
+         // so "unpin" visibly means "tuck it behind". Only here — never from focus/blur handlers,
+         // where moveTop would drag the board over other apps' windows.
+         if (!isPinned && mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && mainWindow.isMaximized()) {
+             mainWindow.moveTop();
+         }
      });
 
     // ✨ Auto-resize popout window based on content
