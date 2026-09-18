@@ -367,7 +367,7 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 7. 알림: `Notification.permission` 상태와 실제 알림 1회. **macOS는 42부터 UNNotification API로, 코드 서명된 번들에서만 표시된다** — `npx electron .`/`npm run electron:dev` 같은 서명 없는 개발 실행에서는 `failed`(UNErrorDomain 1)가 나고 아무것도 안 뜬다. 정상. 알림은 반드시 패키징된 앱(`dist/mac-arm64/Code Tiara.app`, ad-hoc 서명이면 충분)에서 확인한다. 2026-09-17 실측: 개발 바이너리 실패, 패키징 앱은 메인·렌더러 모두 표시.
 8. 트레이 아이콘 스크립트 재실행(오프스크린 렌더 배율이 42부터 1.0) — 결과 PNG 크기 18/36 확인.
 9. `webContents.on('console-message')` 등 콜백 시그니처 변경 여부 — 공식 breaking-changes 페이지를 대상 버전까지 훑는다.
-10. macOS DMG(x64·arm64)와 Windows NSIS 빌드가 모두 성공. 이전 버전 DMG는 롤백용으로 보관.
+10. macOS **Universal** DMG와 Windows NSIS 빌드가 모두 성공. Universal은 `lipo -info`로 두 슬라이스, `codesign -dv`로 서명 확인. 이전 버전 DMG는 롤백용으로 보관.
 
 ## 15. 프로세스 규칙
 
@@ -417,3 +417,4 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-17 | 언어: 고르기 전엔 매번 OS 언어, 고르면 기기별로 유지, 미지원 OS 언어는 영어 | 감지기가 첫 실행 값을 자동 캐시해 OS 언어를 바꿔도 앱이 안 따라왔고, 일본어 등 미지원 OS는 한국어로 떨어졌음(실측). 사용자 결정 |
 | 2026-09-18 | 시만 입력하면 분 `00`으로 저장, 입력값 범위 보정 | 시만 넣고 저장하면 시간이 통째로 사라졌음(사용자 보고). 분만 입력은 시각이 아니라 무시. 함수는 `src/utils/time.js`로 분리해 단위 테스트 |
 | 2026-09-18 | 팝아웃 핀 OFF = 일반 창(Space 고정, 뒤로 갈 수 있음) | 창 생성 시 `setVisibleOnAllWorkspaces(true, visibleOnFullScreen)`을 무조건 걸어 핀을 꺼도 Space 전환·전체화면 앱 위로 따라다니고 앞으로 튀어나왔음(듀얼 모니터 사용자 보고). 3안 중 "완전히 일반 창" 선택 |
+| 2026-09-18 | macOS 배포를 칩별 DMG 2개 → **Universal DMG 1개**로 | 사이트 "Download for Mac" 버튼이 arm64 파일만 가리켜 Intel 맥에서 실행 불가 보고. Safari가 칩 정보를 숨겨 사이트에서 분기 불가. 네이티브 모듈이 없어 병합 리스크 없음. 크기 약 2배는 1회 설치 파일이라 수용 |
