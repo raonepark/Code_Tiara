@@ -427,7 +427,15 @@ function createWindow() {
         const onTop = isPinned && (isTimer || !mainCovers);
         if (onTop) win.setAlwaysOnTop(true, 'pop-up-menu');
         else win.setAlwaysOnTop(false);
-        if (isMac) win.setVisibleOnAllWorkspaces(isPinned, { visibleOnFullScreen: isPinned });
+        // Only touch the all-Spaces flag when it actually changes. On macOS every call to
+        // setVisibleOnAllWorkspaces transforms the process type (UIElement <-> Foreground) and
+        // "hides the window and dock for a short time" (Electron docs). This helper also runs
+        // from the main window's focus/blur/maximize handlers, so calling it unconditionally
+        // re-hid the board every time a popout took focus — the main window vanished after
+        // "팝업으로 분리" (user report, 2026-09-26).
+        if (isMac && win.isVisibleOnAllWorkspaces() !== isPinned) {
+            win.setVisibleOnAllWorkspaces(isPinned, { visibleOnFullScreen: isPinned });
+        }
     }
     function applyAllPopoutPinBehaviors() {
         Object.keys(popoutWindows).forEach(applyPopoutPinBehavior);
