@@ -343,6 +343,10 @@ export const THEME_CONFIG = {
             dragShadow: 'bg-white shadow-xl ring-1 ring-[#D1D1D1]',
             checkbox: '',
             checkboxDone: '',
+            // TaskItem renders a spreadsheet-style square box for Excel (not the lucide circle);
+            // these two tokens were missing, so the box was an empty, invisible div.
+            checkboxExcel: 'mt-0.5 w-4 h-4 flex-shrink-0 flex items-center justify-center bg-white border border-[#828790] hover:border-[#217346] cursor-pointer rounded-none',
+            checkboxExcelCheck: 'w-3 h-3 text-[#217346]',
             textDefault: 'text-[#000]',
             textDone: 'text-[#555] line-through',
             timeDefault: 'text-slate-500',
