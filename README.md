@@ -87,6 +87,19 @@ Firebase Auth의 팝업 로그인은 `file://` origin에서 동작하지 않기 
 firebase deploy --only firestore:rules
 ```
 
+## 모바일 (웹 빌드 + 네이티브 셸)
+
+같은 React 앱을 Firebase Hosting에 배포하고, 별도 저장소 **Code_Tiara_Mobile**(React Native WebView)이 그 페이지를 감쌉니다. 데스크톱과 소스가 하나입니다.
+
+```bash
+npm run deploy:web              # build + firebase deploy --only hosting (프로젝트 code-tiara)
+BROWSER=none npx react-scripts start   # 브라우저에서 http://localhost:3000/?mobile=1 (375×812)로 모바일 UI 확인
+```
+
+- 모바일 판정·셸 통신 계약·동기화·알림 규칙: [AGENTS.md](AGENTS.md) "모바일 규칙", 구조와 설계 규칙: [docs/design-system.md](docs/design-system.md) §13
+- 개인정보처리방침: `public/privacy.html` → `https://code-tiara.web.app/privacy.html`
+- 2026-09-26 기준 모바일 코드는 `feat/mobile-companion` 브랜치에 있으며 `main` 머지 전입니다.
+
 ## 라이선스
 
 Private — © Lumora

@@ -19,6 +19,11 @@
 | `scripts/make-tray-icon.js` | macOS 메뉴 바 아이콘 생성 (`npx electron scripts/make-tray-icon.js`) |
 | `firestore.rules` | `users/{uid}` 본인만 읽기/쓰기 |
 | `docs/design-system.md` | 디자인 시스템 · 결정 로그 |
+| `src/utils/platform.js` | `isMac` `isWin` `isMobileDevice` — 플랫폼 판정은 여기서만 |
+| `src/utils/realtimeSync.js` | Firestore `onSnapshot` 변경을 로컬 상태에 반영하는 순수 함수 (모바일 브랜치) |
+| `src/components/AuthBridge.js` | 모바일 셸용 Google 로그인 브리지 페이지 (`?auth_bridge=google`, 모바일 브랜치) |
+| `firebase.json` `.firebaserc` | 웹 빌드 호스팅(`code-tiara`), 캐시 정책 (모바일 브랜치) |
+| `public/privacy.html` | 개인정보처리방침 (스토어 등록용, ko/en) (모바일 브랜치) |
 
 ## 절대 규칙
 
@@ -33,6 +38,24 @@
 9. **창 크기는 콘텐츠 + 2×`WINDOW_INSET`(현재 0)** — `main.js`에서 창을 만들거나 크기를 바꿀 때는 `withInset()`을 거치고, IPC로 오가는 width/height는 항상 콘텐츠 크기다. 렌더러는 `window.electron.windowInset`로 카드를 안쪽에 두고 그림자를 여백에 그린다 (design-system §6/§12). 창은 `roundedCorners: false` — OS 둥근 마스크가 카드를 잘라내므로 모서리는 항상 테마 CSS가 정한다. Electron 44부터 macOS·Windows 11·Linux 모두에서 동작한다 (§7-2). 테마별 토큰 표는 design-system §3-3.
 10. **디자인 변경은 사용자 확인 후** — 실제 앱 위에 CSS로 2안 이상 얹어 비교하고, 고른 뒤 구현.
 11. **macOS 배포는 Universal DMG 하나** (`tiara.setup.js` `arch: ["universal"]`) — 다운로드 페이지 버튼이 하나이고 Safari는 칩 종류를 숨기므로 칩별 파일로 나누지 않는다. 빌드 후 `lipo -info`로 x64·arm64 두 슬라이스, `codesign -dv`로 ad-hoc 서명(알림에 필요)을 확인하고, `arch -x86_64`로 Intel 슬라이스를 한 번 실행해 본다. 배포 위치는 roparkinfiniq/lumora.tools 릴리스(태그 `Code_Tiara`), 사이트 링크는 그 저장소 `src/data/codeTiaraRelease.ts`.
+
+## 모바일 규칙 (웹 빌드 + 네이티브 셸)
+
+모바일은 **같은 React 앱**을 Firebase Hosting에 올리고, 별도 저장소 `Code_Tiara_Mobile`(React Native WebView 셸)이 그 페이지를 감싸는 구조다. 데스크톱(Electron)과 코드베이스가 하나이므로 아래 규칙은 데스크톱을 깨지 않기 위한 것이다. 상세는 design-system §13. (2026-09-26 기준 코드는 `feat/mobile-companion` 브랜치, 아직 `main` 미머지.)
+
+1. **모바일 판정은 `isMobileDevice`(`src/utils/platform.js`) 하나만.** 순서: `window.ReactNativeWebView` 있음 → 모바일 / `?mobile=1` → 모바일 / `window.electron` 있음 → 데스크톱 / 그 외 UA. **창 폭(`isMiniMode`)으로 모바일을 판정하지 않는다.** 데스크톱 브라우저에서 모바일 UI를 보려면 `?mobile=1` + 375×812.
+2. **분기는 `isMobile` prop 또는 `isMobileDevice` import로만.** `!isMobile` 경로는 데스크톱 코드를 그대로 둔다. Electron 전용 호출은 기존 `sendIPC` 가드를 유지한다.
+3. **웹 → 셸 통신은 `window.ReactNativeWebView.postMessage(JSON.stringify({ type, … }))` 한 방향뿐.** 허용 타입: `THEME_CHANGE {theme}` · `SCHEDULE_REMINDERS {reminders:[{id,title,body,fireAt}]}` · `GOOGLE_SIGN_IN {lang}` · `NOTIFICATION_STATUS` · `TEST_NOTIFICATION {title,body}`. 새 타입은 이 목록과 `Code_Tiara_Mobile` 양쪽에 같은 PR로 추가.
+4. **셸 → 웹 콜백은 두 전역뿐.** `window.CodeTiaraNative.{onGoogleCredential(idToken, accessToken), onGoogleCancelled(reason)}` (AuthScreen 마운트 중), `window.CodeTiaraNotify.{onStatus({available,granted,scheduled}), onTestResult({ok,seconds,reason})}` (설정 패널 열림 중). 등록한 컴포넌트가 언마운트 시 `delete`한다. 다른 전역을 만들지 않는다.
+5. **Google 로그인**: 셸이 `{WEB_URL}/?auth_bridge=google&return=<딥링크>&hl=ko|en`을 **시스템 브라우저**로 열고, `AuthBridge.js`가 `signInWithRedirect` 결과의 크리덴셜을 `return` 딥링크로 돌려준다. `return`은 `isSafeReturnUrl` 통과 필수. `authDomain`은 `code-tiara.firebaseapp.com` 고정(web.app 핸들러는 등록된 redirect URI가 아님). ⚠️ 미해결: 토큰이 커스텀 스킴 URL로 전달되고 `exp://`·`exps://`가 프로덕션에서도 허용됨 — 머지 전 §13 "열린 이슈" 참고.
+6. **실시간 동기화**: 원격 변경은 `onSnapshot` + `applyRemoteChanges`(`src/utils/realtimeSync.js`)로만 반영하고 `prevTasksRef`/`prevCategoriesRef`를 함께 전진시킨다. 기존 저장 경로(localStorage → diff push)는 건드리지 않는다. 팝아웃 창은 구독하지 않는다. `hasPendingWrites` 스냅샷은 무시.
+7. **"이미 알림함" 상태는 기기별.** `localStorage['lumora_alerted_local']`(키 `reminderKey(task)`, `src/utils/time.js`)에만 쓰고 `task.alerted`를 Firestore에 쓰지 않는다 (규칙 8의 연장).
+8. **네이티브 알림은 셸이 띄운다.** 웹은 `SCHEDULE_REMINDERS`로 앞으로 30일치 전체 목록을 매번 통째로 넘긴다(증분 아님, 800ms 디바운스). 모바일에서 `new Notification`을 직접 부르지 않는다.
+9. **모바일 전용 스타일**은 `isMobile` 분기와 `index.css`의 `.mobile-sheet-*`에만. 색은 반드시 `themeConfig` 토큰(`theme.*`) — 컴포넌트에 테마별 hex를 하드코딩하지 않는다.
+10. **문자열·아이콘 규칙은 동일** (규칙 3·4). 모바일에서 문구가 달라지면 `*_mobile` 키로 ko/en 동시 추가.
+11. **배포**: `npm run deploy:web` (= `npm run build && firebase deploy --only hosting`, 프로젝트 `code-tiara`). 캐시 정책은 `firebase.json`에서만: `/static/**` 1년 immutable, `/`·`/index.html` no-cache. 데스크톱 앱은 이 배포와 무관하다 — 데스크톱 수정은 DMG/exe를 다시 만들어야 반영된다.
+12. **스토어 등록**: 개인정보처리방침 `https://code-tiara.web.app/privacy.html`(`public/privacy.html`, ko/en), 계정 삭제 경로는 설정 > 회원탈퇴.
+13. **빌드 산출물(`build/`, `main.*.js`, `*.asar`)은 절대 커밋하지 않는다.**
 
 ## 로컬 실행 · 검증
 
