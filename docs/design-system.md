@@ -419,3 +419,4 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-18 | 팝아웃 핀 OFF = 일반 창(Space 고정, 뒤로 갈 수 있음) | 창 생성 시 `setVisibleOnAllWorkspaces(true, visibleOnFullScreen)`을 무조건 걸어 핀을 꺼도 Space 전환·전체화면 앱 위로 따라다니고 앞으로 튀어나왔음(듀얼 모니터 사용자 보고). 3안 중 "완전히 일반 창" 선택 |
 | 2026-09-18 | macOS 배포를 칩별 DMG 2개 → **Universal DMG 1개**로 | 사이트 "Download for Mac" 버튼이 arm64 파일만 가리켜 Intel 맥에서 실행 불가 보고. Safari가 칩 정보를 숨겨 사이트에서 분기 불가. 네이티브 모듈이 없어 병합 리스크 없음. 크기 약 2배는 1회 설치 파일이라 수용 |
 | 2026-09-26 | `setVisibleOnAllWorkspaces`는 값이 바뀔 때만 호출 | "팝업으로 분리" 후 본 창이 사라짐(macOS). 핀 헬퍼가 본 창 focus/blur/maximize마다 이 API를 무조건 불렀고, 호출마다 프로세스 타입 전환으로 창·Dock이 숨겨짐. `isVisibleOnAllWorkspaces()`와 비교해 다를 때만 호출 |
+| 2026-09-26 | Excel 테마 체크박스 토큰 `checkboxExcel`/`checkboxExcelCheck` 추가 | TaskItem이 Excel에서만 네모 체크박스를 그리는데 토큰이 없어 빈 div로 렌더링돼 체크박스가 안 보였음(모바일 작업 중 발견). 새 테마 토큰을 참조하면 세 테마 모두에 정의(§3-3) |
