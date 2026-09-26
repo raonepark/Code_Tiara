@@ -327,20 +327,55 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 
 ---
 
-## 13. 모바일 버전을 만들 때
+## 13. 모바일 (웹 빌드 + 네이티브 셸)
 
-| 데스크톱 | 모바일 대응 |
+> 2026-09-26 기준 구현은 `feat/mobile-companion` 브랜치(17 커밋, 21 파일). 아직 `main`에 머지되지 않았고, 아래 "열린 이슈" 두 건은 머지 전에 해결한다.
+
+### 13-1. 구조
+
+- **하나의 React 앱**을 Firebase Hosting(`code-tiara`, `https://code-tiara.web.app`)에 올리고, 별도 저장소 `Code_Tiara_Mobile`(React Native WebView)이 그 페이지를 감싼다. 데스크톱 Electron과 소스가 같다.
+- 모바일 판정: `isMobileDevice` (`src/utils/platform.js`) — `window.ReactNativeWebView` → `?mobile=1` → `window.electron`이면 데스크톱 → UA. `App.js`가 `isMobile`로 받아 `TaskItem`·`SettingsPanel`·`OnboardingPanel`에 prop으로 내려준다.
+- 셸 통신 계약(정확한 이름은 `AGENTS.md` 모바일 규칙 3–4): 웹→셸은 `postMessage` 5종, 셸→웹은 `window.CodeTiaraNative`·`window.CodeTiaraNotify` 두 전역.
+- Google 로그인: WebView 안에서는 Google OAuth가 막히므로 셸이 시스템 브라우저로 `?auth_bridge=google` 페이지(`AuthBridge.js`)를 열고, 결과 크리덴셜을 딥링크(`codetiara://…`)로 돌려받아 `signInWithCredential`한다.
+- 동기화: 데스크톱은 localStorage → Firestore diff push. 모바일 브랜치는 여기에 `onSnapshot` 구독을 더해 다른 기기의 변경을 실시간으로 받는다(`applyRemoteChanges`). 저장 경로는 그대로.
+- 알림: 웹이 30일치 리마인더 목록을 셸에 넘기고(`SCHEDULE_REMINDERS`) 셸이 OS 로컬 알림을 예약한다. "이미 알림함"은 기기별 `lumora_alerted_local`.
+
+### 13-2. 데스크톱 ↔ 모바일 대응표
+
+| 데스크톱 | 모바일 |
 |---|---|
-| 미니 모드 (340px 단일 열) | **그대로 모바일 기본 화면.** 카드·행·폼 규칙 §6–§9 동일 |
-| 전체 모드 그리드 | 태블릿 가로에서만. 폰에서는 미니 모드 |
-| 팝아웃 스티키 노트 | 홈 화면 위젯 또는 바텀 시트. "항상 위" 개념은 위젯으로 대체 |
-| 커스텀 타이틀 바(신호등) | 없음. 시스템 상태바 + 안전 영역(safe-area) 여백 |
-| 트레이 아이콘 | 없음. 알림은 OS 로컬 알림 |
-| hover로 나타나는 행 액션(복제·수정·삭제) | 스와이프 액션 또는 길게 누르기. hover 의존 금지 |
-| 행 텍스트 클릭 = 완료 | 모바일에서는 **체크만 완료**, 텍스트 탭 = 열기 (실수 방지) |
+| 미니 모드 (340px 단일 열) | **그대로 기본 화면.** 카드·행 규칙 §6–§9 동일 |
+| 전체 모드 그리드 | 태블릿 가로에서만. 폰은 미니 모드 |
+| 팝아웃 스티키 노트 · 핀 | 없음. 카테고리는 한 화면에 세로 스택 |
+| 커스텀 타이틀 바(신호등) | 없음. 시스템 상태바 + safe-area 여백. 로그인 화면에서도 데스크톱 창 크롬 숨김 |
+| 트레이 · 전역 단축키 | 없음. 알림은 셸의 OS 로컬 알림 |
+| 인라인 추가/수정 폼 | **바텀 시트** (`.mobile-sheet-*`). 수정 시트는 설정 목록형(할 일·메모·날짜·반복·시간·알림 행) |
+| hover 행 액션(복제·수정·삭제) | 없음. **행 탭 = 수정 시트 열기, 완료는 체크박스만** (2026-09-25 결정, 실수 방지) |
+| 시간 `<select>`·날짜 피커 | `CustomSelect`·폰용 날짜 피커. 색은 `themeConfig` 토큰 |
 | 창 테두리 `#FFC0CB` | 없음. 배경 `#FFFCFD` 전체 |
-| 폰트 | Pretendard/Gamja Flower 번들. 시스템 폰트 폴백 |
-| 데이터 | 동일 Firestore 구조 `users/{uid}/...` + 동일 규칙 파일 `firestore.rules` |
+| 폰트 | 동일 번들(Pretendard/Gamja Flower/Gaegu) |
+| 언어 | 동일 규칙(§10-6): 고르기 전엔 OS 언어, 고르면 기기 저장. 셸이 `hl=`로 초기 언어 전달 |
+| 데이터 | 동일 Firestore `users/{uid}/…` + 동일 `firestore.rules` |
+| 온보딩 | 동일 슬라이드 + "기기 간 동기화" 슬라이드 추가, 기기당 1회 |
+
+### 13-3. 설계 규칙
+
+1. 모바일 화면은 미니 모드의 파생이다. 카드·헤더 밴드·행 표면은 §6 그대로, 터치 타깃만 키운다(체크박스 20px, 행 패딩 확대).
+2. 시트·드롭다운의 모서리·색은 테마가 정한다(§3-3, §7-2). Excel/Developer는 직각, Princess는 둥글게.
+3. 모바일 전용 컴포넌트(`CustomSelect` 등)도 `theme.*` 토큰을 쓴다. 테마별 hex 하드코딩은 리뷰에서 반려.
+4. 데스크톱 UI를 바꾸는 변경(예: 언어 `<select>` 교체)은 모바일 PR에 섞지 않는다 — 규칙 10과 "디자인·버그 분리".
+5. 애니메이션 클래스 `animate-in`·`fade-in`·`slide-in-from-*`는 **`tailwindcss-animate` 플러그인이 설치돼 있지 않아 동작하지 않는다**(main 14곳, 모바일 브랜치 42곳). 살릴지 결정 전까지 새로 추가하지 않는다.
+
+### 13-4. 열린 이슈 (머지 전 해결)
+
+| 심각도 | 내용 | 위치 |
+|---|---|---|
+| 높음 | 빌드 번들 `main.a50fc717.js`(1MB)가 저장소 루트에 커밋됨 (커밋 `47268db`의 유일한 내용) | 브랜치 히스토리에서 제거, `.gitignore`에 `/main.*.js` |
+| 높음 | Google `idToken`·`accessToken`을 커스텀 스킴 URL 쿼리로 전달. Android는 커스텀 스킴을 검증하지 않고, `exp://`·`exps://`가 프로덕션에서도 허용돼 피싱 링크로 크리덴셜 탈취 가능 | `AuthBridge.js` `isSafeReturnUrl`, 66–74행 |
+| 중간 | 로컬 `setTasks`와 원격 스냅샷이 한 렌더에 묶이면 `prevTasksRef`가 먼저 전진해 로컬 수정이 업로드되지 않을 수 있음 | `App.js` 실시간 구독 |
+| 중간 | 언어 드롭다운을 모든 플랫폼에서 커스텀 컴포넌트로 교체(데스크톱 디자인 변경, 규칙 10) + `sm:` 사용 + hex 하드코딩 | `SettingsPanel.jsx`, `CustomSelect.js` |
+| 중간 | `moveTaskToCategory`에서 콜백 파라미터 이름 `t` (규칙 3) + localStorage 직접 쓰기 | `App.js:473` |
+| 낮음 | `sm:text-[11px]`·`sm:bottom-6` 추가(규칙 7), 미사용 state `wasMiniModeBeforeSettings`(CI 빌드 실패), `lumora_alerted_local` 무한 증가, 리마인더가 할 일 변경 시에만 재전송, `firebase-tools` 미설치(매번 npx 다운로드) | 각 파일 |
 
 ---
 
@@ -420,3 +455,4 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-18 | macOS 배포를 칩별 DMG 2개 → **Universal DMG 1개**로 | 사이트 "Download for Mac" 버튼이 arm64 파일만 가리켜 Intel 맥에서 실행 불가 보고. Safari가 칩 정보를 숨겨 사이트에서 분기 불가. 네이티브 모듈이 없어 병합 리스크 없음. 크기 약 2배는 1회 설치 파일이라 수용 |
 | 2026-09-26 | `setVisibleOnAllWorkspaces`는 값이 바뀔 때만 호출 | "팝업으로 분리" 후 본 창이 사라짐(macOS). 핀 헬퍼가 본 창 focus/blur/maximize마다 이 API를 무조건 불렀고, 호출마다 프로세스 타입 전환으로 창·Dock이 숨겨짐. `isVisibleOnAllWorkspaces()`와 비교해 다를 때만 호출 |
 | 2026-09-26 | Excel 테마 체크박스 토큰 `checkboxExcel`/`checkboxExcelCheck` 추가 | TaskItem이 Excel에서만 네모 체크박스를 그리는데 토큰이 없어 빈 div로 렌더링돼 체크박스가 안 보였음(모바일 작업 중 발견). 새 테마 토큰을 참조하면 세 테마 모두에 정의(§3-3) |
+| 2026-09-26 | 모바일 = 같은 웹 앱 + RN WebView 셸. 규칙을 AGENTS 모바일 절과 §13에 성문화 | 모바일 브랜치(`feat/mobile-companion`) 리뷰. 셸 통신 계약·판정 함수·동기화 경로·알림 분담을 코드에서 추출해 고정. 열린 이슈 2건(번들 커밋, 인증 브리지 토큰 노출)은 머지 전 해결 |
