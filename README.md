@@ -87,6 +87,19 @@ Firebase Auth의 팝업 로그인은 `file://` origin에서 동작하지 않기 
 firebase deploy --only firestore:rules
 ```
 
+## 배포 · 자동 업데이트
+
+릴리스는 이 저장소의 버전별 GitHub 릴리스(`v1.8.2`, …)입니다. 앱은 여기서 새 버전을 확인해 **Windows는 자동 설치**, **macOS는 새 버전 안내**를 띄웁니다(서명이 ad-hoc이라 macOS 자동 설치는 Apple Developer ID가 생긴 뒤).
+
+```bash
+npm run build
+GH_TOKEN=$(gh auth token) npx electron-builder -m --config tiara.setup.js --publish always
+GH_TOKEN=$(gh auth token) npx electron-builder -w --config tiara.setup.js --publish always
+gh release edit v<version> -R raonepark/Code_Tiara --notes-file notes.md --draft=false --latest
+```
+
+초안으로 올라가므로 공개 전까지 사용자에게 가지 않습니다. 전체 절차와 확인 항목: [docs/design-system.md](docs/design-system.md) §14-2.
+
 ## 모바일 (웹 빌드 + 네이티브 셸)
 
 같은 React 앱을 Firebase Hosting에 배포하고, 별도 저장소 **Code_Tiara_Mobile**(React Native WebView)이 그 페이지를 감쌉니다. 데스크톱과 소스가 하나입니다.

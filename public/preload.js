@@ -9,15 +9,15 @@ const SEND_CHANNELS = new Set([
     'storage-changed', 'storage-clear',
     'open-popout', 'close-popout', 'close-popout-by-id',
     'set-always-on-top', 'resize-popout-window', 'show-popout-window',
-    'set-auto-launch', 'open-external'
+    'set-auto-launch', 'open-external', 'install-update'
 ]);
 
 // Renderer → main, request/response. Must match the ipcMain.handle handlers in main.js.
-const INVOKE_CHANNELS = new Set(['get-auto-launch', 'get-quick-add-shortcut', 'set-quick-add-shortcut']);
+const INVOKE_CHANNELS = new Set(['get-auto-launch', 'get-quick-add-shortcut', 'set-quick-add-shortcut', 'get-update-status']);
 
 // Main → renderer pushes the renderer may subscribe to.
 const RECEIVE_CHANNELS = new Set([
-    'auth-popup-closed', 'storage-changed', 'storage-clear', 'popout-closed', 'quick-add'
+    'auth-popup-closed', 'storage-changed', 'storage-clear', 'popout-closed', 'quick-add', 'update-status'
 ]);
 
 contextBridge.exposeInMainWorld('electron', {

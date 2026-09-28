@@ -2,6 +2,14 @@ export const THEME_CONFIG = {
     developer: {
         label: 'Developer',
         windowShadow: '', // no card shadow: with WINDOW_INSET 0 it only leaked into the rounded-corner gaps (user: remove)
+        // Update notice card (UpdateNotice.jsx) — design-system §14-2
+        updateNotice: {
+            container: 'bg-[#252526] border border-[#3E3E42] rounded-none shadow-[0_12px_24px_rgba(0,0,0,0.5)] text-[#D4D4D4] font-mono',
+            title: 'text-[#61AFEF] font-bold',
+            desc: 'text-[#ABB2BF]',
+            primaryBtn: 'bg-[#007ACC] text-white hover:bg-[#0062A3] rounded-none',
+            secondaryBtn: 'text-[#ABB2BF] hover:bg-[#3E3E42] rounded-none'
+        },
         titleText: 'text-[#61AFEF]',
         themeIcon: 'code',
         themeBadge: 'bg-[#282C34] text-[#61AFEF] border border-[#3E3E42] !rounded-none',
@@ -127,6 +135,14 @@ export const THEME_CONFIG = {
         label: 'Princess',
         titleText: 'text-[#FF6B81] font-[Gaegu]',
         windowShadow: '', // no card shadow: with WINDOW_INSET 0 it only leaked into the rounded-corner gaps (user: remove)
+        // Update notice card (UpdateNotice.jsx) — design-system §14-2; float shadow = §7 shadow-float
+        updateNotice: {
+            container: 'bg-white border-2 border-[#FFC0CB] rounded-[16px] shadow-[0_8px_24px_rgba(244,143,177,0.35)] text-slate-700',
+            title: 'text-[#FF6B81] font-bold',
+            desc: 'text-slate-500',
+            primaryBtn: 'bg-[#FF6B81] text-white hover:bg-[#FF5470] rounded-[10px]',
+            secondaryBtn: 'text-slate-500 hover:bg-[#FFF0F3] rounded-[10px]'
+        },
         themeIcon: 'crown',
         themeBadge: 'bg-pink-100 text-pink-500',
         themeSelectorActive: 'bg-[#FFF0F5] border-2 border-[#F472B6] text-[#F472B6] rounded-xl shadow-sm scale-105',
@@ -250,6 +266,14 @@ export const THEME_CONFIG = {
     excel: {
         label: 'Excel',
         windowShadow: '', // no card shadow: with WINDOW_INSET 0 it only leaked into the rounded-corner gaps (user: remove)
+        // Update notice card (UpdateNotice.jsx) — design-system §14-2
+        updateNotice: {
+            container: 'bg-white border border-[#217346] rounded-none shadow-md text-slate-800 font-sans',
+            title: 'text-[#217346] font-bold',
+            desc: 'text-slate-500',
+            primaryBtn: 'bg-[#107C41] text-white border border-[#107C41] hover:bg-[#0E6032] rounded-none',
+            secondaryBtn: 'bg-white text-slate-700 border border-[#D1D1D1] hover:bg-slate-100 rounded-none'
+        },
         titleText: 'text-[#217346]',
         themeIcon: 'table',
         themeBadge: 'bg-slate-100 text-slate-500',

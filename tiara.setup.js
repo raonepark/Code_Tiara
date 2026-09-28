@@ -28,10 +28,20 @@ module.exports = {
         "build/**/*",
         "public/main.js",
         "public/preload.js",
+        "public/updater.js",
         "package.json",
         "assets/**/*"
     ],
     asar: true,
+    // Auto-update feed (AGENTS rule 12). One GitHub release per version, tag v<version>.
+    // electron-builder only uploads with `--publish always` (GH_TOKEN from `gh auth token`),
+    // and always as a DRAFT — nothing reaches users until the release is published by hand.
+    publish: {
+        provider: "github",
+        owner: "raonepark",
+        repo: "Code_Tiara",
+        releaseType: "draft"
+    },
     afterPack: adHocSignMac,
     win: {
         target: [
@@ -48,7 +58,7 @@ module.exports = {
         allowToChangeInstallationDirectory: false,
         installerIcon: "assets/icon.ico",
         uninstallerIcon: "assets/icon.ico",
-        artifactName: "${productName} Setup ${version}.${ext}",
+        artifactName: "Code-Tiara-Setup-${version}.${ext}", // no spaces: GitHub renames them, breaking latest.yml URLs
         createDesktopShortcut: true,
         createStartMenuShortcut: true,
         shortcutName: "Code Tiara"
@@ -65,6 +75,7 @@ module.exports = {
         ],
         icon: "assets/icons/icon.icns",
         category: "public.app-category.productivity",
+        artifactName: "Code-Tiara-${version}-${arch}-mac.${ext}", // the zip electron-updater reads via latest-mac.yml
         hardenedRuntime: true,
         gatekeeperAssess: false
     },
@@ -81,6 +92,6 @@ module.exports = {
                 path: "/Applications"
             }
         ],
-        artifactName: "${productName}-${version}-${arch}.${ext}" // x64 and arm64 DMGs used to share one name and overwrite each other
+        artifactName: "Code-Tiara-${version}-${arch}.${ext}" // no spaces (see nsis.artifactName)
     }
 };

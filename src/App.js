@@ -10,6 +10,7 @@ import {
   Monitor, Smartphone, ListChecks, Settings2, Table2
 } from 'lucide-react';
 import CustomDatePicker from './components/CustomDatePicker';
+import UpdateNotice from './components/UpdateNotice';
 import { convertTo24Hour } from './utils/time';
 import TaskItem from './components/TaskItem';
 import SettingsPanel from './components/SettingsPanel';
@@ -2760,6 +2761,9 @@ const CodeTiara = () => {
           } !important;
         }
       `}</style>
+
+      {/* App update notice (fixed, board window only) */}
+      {!popoutCategoryId && <UpdateNotice theme={theme} />}
 
       {/* ✨ Custom Title Bar (Fixed at Top) */}
       {/* ✨ Custom Title Bar Removed */}

@@ -1,5 +1,6 @@
 const electron = require('electron');
 const { app, BrowserWindow, ipcMain, Tray, Menu, screen, session, protocol, net, shell, globalShortcut } = electron;
+const { setupAutoUpdate } = require('./updater');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
@@ -744,6 +745,8 @@ if (!gotTheLock) {
         createTray();
         loadQuickAddPrefs();
         applyQuickAddShortcut();
+        // Updates go to the board only — popouts never show the notice.
+        setupAutoUpdate({ windows: () => (mainWindow && !mainWindow.isDestroyed() ? [mainWindow] : []) });
     });
 }
 
