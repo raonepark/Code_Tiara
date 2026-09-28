@@ -404,6 +404,39 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 9. `webContents.on('console-message')` 등 콜백 시그니처 변경 여부 — 공식 breaking-changes 페이지를 대상 버전까지 훑는다.
 10. macOS **Universal** DMG와 Windows NSIS 빌드가 모두 성공. Universal은 `lipo -info`로 두 슬라이스, `codesign -dv`로 서명 확인. 이전 버전 DMG는 롤백용으로 보관.
 
+### 14-2. 배포 · 자동 업데이트 (2026-09-28, 1.8.2부터)
+
+**구조**
+
+| | Windows | macOS |
+|---|---|---|
+| 확인 | 앱 시작 10초 뒤 + 6시간마다 (`public/updater.js`) | 같음 |
+| 동작 | 백그라운드 다운로드 → 안내 "재시작하고 업데이트" → 무음 설치 후 자동 재실행. 무시해도 **종료할 때 설치** | **안내만.** "다운로드 페이지" 버튼이 릴리스 페이지를 연다 |
+| 이유 | NSIS + electron-updater는 서명 없이도 동작 | Squirrel.Mac은 Apple Developer ID 서명 필수, 우리 빌드는 ad-hoc. Developer ID가 생기면 `autoDownload`/`autoInstallOnAppQuit`를 켜는 것만으로 Windows와 같아진다 |
+| 읽는 파일 | `latest.yml` | `latest-mac.yml` (Universal zip) |
+
+- 피드: `raonepark/Code_Tiara` GitHub 릴리스. electron-updater가 `github.com/…/releases/latest`(API 아님, 호출 제한 없음)로 최신 태그를 찾고 그 태그의 yml을 읽는다. **최신 릴리스 = 최신 앱 버전**이어야 하므로 이 저장소에는 앱 릴리스만 올린다.
+- 개발 실행(`app.isPackaged === false`)은 확인하지 않는다. 테스트는 패키징된 앱 + `CODE_TIARA_UPDATE_FEED=<로컬 generic 피드 URL>` (코드에 남은 유일한 테스트 훅).
+- 확인 중·다운로드 중·오류(오프라인, 릴리스 없음)는 **아무것도 표시하지 않는다.** 사용자가 행동할 수 있을 때만 카드 하나(`UpdateNotice.jsx`, 본 창 하단, 팝아웃 제외). "나중에"는 이번 실행·이번 버전만 숨긴다.
+- 안내 카드 색은 테마 토큰 `theme.updateNotice`(세 테마 모두 정의). 문구는 `app.update_*` 키(ko/en).
+- 데이터: 업데이트는 앱 파일만 바꾼다. localStorage는 고정 origin(규칙 1)에, 창 상태는 `userData`에 있어 그대로 남는다.
+- **업데이터가 없는 버전(≤1.8.1) 사용자는 1.8.2를 한 번 직접 설치**해야 체인에 들어온다.
+
+**릴리스 절차** (`main`의 `package.json` 버전을 올린 뒤, 워크트리에서)
+
+```bash
+npm run build
+GH_TOKEN=$(gh auth token) npx electron-builder -m --config tiara.setup.js --publish always   # Universal DMG + zip + latest-mac.yml
+GH_TOKEN=$(gh auth token) npx electron-builder -w --config tiara.setup.js --publish always   # NSIS exe + latest.yml (macOS에서는 Rosetta 필요)
+gh release view v<version> -R raonepark/Code_Tiara            # 초안: 자산 7개(dmg, zip, exe, 각 blockmap, yml 2개) 확인
+gh release edit v<version> -R raonepark/Code_Tiara --notes-file notes.md --draft=false --latest
+```
+
+- electron-builder는 **초안(draft)** 으로만 올린다(`publish.releaseType`). 초안은 업데이터가 보지 못하므로, 자산과 노트를 확인한 뒤 공개하는 순간이 곧 배포다.
+- 토큰은 `gh auth token`으로 그 명령에만 넘긴다. 파일·셸 설정·채팅에 남기지 않는다.
+- 공개 뒤 lumora.tools의 `src/data/codeTiaraRelease.ts` 링크를 새 파일로 바꾸고 푸시(Vercel 자동 배포).
+- 확인: 공개 직후 이전 버전 앱을 켜 두고 10초 뒤 Windows는 다운로드→안내, macOS는 안내가 뜨는지 본다. Windows 데이터 유지는 실제 PC에서 할 일·설정·팝아웃 위치가 남는지로 확인.
+
 ## 15. 프로세스 규칙
 
 1. **항목 하나 = 브랜치 하나 = PR 하나.** 디자인 변경과 버그 수정을 한 PR에 섞지 않는다.
@@ -456,3 +489,4 @@ Firebase 로그인으로 기기 간 동기화되며, 게스트 모드로 로그�
 | 2026-09-26 | `setVisibleOnAllWorkspaces`는 값이 바뀔 때만 호출 | "팝업으로 분리" 후 본 창이 사라짐(macOS). 핀 헬퍼가 본 창 focus/blur/maximize마다 이 API를 무조건 불렀고, 호출마다 프로세스 타입 전환으로 창·Dock이 숨겨짐. `isVisibleOnAllWorkspaces()`와 비교해 다를 때만 호출 |
 | 2026-09-26 | Excel 테마 체크박스 토큰 `checkboxExcel`/`checkboxExcelCheck` 추가 | TaskItem이 Excel에서만 네모 체크박스를 그리는데 토큰이 없어 빈 div로 렌더링돼 체크박스가 안 보였음(모바일 작업 중 발견). 새 테마 토큰을 참조하면 세 테마 모두에 정의(§3-3) |
 | 2026-09-26 | 모바일 = 같은 웹 앱 + RN WebView 셸. 규칙을 AGENTS 모바일 절과 §13에 성문화 | 모바일 브랜치(`feat/mobile-companion`) 리뷰. 셸 통신 계약·판정 함수·동기화 경로·알림 분담을 코드에서 추출해 고정. 열린 이슈 2건(번들 커밋, 인증 브리지 토큰 노출)은 머지 전 해결 |
+| 2026-09-28 | 자동 업데이트 도입: Windows 완전 자동, macOS 안내만. 릴리스를 `raonepark/Code_Tiara` 버전별 태그로 일원화 | 수동 배포만 있었고, 두 저장소에 태그 하나를 덮어쓰는 방식이라 업데이터가 쓸 수 없었음. Squirrel.Mac은 Developer ID 필수. lumora.tools는 다른 도구 릴리스와 섞여 "최신 릴리스"가 흔들릴 수 있어 피드에서 제외 |
