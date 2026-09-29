@@ -4054,7 +4054,7 @@ const CodeTiara = () => {
                                 onChange={(e) => setNewTaskMemo(e.target.value)}
                                 placeholder={currentTheme === 'excel' ? t('app.detail_memo_excel') : t('app.detail_memo')}
                                 rows={2}
-                                className={`w-full block resize-y min-h-[40px] outline-none transition-colors duration-200
+                                className={`custom-scrollbar w-full block resize-y min-h-[40px] outline-none transition-colors duration-200
                                       ${currentTheme === 'princess'
                                     ? `bg-white border border-[var(--c-light-rgb)] text-slate-600 placeholder-[var(--c-dark)]/50 focus:border-[var(--c-dark)] focus:ring-2 focus:ring-[var(--c-bg)] shadow-sm font-semibold ${isMiniMode ? 'text-[11px] p-1.5 px-2.5 rounded-[10px]' : 'text-[12px] p-2 px-3.5 rounded-[14px]'}`
                                     : (currentTheme === 'excel'
