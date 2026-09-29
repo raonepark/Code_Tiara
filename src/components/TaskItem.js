@@ -79,6 +79,17 @@ const openExternalLink = (url) => {
     }
 };
 
+// Memo body: one block per line; blank lines become a half-line gap instead of a full
+// empty line (bullet lists separated by empty lines looked double-spaced).
+const renderMemoLines = (text) => {
+    if (!text) return null;
+    return String(text).replace(/\n{3,}/g, '\n\n').split('\n').map((line, i) => (
+        line.trim() === ''
+            ? <div key={i} aria-hidden="true" style={{ height: '0.45em' }} />
+            : <div key={i}>{renderMemoWithLinks(line)}</div>
+    ));
+};
+
 const renderMemoWithLinks = (text) => {
     if (!text) return null;
     
@@ -293,7 +304,7 @@ const TaskItem = memo(({
                                 }}
                                 placeholder={t('app.memo_placeholder')}
                                 rows={2}
-                                className={`w-full bg-transparent focus:outline-none resize-y min-h-[40px] max-h-[160px] transition-colors duration-200 block
+                                className={`custom-scrollbar w-full bg-transparent focus:outline-none resize-y min-h-[40px] max-h-[160px] transition-colors duration-200 block
                                     ${currentTheme === 'princess'
                                         ? 'border border-[var(--c-light-rgb)] focus:border-[var(--c-dark)] text-slate-600 rounded-xl p-2 text-xs font-semibold bg-white'
                                         : (currentTheme === 'excel'
@@ -483,7 +494,18 @@ const TaskItem = memo(({
                         )}
 
                         {/* 상세 메모 표시 */}
-                        {task.memo && task.memo.trim() !== '' && (
+                        {task.memo && task.memo.trim() !== '' && (() => {
+                            // Memo follows the task title (same rule as the title span above) and the
+                            // font-size setting, instead of fixed 12px/9px/8px classes.
+                            // PC: 86% of the title, never larger than the title, at least 11px unless
+                            // the title itself is smaller. (The mobile branch uses 80% on phones.)
+                            const titleBase = typeof fontSize === 'number'
+                                ? (isPopout ? Math.min(12, Math.max(10, fontSize - 3)) : (isMiniMode ? Math.min(17, Math.max(11, fontSize - 2), fontSize) : fontSize))
+                                : 14;
+                            const titlePx = Math.round(titleBase * getFontScaleMultiplier(fontFamily, currentTheme, titleBase));
+                            const memoPx = Math.min(titlePx, Math.max(11, Math.round(titlePx * 0.86)));
+                            const memoHeadPx = Math.min(memoPx, Math.max(9, Math.round(memoPx * 0.78)));
+                            return (
                             <div 
                                 className="mt-1.5 w-full"
                                 onClick={(e) => {
@@ -516,7 +538,7 @@ const TaskItem = memo(({
                                                     : 'bg-[#1E1E1E] border-l-2 border-l-[#007ACC] border border-[#3E3E42] text-[#ABB2BF] font-mono text-[11px] whitespace-pre-wrap leading-normal rounded-sm')
                                             }`}
                                     >
-                                        <div className={`flex items-center justify-between border-b pb-1 mb-1 text-[9px] font-bold select-none
+                                        <div style={{ fontSize: `${memoHeadPx}px` }} className={`flex items-center justify-between border-b pb-1 mb-1.5 font-bold select-none
                                             ${currentTheme === 'princess'
                                                 ? 'border-[var(--c-light-rgb)] text-[var(--c-dark)]'
                                                 : (currentTheme === 'excel'
@@ -528,15 +550,16 @@ const TaskItem = memo(({
                                                 <FileText className="w-3 h-3" />
                                                 {currentTheme === 'developer' ? '// Memo detail' : t('app.memo_detail')}
                                             </span>
-                                            <span className="opacity-60 text-[8px]">
+                                            <span className="opacity-60 font-normal">
                                                 {currentTheme === 'developer' ? 'Click to collapse' : t('app.click_to_collapse')}
                                             </span>
                                         </div>
-                                        <div className="whitespace-pre-wrap break-words">{renderMemoWithLinks(task.memo)}</div>
+                                        <div className="whitespace-pre-wrap break-words" style={{ fontSize: `${memoPx}px`, lineHeight: 1.55 }}>{renderMemoLines(task.memo)}</div>
                                     </div>
                                 )}
                             </div>
-                        )}
+                            );
+                        })()}
                      </>
                 )}
             </div>
